@@ -17,7 +17,7 @@ jobs:
         shell: pwsh
         run: |
           # 使用 GitHub Releases 的稳定下载链接获取 AutoHotkey v2 核心文件
-          # 这是一个包含解释器文件（如 AutoHotkey64.exe）的包
+          # 请务必再次确认该链接是最新的和有效的，否则下载本身就会失败
           $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19.zip" 
           $ahkExtractPath = "AutoHotkey_v2_Core_Files" # 修改解压路径名称以区分
           Write-Host "Downloading AutoHotkey v2 Core from $ahkZipUrl"
@@ -25,17 +25,24 @@ jobs:
           Write-Host "Extracting AutoHotkey v2 Core to $ahkExtractPath"
           Expand-Archive -Path "ahk-v2-core.zip" -DestinationPath $ahkExtractPath -Force
 
-          # 打印核心文件列表以供调试，确认解释器存在
+          # *** 这一行现在位于所有路径检查之前，以确保总是打印文件列表 ***
           Write-Host "Listing contents of $ahkExtractPath after extraction:"
           Get-ChildItem -Path $ahkExtractPath -Recurse | Select-Object FullName, Name, DirectoryName | Sort-Object FullName
           Write-Host "--- End of AutoHotkey v2 Core file listing ---"
+          # *****************************************************************
 
           # 将 AutoHotkey 核心可执行文件（解释器）的路径添加到 PATH
           # 这样后续编译步骤可以通过 Get-Command AutoHotkey 找到解释器
           $ahkMainPath = Join-Path $PWD $ahkExtractPath
           $ahkUXPath = Join-Path $PWD $ahkExtractPath "UX" # 某些版本可能在 UX 目录下
 
-          if (Test-Path "$ahkMainPath\AutoHotkey.exe" -or Test-Path "$ahkMainPath\AutoHotkey64.exe" -or Test-Path "$ahkUXPath\AutoHotkey.exe" -or Test-Path "$ahkUXPath\AutoHotkey64.exe") {
+          # 修正 PowerShell 语法：使用括号将每个 Test-Path 调用包围起来
+          if ((Test-Path "$ahkMainPath\AutoHotkey.exe") -or `
+              (Test-Path "$ahkMainPath\AutoHotkey64.exe") -or `
+              (Test-Path "$ahkUXPath\AutoHotkey.exe") -or `
+              (Test-Path "$ahkUXPath\AutoHotkey64.exe")) {
+              
+              Write-Host "AutoHotkey interpreter found in main or UX directory."
               Write-Host "Adding $ahkMainPath to PATH (for AutoHotkey interpreter)"
               Add-Content $env:GITHUB_PATH "$ahkMainPath"
               # 如果 UX 目录存在，也添加到 PATH，以防解释器在那里
@@ -71,6 +78,7 @@ jobs:
           $ahk2ExeBinPath = Join-Path $PWD $ahk2ExeExtractPath 
 
           if (Test-Path "$ahk2ExeBinPath\Ahk2Exe.exe") {
+              Write-Host "Found Ahk2Exe.exe in: $ahk2ExeBinPath"
               Write-Host "Adding $ahk2ExeBinPath to PATH (for Ahk2Exe.exe)"
               Add-Content $env:GITHUB_PATH "$ahk2ExeBinPath"
           } else {

@@ -21,6 +21,20 @@ jobs:
           out: DoroHelper.exe # 输出的可执行文件名称
           base: 64 # 编译为 64 位应用程序，如果需要 32 位可以改为 32
 
+      # !!! 新增步骤：验证编译后的 EXE 文件是否存在 !!!
+      - name: Verify Compiled Executable Exists
+        shell: pwsh
+        run: |
+          $expectedExePath = "DoroHelper.exe"
+          Write-Host "Checking for compiled executable at: $(Resolve-Path $expectedExePath -ErrorAction SilentlyContinue)"
+          if (-not (Test-Path $expectedExePath)) {
+            Write-Error "Error: Compiled executable '$expectedExePath' was not found after compilation."
+            Write-Host "Listing contents of current directory for debugging:"
+            Get-ChildItem -Path (Get-Location) -Recurse -Depth 2 | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
+            exit 1 # 显式地使当前步骤失败
+          }
+          Write-Host "Compiled executable '$expectedExePath' found. Proceeding with release."
+
       - name: Extract Version from AHK script
         id: get_version
         shell: pwsh

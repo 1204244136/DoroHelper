@@ -15,13 +15,72 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install AutoHotkey v2 via Chocolatey
-        id: install_ahk # 修正了这一行的缩进，使其与 name、run 等同级
+        id: install_ahk
         run: |
-          choco install autohotkey --version 2.0.19 -y # 替换为AutoHotkey v2的最新稳定版本号
+          # 确保 Chocolatey 安装的是 AutoHotkey v2
+          choco install autohotkey --version 2.0.19 -y # 使用你确认的最新稳定版本号，例如 2.0.19
+
+          # 获取 AutoHotkey.exe 的实际安装路径，并将其添加到 PATH
+          # 注意：Chocolatey 安装后，AutoHotkey.exe 可能直接在 C:\Program Files\AutoHotkey
+          # 或者在 C:\Program Files\AutoHotkey\AutoHotkey 这样的子目录里
+          # 我们需要找到实际的可执行文件路径
+          $ahk_exe_path = (Get-Command AutoHotkey.exe -ErrorAction SilentlyContinue).Path
+
+          if ($null -eq $ahk_exe_path) {
+              # 如果 Get-Command 没找到，尝试在常见的 Chocolatey 部署路径中查找
+              $possible_paths = @(
+                  "C:\Program Files\AutoHotkey\AutoHotkey.exe",
+                  "C:\Program Files\AutoHotkey\AutoHotkey_2.0.19\AutoHotkey.exe" # 考虑版本号子目录
+              )
+              foreach ($p in $possible_paths) {
+                  if (Test-Path $p) {
+                      $ahk_exe_path = $p
+                      break
+                  }
+              }
+          }
+
+          if ($null -eq $ahk_exe_path) {
+              Write-Error "Error: AutoHotkey.exe not found after Chocolatey installation. Please check the installation path."
+              exit 1
+          }
+
+          $ahk_install_dir = Split-Path -Path $ahk_exe_path -Parent
+
+          # 将 AutoHotkey 安装目录添加到当前 shell 会话的 PATH
+          # GITHUB_PATH 环境变量是 GitHub Actions 推荐的方式，可以永久性地将目录添加到后续步骤的 PATH
+          echo "$ahk_install_dir" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+          Write-Host "AutoHotkey installation directory added to PATH: $ahk_install_dir"
+
+          # 现在应该可以在 PATH 中找到 AutoHotkey.exe 了
           AutoHotkey.exe -v
-          $ahk_install_path = (Get-Command AutoHotkey.exe).Path | Split-Path -Parent
-          $compiler_script_path = Join-Path $ahk_install_path "Compiler.ahk"
+
+          # 找到 Compiler.ahk 的路径并添加到环境变量，以便后续使用
+          # Compiler.ahk 通常在 AutoHotkey.exe 所在的目录中
+          $compiler_script_path = Join-Path $ahk_install_dir "Compiler.ahk"
+          if (-not (Test-Path $compiler_script_path)) {
+             Write-Host "Warning: Compiler.ahk not found directly in $ahk_install_dir. Attempting to search common subdirectories."
+             # 某些安装可能将其放在 "Compiler" 或 "Lib" 子目录中
+             $possible_compiler_dirs = @(
+                Join-Path $ahk_install_dir "Compiler"
+                Join-Path $ahk_install_dir "Lib"
+                # 根据 AutoHotkey v2 的实际安装结构调整
+             )
+             foreach ($dir in $possible_compiler_dirs) {
+                $temp_compiler_path = Join-Path $dir "Compiler.ahk"
+                if (Test-Path $temp_compiler_path) {
+                   $compiler_script_path = $temp_compiler_path
+                   break
+                }
+             }
+          }
+
           Write-Host "AutoHotkey Compiler.ahk path: $compiler_script_path"
+          if (-not (Test-Path $compiler_script_path)) {
+            Write-Error "Error: AutoHotkey v2 Compiler.ahk could not be located after installation."
+            exit 1
+          }
           echo "AHK_COMPILER_PATH=$compiler_script_path" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Get currentVersion from AHK script
@@ -74,10 +133,9 @@ jobs:
               exit 1
           }
 
-          # 从上一步的输出中获取 Compiler.ahk 的路径
           $compiler_path = "${{ steps.install_ahk.outputs.AHK_COMPILER_PATH }}"
           if (-not (Test-Path $compiler_path)) {
-              Write-Error "Error: AutoHotkey v2 Compiler.ahk not found at $compiler_path. Please ensure AutoHotkey v2 was correctly installed."
+              Write-Error "Error: AutoHotkey v2 Compiler.ahk not found at $compiler_path. Please ensure AutoHotkey v2 was correctly installed and its Compiler.ahk path was extracted."
               exit 1
           }
 

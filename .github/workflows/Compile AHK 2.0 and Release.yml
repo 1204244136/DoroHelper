@@ -60,15 +60,37 @@ jobs:
               exit 1
           }
 
-      - name: Download and Setup Ahk2Exe (Final Confirmed Correct URL) # 使用最终确认的Ahk2Exe下载链接
+      - name: Download and Setup Ahk2Exe (with Retry Logic) # 为Ahk2Exe下载添加重试逻辑
         shell: pwsh
         run: |
-          # 最终确认的 Ahk2Exe 下载链接
           $ahk2ExeZipUrl = "https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe1.1.37.02a0a/Ahk2Exe1.1.37.02a0.zip" 
           $ahk2ExeExtractPath = "AutoHotkey_Ahk2Exe_Files" 
+          $maxRetries = 5
+          $retryDelaySeconds = 10 # 每次重试等待10秒
+          $attempt = 0
+          $success = $false
 
-          Write-Host "Downloading Ahk2Exe from $ahk2ExeZipUrl"
-          Invoke-WebRequest -Uri $ahk2ExeZipUrl -OutFile "ahk2exe.zip"
+          while ($attempt -lt $maxRetries -and -not $success) {
+              $attempt++
+              Write-Host "Attempt $attempt of $maxRetries: Downloading Ahk2Exe from $ahk2ExeZipUrl"
+              try {
+                  Invoke-WebRequest -Uri $ahk2ExeZipUrl -OutFile "ahk2exe.zip" -ErrorAction Stop
+                  $success = $true
+                  Write-Host "Ahk2Exe downloaded successfully."
+              } catch {
+                  Write-Warning "Download failed: $($_.Exception.Message)"
+                  if ($attempt -lt $maxRetries) {
+                      Write-Host "Retrying in $retryDelaySeconds seconds..."
+                      Start-Sleep -Seconds $retryDelaySeconds
+                  }
+              }
+          }
+
+          if (-not $success) {
+              Write-Error "Failed to download Ahk2Exe after $maxRetries attempts."
+              exit 1
+          }
+
           Write-Host "Extracting Ahk2Exe to $ahk2ExeExtractPath"
           Expand-Archive -Path "ahk2exe.zip" -DestinationPath $ahk2ExeExtractPath -Force
 

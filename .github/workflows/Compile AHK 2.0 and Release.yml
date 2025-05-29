@@ -55,14 +55,30 @@ jobs:
               exit 1
           }
 
-      - name: Download and Setup Ahk2Exe
+      - name: Download and Setup Ahk2Exe (Latest Dynamic)
         shell: pwsh
         run: |
-          # 获取 Ahk2Exe 的最新发布资产 URL
-          # 根据 install-ahk2exe.ahk，Ahk2Exe 有独立的 GitHub Release 仓库
-          # 这里我们直接构建一个通用的下载链接，获取最新版本的 Ahk2Exe.zip
-          $ahk2ExeZipUrl = "https://github.com/AutoHotkey/Ahk2Exe/releases/latest/download/Ahk2Exe.zip"
+          $repoOwner = "AutoHotkey"
+          $repoName = "Ahk2Exe"
+          $apiURL = "https://api.github.com/repos/$repoOwner/$repoName/releases/latest"
           $ahk2ExeExtractPath = "AutoHotkey_Ahk2Exe_Files" # 专门用于 Ahk2Exe 的解压路径
+
+          Write-Host "Fetching latest Ahk2Exe release information from $apiURL"
+          try {
+              $releaseInfo = Invoke-RestMethod -Uri $apiURL -Headers @{ Authorization = "token ${{ secrets.GITHUB_TOKEN }}" }
+              $ahk2ExeZipAsset = $releaseInfo.assets | Where-Object { $_.name -like "Ahk2Exe*.zip" } | Select-Object -First 1
+              
+              if (-not $ahk2ExeZipAsset) {
+                  Write-Error "Could not find Ahk2Exe.zip asset in the latest release."
+                  exit 1
+              }
+              $ahk2ExeZipUrl = $ahk2ExeZipAsset.browser_download_url
+              Write-Host "Found latest Ahk2Exe.zip at: $ahk2ExeZipUrl"
+          } catch {
+              Write-Error "Failed to fetch latest Ahk2Exe release information: $($_.Exception.Message)"
+              exit 1
+          }
+
           Write-Host "Downloading Ahk2Exe from $ahk2ExeZipUrl"
           Invoke-WebRequest -Uri $ahk2ExeZipUrl -OutFile "ahk2exe.zip"
           Write-Host "Extracting Ahk2Exe to $ahk2ExeExtractPath"

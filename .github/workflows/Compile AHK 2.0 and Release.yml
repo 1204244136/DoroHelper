@@ -23,10 +23,12 @@ jobs:
       - name: Download and Setup AutoHotkey v2 Core (v2.0.19) # <--- 最终修正 URL 拼写
         shell: pwsh
         run: |
-          $ahkVersion = "v2.0.19" 
-          # 最终修正这里：AutoHotkey_2.0.19.zip，文件名不带 'v'
-          $ahkZipFileName = "AutoHotkey_${ahkVersion}.zip" # 文件名是不带v的，如 AutoHotkey_2.0.19.zip
-          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/$ahkVersion/$ahkZipFileName" 
+          $ahkTag = "v2.0.19" # GitHub release tag name, usually starts with 'v'
+          $ahkFileNameVersion = "2.0.19" # File name part, usually without 'v'
+
+          # 正确的文件名应该是 AutoHotkey_2.0.19.zip
+          $ahkZipFileName = "AutoHotkey_${ahkFileNameVersion}.zip" 
+          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/$ahkTag/$ahkZipFileName" 
           $ahkExtractPath = "AutoHotkey_v2_Core_Files" 
 
           Write-Host "Downloading AutoHotkey v2 Core from $ahkZipUrl"

@@ -17,7 +17,7 @@ jobs:
       - name: Install AutoHotkey v2 via Chocolatey
         id: install_ahk # 修正了这一行的缩进，使其与 name、run 等同级
         run: |
-          choco install autohotkey --version 2.0.12 -y # 替换为AutoHotkey v2的最新稳定版本号
+          choco install autohotkey --version 2.0.19 -y # 替换为AutoHotkey v2的最新稳定版本号
           AutoHotkey.exe -v
           $ahk_install_path = (Get-Command AutoHotkey.exe).Path | Split-Path -Parent
           $compiler_script_path = Join-Path $ahk_install_path "Compiler.ahk"

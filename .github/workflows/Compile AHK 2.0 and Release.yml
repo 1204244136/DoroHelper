@@ -20,7 +20,7 @@ jobs:
           Get-ChildItem -Path (Get-Location) -Recurse | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
           Write-Host "--- End of repository file listing ---"
 
-      - name: Download and Setup AutoHotkey v2 Core (v2.0.19) # <--- 最终修正 URL 拼写
+      - name: Download and Setup AutoHotkey v2 Core (v2.0.19)
         shell: pwsh
         run: |
           $ahkTag = "v2.0.19" # GitHub release tag name, usually starts with 'v'
@@ -81,7 +81,8 @@ jobs:
               $ahk2ExeZipUrl = $ahk2ExeZipAsset.browser_download_url
               Write-Host "Found Ahk2Exe.zip for $ahk2ExeVersion at: $ahk2ExeZipUrl"
           } catch {
-              Write-Error "Failed to fetch Ahk2Exe release information for $ahk2ExeVersion: $($_.Exception.Message)"
+              # 修正此处的语法错误
+              Write-Error "Failed to fetch Ahk2Exe release information for version $($ahk2ExeVersion): $($_.Exception.Message)"
               exit 1
           }
 
@@ -150,7 +151,6 @@ jobs:
           Write-Host $testOutput
           Write-Host "Interpreter Exit Code: $testExitCode"
           Write-Host "--- End of Interpreter Test Output ---"
-
           if ($testExitCode -ne 0) {
               Write-Warning "Interpreter test failed with exit code $testExitCode. This might indicate an issue with the script or interpreter setup."
           } else {

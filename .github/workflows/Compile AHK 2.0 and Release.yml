@@ -35,7 +35,7 @@ jobs:
           Write-Host "Verifying Ahk2Exe command..."
           if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
             Write-Error "Ahk2Exe.exe not found in PATH. Please check extraction and PATH setup."
-            Write-Host "Contents of $ahkExtractPath:"
+            Write-Host "Contents of ${ahkExtractPath}:" # <--- 修改在这里
             Get-ChildItem -Path $MainAhkPath -Recurse | Select-Object FullName
             Write-Host "Current PATH: $env:PATH"
             exit 1
@@ -97,7 +97,7 @@ jobs:
                        $baseBinaryPath = Join-Path $PWD $ahkExtractPath "UX" $baseBinaryName # 检查 UX 子目录
                        if (-not (Test-Path $baseBinaryPath)) {
                            Write-Error "Could not find a suitable 64-bit base binary (AutoHotkey64.exe or AutoHotkeyU64.exe) in '$ahkExtractPath' or '$($ahkExtractPath)\UX'."
-                           Write-Host "Listing contents of $ahkExtractPath:"
+                           Write-Host "Listing contents of ${ahkExtractPath}:" # <--- 同时修改这里以保持一致性
                            Get-ChildItem -Path (Join-Path $PWD $ahkExtractPath) -Recurse | Select-Object FullName
                            exit 1
                        }
@@ -139,7 +139,7 @@ jobs:
           echo "Release version: $VERSION_TAG, Is Prerelease: $IS_PRERELEASE"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2 # 使用 v2 版本
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.get_version.outputs.VERSION_TAG }}
           name: ${{ steps.get_version.outputs.VERSION_TAG }} # Release 标题

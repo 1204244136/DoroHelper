@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-release:
-    runs-on: windows-latest # AutoHotkey 和 Ahk2Exe 在 Windows 上运行
+    runs-on: windows-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,38 +20,64 @@ jobs:
           Get-ChildItem -Path (Get-Location) -Recurse | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
           Write-Host "--- End of repository file listing ---"
 
-      - name: Download and Setup AutoHotkey v2 Core
+      - name: Download and Setup AutoHotkey v2 (using AutoHotkey_H for compiler) # <--- 修改步骤名称
         shell: pwsh
         run: |
-          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19.zip" 
-          $ahkExtractPath = "AutoHotkey_v2_Core_Files" 
-          Write-Host "Downloading AutoHotkey v2 Core from $ahkZipUrl"
-          Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2-core.zip"
-          Write-Host "Extracting AutoHotkey v2 Core to $ahkExtractPath"
-          Expand-Archive -Path "ahk-v2-core.zip" -DestinationPath $ahkExtractPath -Force
+          # 尝试下载 AutoHotkey_H 的 V2 版本，作为编译器的基础
+          # 查找最新稳定版 AutoHotkey_H for v2 的 URL
+          $ahkHRepoOwner = "HotKeyIt"
+          $ahkHRepoName = "AutoHotkey_H"
+          $ahkHApiURL = "https://api.github.com/repos/$ahkHRepoOwner/$ahkHRepoName/releases/latest"
+          $ahkExtractPath = "AutoHotkey_v2_Compiler_Files" # <--- 修改提取路径名称
+
+          Write-Host "Fetching latest AutoHotkey_H v2 release information from $ahkHApiURL"
+          try {
+              $releaseInfo = Invoke-RestMethod -Uri $ahkHApiURL -Headers @{ Authorization = "token ${{ secrets.GITHUB_TOKEN }}" }
+              # 查找包含 "v2" 且是 x64 版本的 zip 或 exe
+              $ahkHAsset = $releaseInfo.assets | Where-Object { $_.name -like "*v2*x64*.zip" -or $_.name -like "*v2*x64*.exe" } | Select-Object -First 1
+              
+              if (-not $ahkHAsset) {
+                  Write-Error "Could not find a suitable AutoHotkey_H v2 x64 asset in the latest release."
+                  Write-Host "Available assets:"
+                  $releaseInfo.assets | Select-Object name, browser_download_url | Format-List
+                  exit 1
+              }
+              $ahkHUrl = $ahkHAsset.browser_download_url
+              Write-Host "Found latest AutoHotkey_H v2 x64 at: $ahkHUrl"
+          } catch {
+              Write-Error "Failed to fetch latest AutoHotkey_H v2 release information: $($_.Exception.Message)"
+              exit 1
+          }
+
+          if ($ahkHUrl -like "*.zip") {
+              Write-Host "Downloading AutoHotkey_H v2 from $ahkHUrl"
+              Invoke-WebRequest -Uri $ahkHUrl -OutFile "ahk_h_v2.zip"
+              Write-Host "Extracting AutoHotkey_H v2 to $ahkExtractPath"
+              Expand-Archive -Path "ahk_h_v2.zip" -DestinationPath $ahkExtractPath -Force
+          } elseif ($ahkHUrl -like "*.exe") {
+              Write-Host "Downloading AutoHotkey_H v2 standalone exe from $ahkHUrl"
+              # 直接下载exe，并确保文件夹存在
+              New-Item -ItemType Directory -Force -Path $ahkExtractPath
+              Invoke-WebRequest -Uri $ahkHUrl -OutFile (Join-Path $ahkExtractPath "AutoHotkey64.exe") # 假设是AutoHotkey64.exe
+          } else {
+              Write-Error "Unsupported AutoHotkey_H v2 asset type: $ahkHUrl"
+              exit 1
+          }
+
 
           Write-Host "Listing contents of $ahkExtractPath after extraction:"
           Get-ChildItem -Path $ahkExtractPath -Recurse | Select-Object FullName, Name, DirectoryName | Sort-Object FullName
-          Write-Host "--- End of AutoHotkey v2 Core file listing ---"
+          Write-Host "--- End of AutoHotkey_H v2 file listing ---"
 
-          $ahkMainPath = Join-Path $PWD $ahkExtractPath
-          $ahkUXPath = Join-Path $PWD $ahkExtractPath "UX" 
+          # 确保将 AutoHotkey_H 的目录添加到 PATH
+          $ahkCompilerPath = Join-Path $PWD $ahkExtractPath
+          Write-Host "Adding $ahkCompilerPath to PATH (for AutoHotkey_H compiler)"
+          Add-Content $env:GITHUB_PATH "$ahkCompilerPath"
 
-          if ((Test-Path "$ahkMainPath\AutoHotkey.exe") -or `
-              (Test-Path "$ahkMainPath\AutoHotkey64.exe") -or `
-              (Test-Path "$ahkUXPath\AutoHotkey.exe") -or `
-              (Test-Path "$ahkUXPath\AutoHotkey64.exe")) {
-              
-              Write-Host "AutoHotkey interpreter found in main or UX directory."
-              Write-Host "Adding $ahkMainPath to PATH (for AutoHotkey interpreter)"
-              Add-Content $env:GITHUB_PATH "$ahkMainPath"
-              if (Test-Path $ahkUXPath) {
-                  Write-Host "Adding $ahkUXPath to PATH (for AutoHotkey interpreter in UX folder)"
-                  Add-Content $env:GITHUB_PATH "$ahkUXPath"
-              }
-          } else {
-              Write-Error "AutoHotkey interpreter (e.g., AutoHotkey.exe, AutoHotkey64.exe) not found in expected paths. Check the file listing above."
-              exit 1
+          # 额外验证是否有 AutoHotkey64.exe 或类似的编译器
+          if (-not (Test-Path "$ahkCompilerPath\AutoHotkey64.exe") -and `
+              -not (Test-Path "$ahkCompilerPath\AutoHotkeyU64.exe")) {
+              Write-Warning "Could not find expected AutoHotkey64.exe or AutoHotkeyU64.exe in $ahkCompilerPath. Compilation might fail."
           }
 
       - name: Download and Setup Ahk2Exe (Latest Dynamic)
@@ -109,25 +135,29 @@ jobs:
           }
           Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
 
-      - name: Test AutoHotkey Interpreter
+      - name: Test AutoHotkey Interpreter # 这个步骤现在会使用 AutoHotkey_H 解释器
         shell: pwsh
         run: |
           $scriptToTest = "test_compile.ahk"
-          $ahkExeName = "AutoHotkey64.exe"
-          $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
+          $ahkExeName = "AutoHotkey64.exe" # 假设 AutoHotkey_H 提供了这个名称的 exe
+          $ahkCompilerExtractPath = "AutoHotkey_v2_Compiler_Files" # <--- 使用新的路径
 
-          $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath $ahkExeName
+          $ahkInterpreterPath = Join-Path $PWD $ahkCompilerExtractPath $ahkExeName
           if (-not (Test-Path $ahkInterpreterPath)) {
-              $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath "UX" $ahkExeName 
+              $ahkInterpreterPath = Join-Path $PWD $ahkCompilerExtractPath "UX" $ahkExeName 
           }
+          # 检查 AutoHotkey_H 是否有其他命名的 exe，例如 "AutoHotkey_H.exe"
           if (-not (Test-Path $ahkInterpreterPath)) {
-              Write-Error "Could not find AutoHotkey interpreter ($ahkExeName) for testing."
+              $ahkInterpreterPath = Join-Path $PWD $ahkCompilerExtractPath "AutoHotkey_H.exe" 
+          }
+
+          if (-not (Test-Path $ahkInterpreterPath)) {
+              Write-Error "Could not find AutoHotkey interpreter ($ahkExeName or AutoHotkey_H.exe) for testing in '$ahkCompilerExtractPath'."
+              Get-ChildItem -Path (Join-Path $PWD $ahkCompilerExtractPath) -Recurse | Select-Object FullName, Name
               exit 1
           }
 
           Write-Host "Attempting to run $scriptToTest with $ahkInterpreterPath..."
-          # Start-Process -FilePath $ahkInterpreterPath -ArgumentList "$scriptToTest" -Wait -NoNewWindow
-          # Above will not capture output, so we need to call directly and capture output
           $testOutput = (& "$ahkInterpreterPath" "$scriptToTest" 2>&1)
           $testExitCode = $LASTEXITCODE
 
@@ -138,7 +168,6 @@ jobs:
 
           if ($testExitCode -ne 0) {
               Write-Warning "Interpreter test failed with exit code $testExitCode. This might indicate an issue with the script or interpreter setup."
-              # We won't fail the workflow here, but it's a strong warning.
           } else {
               Write-Host "Interpreter test successful."
           }
@@ -150,8 +179,8 @@ jobs:
           $scriptPath = "DoroHelper.ahk" 
           if (-not (Test-Path $scriptPath)) {
             Write-Warning "Script file '$scriptPath' not found for version extraction. Current directory: $(Get-Location)"
-            echo "VERSION_TAG=0.0.0" >> $env:GITHUB_OUTPUT # 提供一个默认版本号
-            exit 0 # 不要在此处失败，因为我们是为了测试编译
+            echo "VERSION_TAG=0.0.0" >> $env:GITHUB_OUTPUT 
+            exit 0
           }
           $content = Get-Content -Path $scriptPath -Raw
           $match = $content | Select-String -Pattern 'currentVersion\s*:=\s*"([^"]+)"'
@@ -168,7 +197,7 @@ jobs:
         id: compile_script
         shell: pwsh
         run: |
-          $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
+          $ahkCompilerExtractPath = "AutoHotkey_v2_Compiler_Files" # <--- 使用新的路径
           $scriptFile = "test_compile.ahk" 
           $iconFile = "doro.ico" 
           $outputExe = "test_compile.exe" 
@@ -197,23 +226,18 @@ jobs:
           Get-ChildItem -Path (Get-Location) -Recurse -Depth 1 | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
           Write-Host "--- End of current working directory listing ---"
 
-          $baseBinaryName = "AutoHotkey64.exe"
-          $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
+          # 寻找 AutoHotkey_H 提供的 64 位编译器
+          $baseBinaryName = "AutoHotkey64.exe" # 优先找这个
+          $baseBinaryPath = Join-Path $PWD $ahkCompilerExtractPath $baseBinaryName
           if (-not (Test-Path $baseBinaryPath)) {
-              $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName 
-              if (-not (Test-Path $baseBinaryPath)) {
-                  $baseBinaryName = "AutoHotkeyU64.exe"
-                  $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
-                   if (-not (Test-Path $baseBinaryPath)) {
-                        $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName 
-                        if (-not (Test-Path $baseBinaryPath)) {
-                            Write-Error "Could not find a suitable 64-bit base binary (AutoHotkey64.exe or AutoHotkeyU64.exe) in '$ahkCoreExtractPath' or '$($ahkCoreExtractPath)\UX'."
-                            Write-Host "Listing contents of ${ahkCoreExtractPath}:"
-                            Get-ChildItem -Path (Join-Path $PWD $ahkCoreExtractPath) -Recurse | Select-Object FullName
-                            exit 1
-                        }
-                   }
-              }
+              $baseBinaryName = "AutoHotkey_H.exe" # 其次找这个
+              $baseBinaryPath = Join-Path $PWD $ahkCompilerExtractPath $baseBinaryName
+          }
+          if (-not (Test-Path $baseBinaryPath)) {
+              Write-Error "Could not find a suitable 64-bit base binary (AutoHotkey64.exe or AutoHotkey_H.exe) in '$ahkCompilerExtractPath'."
+              Write-Host "Listing contents of ${ahkCompilerExtractPath}:"
+              Get-ChildItem -Path (Join-Path $PWD $ahkCompilerExtractPath) -Recurse | Select-Object FullName
+              exit 1
           }
 
           Write-Host "Using Ahk2Exe from PATH."
@@ -229,17 +253,17 @@ jobs:
 
           Write-Host "Attempting to compile with Ahk2Exe.exe..."
           Write-Host "Compilation Arguments: $($compileArgs -join ' ')" 
-          $ahk2ExeOutput = (Ahk2Exe.exe $compileArgs 2>&1) # Capture stdout and stderr
-          $ahk2ExeExitCode = $LASTEXITCODE # Capture exit code immediately
+          $ahk2ExeOutput = (Ahk2Exe.exe $compileArgs 2>&1) 
+          $ahk2ExeExitCode = $LASTEXITCODE 
 
           Write-Host "--- Ahk2Exe Output Start (Actual Compilation) ---"
           Write-Host $ahk2ExeOutput
           Write-Host "--- Ahk2Exe Output End (Actual Compilation) ---"
-          Write-Host "Ahk2Exe Exit Code: $ahk2ExeExitCode" # Log the exit code
+          Write-Host "Ahk2Exe Exit Code: $ahk2ExeExitCode" 
 
           if ($ahk2ExeExitCode -ne 0) {
-              Write-Error "Compilation failed with exit code $ahk2ExeExitCode. $outputExe not found. See Ahk2Exe output above for details."
-              exit 1
+            Write-Error "Compilation failed with exit code $ahk2ExeExitCode. $outputExe not found. See Ahk2Exe output above for details."
+            exit 1
           }
           Write-Host "$outputExe compiled successfully."
           echo "EXE_NAME=$outputExe" >> $env:GITHUB_OUTPUT

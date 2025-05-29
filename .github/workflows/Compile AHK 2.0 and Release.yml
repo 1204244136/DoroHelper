@@ -13,38 +13,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download and Setup AutoHotkey v2
+      - name: Install AutoHotkey v2 using Chocolatey
         shell: pwsh
         run: |
-          # 使用 GitHub Releases 的稳定下载链接，避免 Cloudflare
-          # 请定期检查 AutoHotkey GitHub Releases 页面，获取最新的稳定版本链接
-          # 例如：https://github.com/AutoHotkey/AutoHotkey/releases
-          # 这里假设最新的 v2 版本是 v2.0.17
-          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19.zip" 
-          $ahkExtractPath = "AutoHotkey_v2_Files"
-          Write-Host "Downloading AutoHotkey v2 from $ahkZipUrl"
-          Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2.zip"
-          Write-Host "Extracting AutoHotkey v2 to $ahkExtractPath"
-          Expand-Archive -Path "ahk-v2.zip" -DestinationPath $ahkExtractPath -Force
+          # 确保 Chocolatey 已安装 (GitHub Actions 的 Windows runner 通常预装了)
+          # choco upgrade chocolatey # 可以选择升级 Chocolatey 到最新版本
 
-          # 将 Compiler 目录和主目录添加到 PATH，以便找到 Ahk2Exe.exe 和基础 exe 文件
-          $CompilerPath = Join-Path $PWD $ahkExtractPath "Compiler"
-          $MainAhkPath = Join-Path $PWD $ahkExtractPath
+          # 安装 AutoHotkey v2。请注意，Chocolatey 包的名称和版本可能需要验证。
+          # 你可以在 https://community.chocolatey.org/packages/autohotkey 查看可用的版本和安装命令。
+          # 这里我们安装 AutoHotkey.ahk2，它是专门用于 v2 的，并且通常会包含 Ahk2Exe.exe
+          Write-Host "Installing AutoHotkey v2 via Chocolatey..."
+          choco install autohotkey.ahk2 --version 2.0.19 -y
 
-          Write-Host "Adding $CompilerPath to PATH"
-          Add-Content $env:GITHUB_PATH "$CompilerPath"
-          Write-Host "Adding $MainAhkPath to PATH"
-          Add-Content $env:GITHUB_PATH "$MainAhkPath"
-
-          Write-Host "Verifying Ahk2Exe command..."
+          # 验证 Ahk2Exe.exe 是否在 PATH 中
+          Write-Host "Verifying Ahk2Exe command after Chocolatey install..."
           if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
-            Write-Error "Ahk2Exe.exe not found in PATH. Please check extraction and PATH setup."
-            Write-Host "Contents of ${ahkExtractPath}:"
-            Get-ChildItem -Path $MainAhkPath -Recurse | Select-Object FullName
+            Write-Error "Ahk2Exe.exe not found in PATH after Chocolatey installation. Please check the Chocolatey package details."
             Write-Host "Current PATH: $env:PATH"
             exit 1
           }
-          Write-Host "Ahk2Exe found in PATH."
+          Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
 
       - name: Extract Version from AHK script
         id: get_version
@@ -71,7 +59,8 @@ jobs:
         id: compile_script
         shell: pwsh
         run: |
-          $ahkExtractPath = "AutoHotkey_v2_Files" # 与上面解压路径一致
+          # Chocolatey 安装通常会将 Ahk2Exe 和 AutoHotkey 解释器放在标准位置，并添加到 PATH
+          # 所以我们不再需要手动指定 AhkExtractPath 或搜索基础二进制文件
           $scriptFile = "DoroHelper.ahk"
           $iconFile = "doro.ico"
           $outputExe = "DoroHelper.exe" # 输出的 exe 文件名
@@ -85,29 +74,15 @@ jobs:
             $iconFile = "" # 如果图标不存在，则不使用图标参数
           }
 
-          # 确定用于编译的64位基础二进制文件路径
-          # Ahk2Exe 的 /bin 参数需要指向解释器二进制文件作为基础
-          # 常见的名称: AutoHotkey64.exe, AutoHotkeyU64.exe
-          # 优先使用 AutoHotkey64.exe，如果它在解压的主目录或 UX 子目录中
-          $baseBinaryName = "AutoHotkey64.exe"
-          $baseBinaryPath = Join-Path $PWD $ahkExtractPath $baseBinaryName
-          if (-not (Test-Path $baseBinaryPath)) {
-              $baseBinaryPath = Join-Path $PWD $ahkExtractPath "UX" $baseBinaryName # 检查 UX 子目录
-              if (-not (Test-Path $baseBinaryPath)) {
-                  # 如果 AutoHotkey64.exe 未找到，尝试 AutoHotkeyU64.exe
-                  $baseBinaryName = "AutoHotkeyU64.exe"
-                  $baseBinaryPath = Join-Path $PWD $ahkExtractPath $baseBinaryName
-                   if (-not (Test-Path $baseBinaryPath)) {
-                        $baseBinaryPath = Join-Path $PWD $ahkExtractPath "UX" $baseBinaryName # 检查 UX 子目录
-                        if (-not (Test-Path $baseBinaryPath)) {
-                            Write-Error "Could not find a suitable 64-bit base binary (AutoHotkey64.exe or AutoHotkeyU64.exe) in '$ahkExtractPath' or '$($ahkExtractPath)\UX'."
-                            Write-Host "Listing contents of ${ahkExtractPath}:"
-                            Get-ChildItem -Path (Join-Path $PWD $ahkExtractPath) -Recurse | Select-Object FullName
-                            exit 1
-                        }
-                   }
-              }
+          # 获取 AutoHotkey v2 解释器的路径作为 /bin 参数
+          # 通常是 AutoHotkey.exe 或 AutoHotkey64.exe，安装在 C:\Program Files\AutoHotkey
+          # 我们可以通过 Get-Command 找到它
+          $ahkExeCommand = Get-Command AutoHotkey -ErrorAction SilentlyContinue
+          if (-not $ahkExeCommand) {
+              Write-Error "AutoHotkey interpreter (AutoHotkey.exe) not found in PATH. Chocolatey installation might have failed or located it elsewhere."
+              exit 1
           }
+          $baseBinaryPath = $ahkExeCommand.Path
 
           Write-Host "Using Ahk2Exe from PATH."
           Write-Host "Script: $scriptFile"

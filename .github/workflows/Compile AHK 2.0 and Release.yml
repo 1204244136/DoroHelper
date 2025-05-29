@@ -16,10 +16,8 @@ jobs:
       - name: Download and Setup AutoHotkey v2 Core
         shell: pwsh
         run: |
-          # 使用 GitHub Releases 的稳定下载链接获取 AutoHotkey v2 核心文件
-          # 请务必再次确认该链接是最新的和有效的，否则下载本身就会失败
           $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19.zip" 
-          $ahkExtractPath = "AutoHotkey_v2_Core_Files" # 修改解压路径名称以区分
+          $ahkExtractPath = "AutoHotkey_v2_Core_Files" 
           Write-Host "Downloading AutoHotkey v2 Core from $ahkZipUrl"
           Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2-core.zip"
           Write-Host "Extracting AutoHotkey v2 Core to $ahkExtractPath"
@@ -29,7 +27,6 @@ jobs:
           Get-ChildItem -Path $ahkExtractPath -Recurse | Select-Object FullName, Name, DirectoryName | Sort-Object FullName
           Write-Host "--- End of AutoHotkey v2 Core file listing ---"
 
-          # 将 AutoHotkey 核心可执行文件（解释器）的路径添加到 PATH
           $ahkMainPath = Join-Path $PWD $ahkExtractPath
           $ahkUXPath = Join-Path $PWD $ahkExtractPath "UX" 
 
@@ -83,7 +80,6 @@ jobs:
           Get-ChildItem -Path $ahk2ExeExtractPath -Recurse | Select-Object FullName, Name, DirectoryName | Sort-Object FullName
           Write-Host "--- End of Ahk2Exe file listing ---"
 
-          # 将 Ahk2Exe.exe 所在的目录添加到 PATH
           $ahk2ExeBinPath = Join-Path $PWD $ahk2ExeExtractPath 
 
           if (Test-Path "$ahk2ExeBinPath\Ahk2Exe.exe") {
@@ -95,7 +91,6 @@ jobs:
               exit 1
           }
 
-      # *** 新增步骤：验证 Ahk2Exe 是否在 PATH 中 ***
       - name: Verify Ahk2Exe in PATH
         shell: pwsh
         run: |
@@ -117,7 +112,6 @@ jobs:
             exit 1
           }
           $content = Get-Content -Path $scriptPath -Raw
-          # 匹配 currentVersion := "v1.0.0-beta" 这样的格式
           $match = $content | Select-String -Pattern 'currentVersion\s*:=\s*"([^"]+)"'
           if ($match) {
             $version = $match.Matches[0].Groups[1].Value
@@ -132,11 +126,10 @@ jobs:
         id: compile_script
         shell: pwsh
         run: |
-          # 核心文件现在在 AutoHotkey_v2_Core_Files
           $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
           $scriptFile = "DoroHelper.ahk"
           $iconFile = "doro.ico"
-          $outputExe = "DoroHelper.exe" # 输出的 exe 文件名
+          $outputExe = "DoroHelper.exe" 
 
           if (-not (Test-Path $scriptFile)) {
             Write-Error "AHK script file '$scriptFile' not found."
@@ -144,21 +137,18 @@ jobs:
           }
           if (-not (Test-Path $iconFile)) {
             Write-Warning "Icon file '$iconFile' not found. Proceeding without custom icon."
-            $iconFile = "" # 如果图标不存在，则不使用图标参数
+            $iconFile = "" 
           }
 
-          # 确定用于编译的64位基础二进制文件路径
-          # 现在我们知道解释器在 AutoHotkey_v2_Core_Files 中
           $baseBinaryName = "AutoHotkey64.exe"
           $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
           if (-not (Test-Path $baseBinaryPath)) {
-              $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName # 检查 UX 子目录
+              $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName 
               if (-not (Test-Path $baseBinaryPath)) {
-                  # 如果 AutoHotkey64.exe 未找到，尝试 AutoHotkeyU64.exe
                   $baseBinaryName = "AutoHotkeyU64.exe"
                   $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
                    if (-not (Test-Path $baseBinaryPath)) {
-                        $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName # 检查 UX 子目录
+                        $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName 
                         if (-not (Test-Path $baseBinaryPath)) {
                             Write-Error "Could not find a suitable 64-bit base binary (AutoHotkey64.exe or AutoHotkeyU64.exe) in '$ahkCoreExtractPath' or '$($ahkCoreExtractPath)\UX'."
                             Write-Host "Listing contents of ${ahkCoreExtractPath}:"
@@ -175,15 +165,20 @@ jobs:
           Write-Host "Icon: $iconFile"
           Write-Host "Base Binary for compilation: $baseBinaryPath"
 
-          $compileArgs = @("/in", "`"$scriptFile`"", "/out", "`"$outputExe`"", "/bin", "`"$baseBinaryPath`"", "/cp", "65001") # UTF-8 codepage
+          $compileArgs = @("/in", "`"$scriptFile`"", "/out", "`"$outputExe`"", "/bin", "`"$baseBinaryPath`"", "/cp", "65001") 
           if ($iconFile -and (Test-Path $iconFile)) {
               $compileArgs += @("/icon", "`"$iconFile`"")
           }
 
-          Ahk2Exe.exe $compileArgs
+          Write-Host "Attempting to compile with Ahk2Exe.exe..."
+          # 捕获 Ahk2Exe.exe 的输出
+          $ahk2ExeOutput = (Ahk2Exe.exe $compileArgs 2>&1) # 2>&1 将 stderr 重定向到 stdout
+          Write-Host "--- Ahk2Exe Output Start ---"
+          Write-Host $ahk2ExeOutput
+          Write-Host "--- Ahk2Exe Output End ---"
 
           if (-not (Test-Path $outputExe)) {
-            Write-Error "Compilation failed. $outputExe not found."
+            Write-Error "Compilation failed. $outputExe not found. See Ahk2Exe output above for details."
             exit 1
           }
           Write-Host "$outputExe compiled successfully."
@@ -191,7 +186,7 @@ jobs:
 
       - name: Determine if Pre-release
         id: prerelease_check
-        shell: bash # bash 更易于进行字符串检查
+        shell: bash
         run: |
           VERSION_TAG="${{ steps.get_version.outputs.VERSION_TAG }}"
           IS_PRERELEASE="false"
@@ -205,7 +200,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.get_version.outputs.VERSION_TAG }}
-          name: ${{ steps.get_version.outputs.VERSION_TAG }} # Release 标题
+          name: ${{ steps.get_version.outputs.VERSION_TAG }}
           body: |
             Automated release for DoroHelper ${{ steps.get_version.outputs.VERSION_TAG }}
             Compiled from commit ${{ github.sha }}

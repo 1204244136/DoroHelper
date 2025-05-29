@@ -32,7 +32,8 @@ jobs:
           $ahkExtractPath = "AutoHotkey_v2_Core_Files" 
 
           Write-Host "Downloading AutoHotkey v2 Core from ${ahkZipUrl}"
-          Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2-core.zip"
+          # 仍然保留 -UseBasicParsing 以防万一
+          Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2-core.zip" -ErrorAction Stop -UseBasicParsing
           Write-Host "Extracting AutoHotkey v2 Core to ${ahkExtractPath}"
           Expand-Archive -Path "ahk-v2-core.zip" -DestinationPath $ahkExtractPath -Force
 
@@ -60,26 +61,46 @@ jobs:
               exit 1
           }
 
-      - name: Download and Setup Ahk2Exe (with Retry Logic)
+      - name: Download and Setup Ahk2Exe (using GitHub API)
         shell: pwsh
         run: |
-          $ahk2ExeZipUrl = "https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe1.1.37.02a0a/Ahk2Exe1.1.37.02a0.zip" 
+          $repoOwner = "AutoHotkey"
+          $repoName = "Ahk2Exe"
           $ahk2ExeExtractPath = "AutoHotkey_Ahk2Exe_Files" 
           $maxRetries = 5
           $retryDelaySeconds = 10 # 每次重试等待10秒
           $attempt = 0
           $success = $false
+          $ahk2ExeZipUrl = "" # 动态获取的下载链接
 
           while ($attempt -lt $maxRetries -and -not $success) {
               $attempt++
-              Write-Host "Attempt ${attempt} of ${maxRetries}: Downloading Ahk2Exe from ${ahk2ExeZipUrl}" 
+              Write-Host "Attempt ${attempt} of ${maxRetries}: Fetching latest Ahk2Exe release information..."
               try {
-                  # 修正：添加 -UseBasicParsing 参数
-                  Invoke-WebRequest -Uri $ahk2ExeZipUrl -OutFile "ahk2exe.zip" -ErrorAction Stop -UseBasicParsing 
-                  $success = $true
-                  Write-Host "Ahk2Exe downloaded successfully."
+                  # 使用 Invoke-RestMethod 获取最新 release 信息
+                  $releaseInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/${repoOwner}/${repoName}/releases/latest" -Headers @{Authorization = "token ${{ secrets.GITHUB_TOKEN }}"} -ErrorAction Stop
+
+                  # 从 assets 中找到 .zip 文件
+                  $zipAsset = $releaseInfo.assets | Where-Object { $_.name -like "*.zip" }
+
+                  if ($zipAsset) {
+                      $ahk2ExeZipUrl = $zipAsset.browser_download_url
+                      Write-Host "Found Ahk2Exe download URL: ${ahk2ExeZipUrl}"
+
+                      # 下载文件
+                      Write-Host "Downloading Ahk2Exe from ${ahk2ExeZipUrl}"
+                      Invoke-WebRequest -Uri $ahk2ExeZipUrl -OutFile "ahk2exe.zip" -ErrorAction Stop -UseBasicParsing # 确保这里有 -UseBasicParsing
+                      $success = $true
+                      Write-Host "Ahk2Exe downloaded successfully."
+                  } else {
+                      Write-Warning "Could not find a .zip asset in the latest Ahk2Exe release."
+                      if ($attempt -lt $maxRetries) {
+                          Write-Host "Retrying in ${retryDelaySeconds} seconds..."
+                          Start-Sleep -Seconds $retryDelaySeconds
+                      }
+                  }
               } catch {
-                  Write-Warning "Download failed: $($_.Exception.Message)"
+                  Write-Warning "Failed to fetch release info or download Ahk2Exe: $($_.Exception.Message)"
                   if ($attempt -lt $maxRetries) {
                       Write-Host "Retrying in ${retryDelaySeconds} seconds..."
                       Start-Sleep -Seconds $retryDelaySeconds

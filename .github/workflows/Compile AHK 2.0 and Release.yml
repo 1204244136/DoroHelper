@@ -7,169 +7,148 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_and_release:
-    runs-on: windows-latest
-
+  build-and-release:
+    runs-on: windows-latest # AutoHotkey 和 Ahk2Exe 在 Windows 上运行
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install AutoHotkey v2 via Chocolatey
-        id: install_ahk
+      - name: Download and Setup AutoHotkey v2
+        shell: pwsh
         run: |
-          # 确保 Chocolatey 安装的是 AutoHotkey v2
-          choco install autohotkey --version 2.0.19 -y # 使用你确认的最新稳定版本号，例如 2.0.19
+          $ahkZipUrl = "https://www.autohotkey.com/download/ahk-v2.zip" # 官方通用下载链接
+          $ahkExtractPath = "AutoHotkey_v2_Files"
+          Write-Host "Downloading AutoHotkey v2 from $ahkZipUrl"
+          Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2.zip"
+          Write-Host "Extracting AutoHotkey v2 to $ahkExtractPath"
+          Expand-Archive -Path "ahk-v2.zip" -DestinationPath $ahkExtractPath -Force
 
-          # 获取 AutoHotkey.exe 的实际安装路径，并将其添加到 PATH
-          # 注意：Chocolatey 安装后，AutoHotkey.exe 可能直接在 C:\Program Files\AutoHotkey
-          # 或者在 C:\Program Files\AutoHotkey\AutoHotkey 这样的子目录里
-          # 我们需要找到实际的可执行文件路径
-          $ahk_exe_path = (Get-Command AutoHotkey.exe -ErrorAction SilentlyContinue).Path
+          # 将 Compiler 目录和主目录添加到 PATH，以便找到 Ahk2Exe.exe 和基础 exe 文件
+          $CompilerPath = Join-Path $PWD $ahkExtractPath "Compiler"
+          $MainAhkPath = Join-Path $PWD $ahkExtractPath
 
-          if ($null -eq $ahk_exe_path) {
-              # 如果 Get-Command 没找到，尝试在常见的 Chocolatey 部署路径中查找
-              $possible_paths = @(
-                  "C:\Program Files\AutoHotkey\AutoHotkey.exe",
-                  "C:\Program Files\AutoHotkey\AutoHotkey_2.0.19\AutoHotkey.exe" # 考虑版本号子目录
-              )
-              foreach ($p in $possible_paths) {
-                  if (Test-Path $p) {
-                      $ahk_exe_path = $p
-                      break
-                  }
-              }
-          }
+          Write-Host "Adding $CompilerPath to PATH"
+          Add-Content $env:GITHUB_PATH "$CompilerPath"
+          Write-Host "Adding $MainAhkPath to PATH"
+          Add-Content $env:GITHUB_PATH "$MainAhkPath"
 
-          if ($null -eq $ahk_exe_path) {
-              Write-Error "Error: AutoHotkey.exe not found after Chocolatey installation. Please check the installation path."
-              exit 1
-          }
-
-          $ahk_install_dir = Split-Path -Path $ahk_exe_path -Parent
-
-          # 将 AutoHotkey 安装目录添加到当前 shell 会话的 PATH
-          # GITHUB_PATH 环境变量是 GitHub Actions 推荐的方式，可以永久性地将目录添加到后续步骤的 PATH
-          echo "$ahk_install_dir" | Out-File -FilePath $env:GITHUB_PATH -Append
-
-          Write-Host "AutoHotkey installation directory added to PATH: $ahk_install_dir"
-
-          # 现在应该可以在 PATH 中找到 AutoHotkey.exe 了
-          AutoHotkey.exe -v
-
-          # 找到 Compiler.ahk 的路径并添加到环境变量，以便后续使用
-          # Compiler.ahk 通常在 AutoHotkey.exe 所在的目录中
-          $compiler_script_path = Join-Path $ahk_install_dir "Compiler.ahk"
-          if (-not (Test-Path $compiler_script_path)) {
-             Write-Host "Warning: Compiler.ahk not found directly in $ahk_install_dir. Attempting to search common subdirectories."
-             # 某些安装可能将其放在 "Compiler" 或 "Lib" 子目录中
-             $possible_compiler_dirs = @(
-                Join-Path $ahk_install_dir "Compiler"
-                Join-Path $ahk_install_dir "Lib"
-                # 根据 AutoHotkey v2 的实际安装结构调整
-             )
-             foreach ($dir in $possible_compiler_dirs) {
-                $temp_compiler_path = Join-Path $dir "Compiler.ahk"
-                if (Test-Path $temp_compiler_path) {
-                   $compiler_script_path = $temp_compiler_path
-                   break
-                }
-             }
-          }
-
-          Write-Host "AutoHotkey Compiler.ahk path: $compiler_script_path"
-          if (-not (Test-Path $compiler_script_path)) {
-            Write-Error "Error: AutoHotkey v2 Compiler.ahk could not be located after installation."
+          Write-Host "Verifying Ahk2Exe command..."
+          if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
+            Write-Error "Ahk2Exe.exe not found in PATH. Please check extraction and PATH setup."
+            Write-Host "Contents of $ahkExtractPath:"
+            Get-ChildItem -Path $MainAhkPath -Recurse | Select-Object FullName
+            Write-Host "Current PATH: $env:PATH"
             exit 1
           }
-          echo "AHK_COMPILER_PATH=$compiler_script_path" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Ahk2Exe found in PATH."
 
-      - name: Get currentVersion from AHK script
+      - name: Extract Version from AHK script
         id: get_version
+        shell: pwsh
         run: |
-          $script_file = "DoroHelper.ahk"
-          if (-not (Test-Path $script_file)) {
-              Write-Error "Error: AutoHotkey script '$script_file' not found."
-              exit 1
+          $scriptPath = "DoroHelper.ahk"
+          if (-not (Test-Path $scriptPath)) {
+            Write-Error "Script file '$scriptPath' not found."
+            exit 1
+          }
+          $content = Get-Content -Path $scriptPath -Raw
+          # 匹配 currentVersion := "v1.0.0-beta" 这样的格式
+          $match = $content | Select-String -Pattern 'currentVersion\s*:=\s*"([^"]+)"'
+          if ($match) {
+            $version = $match.Matches[0].Groups[1].Value
+            Write-Host "Version found: $version"
+            echo "VERSION_TAG=$version" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Error "Version pattern (currentVersion := \"...\") not found in $scriptPath"
+            exit 1
           }
 
-          $current_version = $null
-          $is_prerelease = "false"
+      - name: Compile AutoHotkey Script
+        id: compile_script
+        shell: pwsh
+        run: |
+          $ahkExtractPath = "AutoHotkey_v2_Files" # 与上面解压路径一致
+          $scriptFile = "DoroHelper.ahk"
+          $iconFile = "doro.ico"
+          $outputExe = "DoroHelper.exe" # 输出的 exe 文件名
 
-          Get-Content $script_file | ForEach-Object {
-              $line = $_
-              $match = [regex]::Match($line, '^\s*currentVersion\s*:=\s*"([^"]+)"')
-              if ($match.Success) {
-                  $current_version = $match.Groups[1].Value
-                  Write-Host "Extracted currentVersion: $current_version"
-                  
-                  if ($current_version -like "*beta*" -or $current_version -like "*alpha*" -or $current_version -like "*rc*") {
-                      $is_prerelease = "true"
-                  }
-                  break
+          if (-not (Test-Path $scriptFile)) {
+            Write-Error "AHK script file '$scriptFile' not found."
+            exit 1
+          }
+          if (-not (Test-Path $iconFile)) {
+            Write-Warning "Icon file '$iconFile' not found. Proceeding without custom icon."
+            $iconFile = "" # 如果图标不存在，则不使用图标参数
+          }
+
+          # 确定用于编译的64位基础二进制文件路径
+          # Ahk2Exe 的 /bin 参数需要指向解释器二进制文件作为基础
+          # 常见的名称: AutoHotkey64.exe, AutoHotkeyU64.exe
+          # 优先使用 AutoHotkey64.exe，如果它在解压的主目录或 UX 子目录中
+          $baseBinaryName = "AutoHotkey64.exe"
+          $baseBinaryPath = Join-Path $PWD $ahkExtractPath $baseBinaryName
+          if (-not (Test-Path $baseBinaryPath)) {
+              $baseBinaryPath = Join-Path $PWD $ahkExtractPath "UX" $baseBinaryName # 检查 UX 子目录
+              if (-not (Test-Path $baseBinaryPath)) {
+                  # 如果 AutoHotkey64.exe 未找到，尝试 AutoHotkeyU64.exe
+                  $baseBinaryName = "AutoHotkeyU64.exe"
+                  $baseBinaryPath = Join-Path $PWD $ahkExtractPath $baseBinaryName
+                   if (-not (Test-Path $baseBinaryPath)) {
+                       $baseBinaryPath = Join-Path $PWD $ahkExtractPath "UX" $baseBinaryName # 检查 UX 子目录
+                       if (-not (Test-Path $baseBinaryPath)) {
+                           Write-Error "Could not find a suitable 64-bit base binary (AutoHotkey64.exe or AutoHotkeyU64.exe) in '$ahkExtractPath' or '$($ahkExtractPath)\UX'."
+                           Write-Host "Listing contents of $ahkExtractPath:"
+                           Get-ChildItem -Path (Join-Path $PWD $ahkExtractPath) -Recurse | Select-Object FullName
+                           exit 1
+                       }
+                   }
               }
           }
 
-          if ($current_version -ne $null) {
-              echo "version=$current_version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-              echo "is_prerelease=$is_prerelease" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          } else {
-              Write-Error "Error: Could not find 'currentVersion := \"...\"' in $script_file."
-              exit 1
+          Write-Host "Using Ahk2Exe from PATH."
+          Write-Host "Script: $scriptFile"
+          Write-Host "Output: $outputExe"
+          Write-Host "Icon: $iconFile"
+          Write-Host "Base Binary for compilation: $baseBinaryPath"
+
+          $compileArgs = @("/in", "`"$scriptFile`"", "/out", "`"$outputExe`"", "/bin", "`"$baseBinaryPath`"", "/cp", "65001") # UTF-8 codepage
+          if ($iconFile -and (Test-Path $iconFile)) {
+              $compileArgs += @("/icon", "`"$iconFile`"")
           }
 
-      - name: Compile AutoHotkey script
-        id: compile_script
+          Ahk2Exe.exe $compileArgs
+
+          if (-not (Test-Path $outputExe)) {
+            Write-Error "Compilation failed. $outputExe not found."
+            # 打印 Ahk2Exe 的输出或日志（如果它生成的话）可能会有帮助，但这取决于 Ahk2Exe 的行为
+            exit 1
+          }
+          Write-Host "$outputExe compiled successfully."
+          echo "EXE_NAME=$outputExe" >> $env:GITHUB_OUTPUT
+
+      - name: Determine if Pre-release
+        id: prerelease_check
+        shell: bash # bash 更易于进行字符串检查
         run: |
-          $script_name = "DoroHelper.ahk"
-          $icon_name = "doro.ico"
-          $output_exe_name = "${{ steps.get_version.outputs.version }}_64bit.exe"
+          VERSION_TAG="${{ steps.get_version.outputs.VERSION_TAG }}"
+          IS_PRERELEASE="false"
+          if [[ "$VERSION_TAG" == *beta* ]]; then
+            IS_PRERELEASE="true"
+          fi
+          echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+          echo "Release version: $VERSION_TAG, Is Prerelease: $IS_PRERELEASE"
 
-          if (-not (Test-Path $script_name)) {
-              Write-Error "Error: AutoHotkey script '$script_name' not found."
-              exit 1
-          }
-          if (-not (Test-Path $icon_name)) {
-              Write-Error "Error: Icon file '$icon_name' not found."
-              exit 1
-          }
-
-          $compiler_path = "${{ steps.install_ahk.outputs.AHK_COMPILER_PATH }}"
-          if (-not (Test-Path $compiler_path)) {
-              Write-Error "Error: AutoHotkey v2 Compiler.ahk not found at $compiler_path. Please ensure AutoHotkey v2 was correctly installed and its Compiler.ahk path was extracted."
-              exit 1
-          }
-
-          $output_dir = "build"
-          if (-not (Test-Path $output_dir)) {
-              New-Item -ItemType Directory -Path $output_dir
-          }
-
-          $full_output_path = Join-Path $output_dir $output_exe_name
-          $full_script_path = Join-Path $PWD $script_name
-          $full_icon_path = Join-Path $PWD $icon_name
-
-          Write-Host "Compiling script: $full_script_path"
-          Write-Host "Output EXE: $full_output_path"
-          Write-Host "Icon: $full_icon_path"
-
-          AutoHotkey.exe "$compiler_path" /in "$full_script_path" /out "$full_output_path" /icon "$full_icon_path" /64
-
-          echo "compiled_exe_path=$full_output_path" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          echo "compiled_exe_name=$output_exe_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2 # 使用 v2 版本
         with:
-          files: ${{ steps.compile_script.outputs.compiled_exe_path }}
-          tag_name: ${{ steps.get_version.outputs.version }}
-          name: Release ${{ steps.get_version.outputs.version }}
+          tag_name: ${{ steps.get_version.outputs.VERSION_TAG }}
+          name: ${{ steps.get_version.outputs.VERSION_TAG }} # Release 标题
           body: |
-            ## 🎉 新版本发布：${{ steps.get_version.outputs.version }}
-
-            此版本包含以下编译文件：
-            - ${{ steps.compile_script.outputs.compiled_exe_name }}
-
-            感谢您的使用！
+            Automated release for DoroHelper ${{ steps.get_version.outputs.VERSION_TAG }}
+            Compiled from commit ${{ github.sha }}
           draft: false
-          prerelease: ${{ steps.get_version.outputs.is_prerelease }}
+          prerelease: ${{ steps.prerelease_check.outputs.IS_PRERELEASE }}
+          files: |
+            ${{ steps.compile_script.outputs.EXE_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

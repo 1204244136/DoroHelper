@@ -20,16 +20,18 @@ jobs:
           Get-ChildItem -Path (Get-Location) -Recurse | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
           Write-Host "--- End of repository file listing ---"
 
-      - name: Download and Setup AutoHotkey v2 Core (v2.0.19) # <--- 修正 URL 拼写
+      - name: Download and Setup AutoHotkey v2 Core (v2.0.19) # <--- 最终修正 URL 拼写
         shell: pwsh
         run: |
           $ahkVersion = "v2.0.19" 
-          # 修正这里：AutoHotkey_v2.0.19.zip，之前少了 'v'
-          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/$ahkVersion/AutoHotkey_${ahkVersion}.zip" 
+          # 最终修正这里：AutoHotkey_2.0.19.zip，文件名不带 'v'
+          $ahkZipFileName = "AutoHotkey_${ahkVersion}.zip" # 文件名是不带v的，如 AutoHotkey_2.0.19.zip
+          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/$ahkVersion/$ahkZipFileName" 
+          $ahkExtractPath = "AutoHotkey_v2_Core_Files" 
+
           Write-Host "Downloading AutoHotkey v2 Core from $ahkZipUrl"
           Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2-core.zip"
           Write-Host "Extracting AutoHotkey v2 Core to $ahkExtractPath"
-          $ahkExtractPath = "AutoHotkey_v2_Core_Files" 
           Expand-Archive -Path "ahk-v2-core.zip" -DestinationPath $ahkExtractPath -Force
 
           Write-Host "Listing contents of $ahkExtractPath after extraction:"

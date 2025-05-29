@@ -13,35 +13,48 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Clean Chocolatey Cache and Install AutoHotkey v2
+      - name: Download and Setup AutoHotkey v2
         shell: pwsh
         run: |
-          Write-Host "Cleaning Chocolatey cache..."
-          choco cache remove all
+          # 使用 GitHub Releases 的稳定下载链接，避免 Cloudflare
+          # 请务必检查 AutoHotkey 的 GitHub Releases 页面，获取最新的稳定版本链接
+          # 例如：https://github.com/AutoHotkey/AutoHotkey/releases/tag/v2.0.19
+          # 找到对应的 .zip 文件下载链接
+          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19.zip" 
+          $ahkExtractPath = "AutoHotkey_v2_Files"
+          Write-Host "Downloading AutoHotkey v2 from $ahkZipUrl"
+          Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2.zip"
+          Write-Host "Extracting AutoHotkey v2 to $ahkExtractPath"
+          Expand-Archive -Path "ahk-v2.zip" -DestinationPath $ahkExtractPath -Force
 
-          Write-Host "Installing AutoHotkey v2 via Chocolatey (latest stable version)..."
-          # 尝试安装最新稳定版，不指定版本号
-          # 如果这个包的最新稳定版是 v2.0.19，这应该能成功。
-          # 如果未来 AutoHotkey 发布了 2.0.20、2.1.0 等，这个命令会自动安装最新。
-          choco install autohotkey.ahk2 -y
+          # 打印解压后的文件结构，以便调试 Ahk2Exe 和基础 exe 的路径
+          Write-Host "Listing contents of $ahkExtractPath after extraction:"
+          Get-ChildItem -Path $ahkExtractPath -Recurse | Select-Object FullName, Name, DirectoryName | Sort-Object FullName
 
-          # 如果上面命令失败，并且你知道你需要的版本是预发布版，可以尝试以下命令（二选一）：
-          # Write-Host "Attempting to install AutoHotkey v2.0.19 as a pre-release..."
-          # choco install autohotkey.ahk2 --version 2.0.19 --pre -y
+          # 根据解压后的目录结构，将 Ahk2Exe 和基础 exe 所在的目录添加到 PATH
+          # 假设 Ahk2Exe 在 AutoHotkey_v2_Files\Compiler 或 AutoHotkey_v2_Files 根目录
+          # 假设 AutoHotkey 解释器在 AutoHotkey_v2_Files 或 AutoHotkey_v2_Files\UX 目录
+
+          # 首先尝试将 Ahk2Exe 的可能路径添加到 PATH
+          $Ahk2ExePathCandidate1 = Join-Path $PWD $ahkExtractPath "Compiler"
+          $Ahk2ExePathCandidate2 = Join-Path $PWD $ahkExtractPath 
+
+          if (Test-Path "$Ahk2ExePathCandidate1\Ahk2Exe.exe") {
+              Write-Host "Adding $Ahk2ExePathCandidate1 to PATH"
+              Add-Content $env:GITHUB_PATH "$Ahk2ExePathCandidate1"
+          } elseif (Test-Path "$Ahk2ExePathCandidate2\Ahk2Exe.exe") {
+              Write-Host "Adding $Ahk2ExePathCandidate2 to PATH"
+              Add-Content $env:GITHUB_PATH "$Ahk2ExePathCandidate2"
+          } else {
+              Write-Error "Ahk2Exe.exe not found in expected paths. Check extraction."
+              exit 1
+          }
 
           # 验证 Ahk2Exe.exe 是否在 PATH 中
-          Write-Host "Verifying Ahk2Exe command after Chocolatey install..."
+          Write-Host "Verifying Ahk2Exe command..."
           if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
-            Write-Error "Ahk2Exe.exe not found in PATH after Chocolatey installation. Please check the Chocolatey package details."
+            Write-Error "Ahk2Exe.exe not found in PATH. Please check extraction and PATH setup."
             Write-Host "Current PATH: $env:PATH"
-            # 再次尝试列出 Chocolatey 安装目录的内容，以帮助调试
-            # AutoHotkey 默认安装路径通常是 C:\Program Files\AutoHotkey
-            if (Test-Path "C:\Program Files\AutoHotkey") {
-              Write-Host "Listing contents of C:\Program Files\AutoHotkey after Chocolatey install:"
-              Get-ChildItem -Path "C:\Program Files\AutoHotkey" -Recurse | Select-Object FullName
-            } else {
-              Write-Host "C:\Program Files\AutoHotkey not found. AutoHotkey might have installed elsewhere."
-            }
             exit 1
           }
           Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
@@ -71,6 +84,7 @@ jobs:
         id: compile_script
         shell: pwsh
         run: |
+          $ahkExtractPath = "AutoHotkey_v2_Files" # 与上面解压路径一致
           $scriptFile = "DoroHelper.ahk"
           $iconFile = "doro.ico"
           $outputExe = "DoroHelper.exe" # 输出的 exe 文件名
@@ -84,13 +98,28 @@ jobs:
             $iconFile = "" # 如果图标不存在，则不使用图标参数
           }
 
-          # 获取 AutoHotkey v2 解释器的路径作为 /bin 参数
-          $ahkExeCommand = Get-Command AutoHotkey -ErrorAction SilentlyContinue
-          if (-not $ahkExeCommand) {
-              Write-Error "AutoHotkey interpreter (AutoHotkey.exe) not found in PATH. Chocolatey installation might have failed or located it elsewhere."
-              exit 1
+          # 确定用于编译的64位基础二进制文件路径
+          # 根据 AutoHotkey v2.0.19.zip 的内容，通常是 AutoHotkey64.exe 或 AutoHotkeyU64.exe
+          # 在 AutoHotkey_v2_Files 或 AutoHotkey_v2_Files\UX 目录下
+          $baseBinaryName = "AutoHotkey64.exe"
+          $baseBinaryPath = Join-Path $PWD $ahkExtractPath $baseBinaryName
+          if (-not (Test-Path $baseBinaryPath)) {
+              $baseBinaryPath = Join-Path $PWD $ahkExtractPath "UX" $baseBinaryName # 检查 UX 子目录
+              if (-not (Test-Path $baseBinaryPath)) {
+                  # 如果 AutoHotkey64.exe 未找到，尝试 AutoHotkeyU64.exe
+                  $baseBinaryName = "AutoHotkeyU64.exe"
+                  $baseBinaryPath = Join-Path $PWD $ahkExtractPath $baseBinaryName
+                   if (-not (Test-Path $baseBinaryPath)) {
+                        $baseBinaryPath = Join-Path $PWD $ahkExtractPath "UX" $baseBinaryName # 检查 UX 子目录
+                        if (-not (Test-Path $baseBinaryPath)) {
+                            Write-Error "Could not find a suitable 64-bit base binary (AutoHotkey64.exe or AutoHotkeyU64.exe) in '$ahkExtractPath' or '$($ahkExtractPath)\UX'."
+                            Write-Host "Listing contents of ${ahkExtractPath}:"
+                            Get-ChildItem -Path (Join-Path $PWD $ahkExtractPath) -Recurse | Select-Object FullName
+                            exit 1
+                        }
+                   }
+              }
           }
-          $baseBinaryPath = $ahkExeCommand.Path
 
           Write-Host "Using Ahk2Exe from PATH."
           Write-Host "Script: $scriptFile"

@@ -3,9 +3,8 @@ name: Compile AHK 2.0 and Release
 on:
   push:
     tags:
-      - "v[0-9]*" # 匹配 v1, v2.3, v10 等
-      - "v[0-9]*.[0-9]*" # 匹配 v1.0, v2.3.4 等
-      - "v[0-9]*-*" # 匹配带预发布标识的标签
+      - "v**"
+  workflow_dispatch:
 
 jobs:
   build_and_release:
@@ -15,13 +14,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup AutoHotkey v2
+      - name: Install AutoHotkey v2 via Chocolatey
+        id: install_ahk # 修正了这一行的缩进，使其与 name、run 等同级
         run: |
-          $ahk_installer_url = "https://www.autohotkey.com/download/ahk-v2.zip"
-          Invoke-WebRequest -Uri $ahk_installer_url -OutFile ahk-v2.zip
-          Expand-Archive -Path ahk-v2.zip -DestinationPath AutoHotkey_v2
-          Add-Content -Path $env:GITHUB_PATH -Value (Join-Path $PWD AutoHotkey_v2)
+          choco install autohotkey --version 2.0.12 -y # 替换为AutoHotkey v2的最新稳定版本号
           AutoHotkey.exe -v
+          $ahk_install_path = (Get-Command AutoHotkey.exe).Path | Split-Path -Parent
+          $compiler_script_path = Join-Path $ahk_install_path "Compiler.ahk"
+          Write-Host "AutoHotkey Compiler.ahk path: $compiler_script_path"
+          echo "AHK_COMPILER_PATH=$compiler_script_path" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Get currentVersion from AHK script
         id: get_version
@@ -73,9 +74,10 @@ jobs:
               exit 1
           }
 
-          $compiler_path = Join-Path (Join-Path $PWD AutoHotkey_v2) "Compiler.ahk"
+          # 从上一步的输出中获取 Compiler.ahk 的路径
+          $compiler_path = "${{ steps.install_ahk.outputs.AHK_COMPILER_PATH }}"
           if (-not (Test-Path $compiler_path)) {
-              Write-Error "Error: AutoHotkey v2 Compiler.ahk not found at $compiler_path. Please ensure AutoHotkey v2 is correctly extracted."
+              Write-Error "Error: AutoHotkey v2 Compiler.ahk not found at $compiler_path. Please ensure AutoHotkey v2 was correctly installed."
               exit 1
           }
 
@@ -94,9 +96,8 @@ jobs:
 
           AutoHotkey.exe "$compiler_path" /in "$full_script_path" /out "$full_output_path" /icon "$full_icon_path" /64
 
-          # 设置输出变量：完整路径和文件名（basename）
           echo "compiled_exe_path=$full_output_path" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          echo "compiled_exe_name=$output_exe_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append # 新增这一行
+          echo "compiled_exe_name=$output_exe_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -109,7 +110,7 @@ jobs:
             ## 🎉 新版本发布：${{ steps.get_version.outputs.version }}
 
             此版本包含以下编译文件：
-            - ${{ steps.compile_script.outputs.compiled_exe_name }} 
+            - ${{ steps.compile_script.outputs.compiled_exe_name }}
 
             感谢您的使用！
           draft: false

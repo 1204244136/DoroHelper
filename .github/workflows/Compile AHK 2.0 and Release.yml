@@ -60,22 +60,27 @@ jobs:
               exit 1
           }
 
-      - name: Download and Setup Ahk2Exe (v1.1.37.02a0) # 更新Ahk2Exe的版本标签
+      - name: Download and Setup Ahk2Exe (v1.1.37.02a0a) # 再次更新Ahk2Exe的版本标签，确保完全一致
         shell: pwsh
         run: |
-          $ahk2ExeVersion = "Ahk2Exe1.1.37.02a0" # 更改为有效的Ahk2Exe版本标签
+          $ahk2ExeVersion = "v1.1.37.02a0a" # 更改为从您提供的链接中获取的有效标签
           $repoOwner = "AutoHotkey"
           $repoName = "Ahk2Exe"
+          # Ahk2Exe的API URL和AutoHotkey核心略有不同，因为Ahk2Exe的标签通常带有"v"前缀
           $apiURL = "https://api.github.com/repos/$repoOwner/$repoName/releases/tags/$ahk2ExeVersion" 
           $ahk2ExeExtractPath = "AutoHotkey_Ahk2Exe_Files" 
 
           Write-Host "Fetching Ahk2Exe release information for $ahk2ExeVersion from $apiURL"
           try {
               $releaseInfo = Invoke-RestMethod -Uri $apiURL -Headers @{ Authorization = "token ${{ secrets.GITHUB_TOKEN }}" }
-              $ahk2ExeZipAsset = $releaseInfo.assets | Where-Object { $_.name -like "Ahk2Exe*.zip" } | Select-Object -First 1
+              # 资产名称通常包含版本信息，我们需要找到正确的zip文件
+              # 修正：根据实际发布页面，文件名为 Ahk2Exe.zip
+              $ahk2ExeZipAsset = $releaseInfo.assets | Where-Object { $_.name -eq "Ahk2Exe.zip" } | Select-Object -First 1
               
               if (-not $ahk2ExeZipAsset) {
                   Write-Error "Could not find Ahk2Exe.zip asset for version $ahk2ExeVersion."
+                  Write-Host "Available assets for $ahk2ExeVersion:"
+                  $releaseInfo.assets | Select-Object name, browser_download_url | Format-List
                   exit 1
               }
               $ahk2ExeZipUrl = $ahk2ExeZipAsset.browser_download_url

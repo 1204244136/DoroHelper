@@ -13,17 +13,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install AutoHotkey v2 using Chocolatey
+      - name: Clean Chocolatey Cache and Install AutoHotkey v2
         shell: pwsh
         run: |
-          # 确保 Chocolatey 已安装 (GitHub Actions 的 Windows runner 通常预装了)
-          # choco upgrade chocolatey # 可以选择升级 Chocolatey 到最新版本
+          Write-Host "Cleaning Chocolatey cache..."
+          choco cache remove all
 
-          # 安装 AutoHotkey v2。不指定 --version，让 Chocolatey 自动选择最新稳定版
-          # 或者，如果你确定需要特定版本，且该版本是稳定版，可以写成 choco install autohotkey.ahk2 --version X.Y.Z -y
-          # 如果是预发布版本（例如 beta, rc），则需要加上 --pre 参数
-          Write-Host "Installing AutoHotkey v2 via Chocolatey..."
+          Write-Host "Installing AutoHotkey v2 via Chocolatey (latest stable version)..."
+          # 尝试安装最新稳定版，不指定版本号
+          # 如果这个包的最新稳定版是 v2.0.19，这应该能成功。
+          # 如果未来 AutoHotkey 发布了 2.0.20、2.1.0 等，这个命令会自动安装最新。
           choco install autohotkey.ahk2 -y
+
+          # 如果上面命令失败，并且你知道你需要的版本是预发布版，可以尝试以下命令（二选一）：
+          # Write-Host "Attempting to install AutoHotkey v2.0.19 as a pre-release..."
+          # choco install autohotkey.ahk2 --version 2.0.19 --pre -y
 
           # 验证 Ahk2Exe.exe 是否在 PATH 中
           Write-Host "Verifying Ahk2Exe command after Chocolatey install..."
@@ -31,8 +35,13 @@ jobs:
             Write-Error "Ahk2Exe.exe not found in PATH after Chocolatey installation. Please check the Chocolatey package details."
             Write-Host "Current PATH: $env:PATH"
             # 再次尝试列出 Chocolatey 安装目录的内容，以帮助调试
-            Write-Host "Listing contents of C:\Program Files\AutoHotkey after Chocolatey install:"
-            Get-ChildItem -Path "C:\Program Files\AutoHotkey" -Recurse | Select-Object FullName
+            # AutoHotkey 默认安装路径通常是 C:\Program Files\AutoHotkey
+            if (Test-Path "C:\Program Files\AutoHotkey") {
+              Write-Host "Listing contents of C:\Program Files\AutoHotkey after Chocolatey install:"
+              Get-ChildItem -Path "C:\Program Files\AutoHotkey" -Recurse | Select-Object FullName
+            } else {
+              Write-Host "C:\Program Files\AutoHotkey not found. AutoHotkey might have installed elsewhere."
+            }
             exit 1
           }
           Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
@@ -76,7 +85,6 @@ jobs:
           }
 
           # 获取 AutoHotkey v2 解释器的路径作为 /bin 参数
-          # 通常是 AutoHotkey.exe 或 AutoHotkey64.exe，安装在 C:\Program Files\AutoHotkey
           $ahkExeCommand = Get-Command AutoHotkey -ErrorAction SilentlyContinue
           if (-not $ahkExeCommand) {
               Write-Error "AutoHotkey interpreter (AutoHotkey.exe) not found in PATH. Chocolatey installation might have failed or located it elsewhere."

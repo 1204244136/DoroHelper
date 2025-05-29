@@ -72,11 +72,10 @@ jobs:
 
           while ($attempt -lt $maxRetries -and -not $success) {
               $attempt++
-              # 关键修正：使用 ${} 包裹变量名以避免解析错误
               Write-Host "Attempt ${attempt} of ${maxRetries}: Downloading Ahk2Exe from ${ahk2ExeZipUrl}" 
               try {
-                  # 使用 -ErrorAction Stop 确保 Invoke-WebRequest 失败时抛出异常
-                  Invoke-WebRequest -Uri $ahk2ExeZipUrl -OutFile "ahk2exe.zip" -ErrorAction Stop
+                  # 修正：添加 -UseBasicParsing 参数
+                  Invoke-WebRequest -Uri $ahk2ExeZipUrl -OutFile "ahk2exe.zip" -ErrorAction Stop -UseBasicParsing 
                   $success = $true
                   Write-Host "Ahk2Exe downloaded successfully."
               } catch {

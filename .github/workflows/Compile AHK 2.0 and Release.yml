@@ -20,15 +20,16 @@ jobs:
           Get-ChildItem -Path (Get-Location) -Recurse | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
           Write-Host "--- End of repository file listing ---"
 
-      - name: Download and Setup AutoHotkey v2 Core (v2.0.19) # <--- 再次使用 v2.0.19
+      - name: Download and Setup AutoHotkey v2 Core (v2.0.19) # <--- 修正 URL 拼写
         shell: pwsh
         run: |
-          $ahkVersion = "v2.0.19" # <--- 确认使用 v2.0.19
+          $ahkVersion = "v2.0.19" 
+          # 修正这里：AutoHotkey_v2.0.19.zip，之前少了 'v'
           $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/$ahkVersion/AutoHotkey_${ahkVersion}.zip" 
-          $ahkExtractPath = "AutoHotkey_v2_Core_Files" 
           Write-Host "Downloading AutoHotkey v2 Core from $ahkZipUrl"
           Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2-core.zip"
           Write-Host "Extracting AutoHotkey v2 Core to $ahkExtractPath"
+          $ahkExtractPath = "AutoHotkey_v2_Core_Files" 
           Expand-Archive -Path "ahk-v2-core.zip" -DestinationPath $ahkExtractPath -Force
 
           Write-Host "Listing contents of $ahkExtractPath after extraction:"
@@ -55,13 +56,13 @@ jobs:
               exit 1
           }
 
-      - name: Download and Setup Ahk2Exe (v2.0.01) # <--- 指定 Ahk2Exe 版本为 v2.0.01
+      - name: Download and Setup Ahk2Exe (v2.0.01)
         shell: pwsh
         run: |
-          $ahk2ExeVersion = "v2.0.01" # <--- 指定 Ahk2Exe 版本
+          $ahk2ExeVersion = "v2.0.01" 
           $repoOwner = "AutoHotkey"
           $repoName = "Ahk2Exe"
-          $apiURL = "https://api.github.com/repos/$repoOwner/$repoName/releases/tags/$ahk2ExeVersion" # <--- 根据标签下载
+          $apiURL = "https://api.github.com/repos/$repoOwner/$repoName/releases/tags/$ahk2ExeVersion" 
           $ahk2ExeExtractPath = "AutoHotkey_Ahk2Exe_Files" 
 
           Write-Host "Fetching Ahk2Exe release information for $ahk2ExeVersion from $apiURL"
@@ -115,14 +116,13 @@ jobs:
         shell: pwsh
         run: |
           $scriptToTest = "test_compile.ahk"
-          $ahkExeName = "AutoHotkey64.exe" # 优先使用 64 位解释器进行测试
+          $ahkExeName = "AutoHotkey64.exe" 
           $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
 
           $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath $ahkExeName
           if (-not (Test-Path $ahkInterpreterPath)) {
               $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath "UX" $ahkExeName 
           }
-          # 如果 64 位不存在，尝试 32 位
           if (-not (Test-Path $ahkInterpreterPath)) {
               Write-Warning "64-bit interpreter ($ahkExeName) not found for testing. Falling back to AutoHotkey32.exe."
               $ahkExeName = "AutoHotkey32.exe"

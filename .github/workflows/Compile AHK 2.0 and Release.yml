@@ -24,7 +24,7 @@ jobs:
           # 你可以在 https://community.chocolatey.org/packages/autohotkey.v2 查看可用的版本和安装命令。
           # 我们将安装最新的稳定版本。如果需要特定版本，请确保它存在。
           Write-Host "Installing AutoHotkey v2 via Chocolatey..."
-          choco install autohotkey.v2 -y 
+          choco install autohotkey -y 
           # 如果你需要一个特定的版本，比如 2.0.18 (请先确认它存在于 Chocolatey)
           # choco install autohotkey.v2 --version 2.0.18 -y
           # 如果 2.0.19 是预发布版本，你可能需要:

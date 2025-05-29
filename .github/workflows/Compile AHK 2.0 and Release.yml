@@ -131,14 +131,46 @@ jobs:
           $iconFile = "doro.ico"
           $outputExe = "DoroHelper.exe" 
 
+          Write-Host "--- Diagnosing Ahk2Exe and Dependencies ---"
+          Write-Host "Attempting to run Ahk2Exe.exe without arguments to get usage info..."
+          $ahk2ExeHelpOutput = (Ahk2Exe.exe 2>&1)
+          Write-Host "Ahk2Exe.exe no-arg output:"
+          Write-Host $ahk2ExeHelpOutput
+
+          # 检查 DoroHelper.ahk 是否存在
           if (-not (Test-Path $scriptFile)) {
-            Write-Error "AHK script file '$scriptFile' not found."
+            Write-Error "AHK script file '$scriptFile' not found at $(Resolve-Path $scriptFile -ErrorAction SilentlyContinue)."
             exit 1
+          } else {
+            Write-Host "AHK script file found: $(Resolve-Path $scriptFile)"
           }
+
+          # 检查 doro.ico 是否存在
           if (-not (Test-Path $iconFile)) {
-            Write-Warning "Icon file '$iconFile' not found. Proceeding without custom icon."
+            Write-Warning "Icon file '$iconFile' not found at $(Resolve-Path $iconFile -ErrorAction SilentlyContinue). Proceeding without custom icon."
             $iconFile = "" 
+          } else {
+            Write-Host "Icon file found: $(Resolve-Path $iconFile)"
           }
+
+          # *** 新增：列出当前工作目录和 lib 文件夹内容 ***
+          Write-Host "Listing contents of current working directory ($(Get-Location)):"
+          Get-ChildItem -Path (Get-Location) -Recurse -Depth 2 | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
+          Write-Host "--- End of current working directory listing ---"
+
+          # 检查 lib 文件夹是否存在
+          $libPath = Join-Path (Get-Location) "lib"
+          if (-not (Test-Path $libPath -PathType Container)) {
+              Write-Error "Dependency folder 'lib' not found at expected path: $libPath. This is critical for compilation."
+              exit 1
+          } else {
+              Write-Host "Dependency folder 'lib' found: $libPath"
+              Write-Host "Listing contents of 'lib' folder:"
+              Get-ChildItem -Path $libPath | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
+              Write-Host "--- End of 'lib' folder listing ---"
+          }
+          # *** 新增诊断结束 ***
+
 
           $baseBinaryName = "AutoHotkey64.exe"
           $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
@@ -171,11 +203,10 @@ jobs:
           }
 
           Write-Host "Attempting to compile with Ahk2Exe.exe..."
-          # 捕获 Ahk2Exe.exe 的输出
-          $ahk2ExeOutput = (Ahk2Exe.exe $compileArgs 2>&1) # 2>&1 将 stderr 重定向到 stdout
-          Write-Host "--- Ahk2Exe Output Start ---"
+          $ahk2ExeOutput = (Ahk2Exe.exe $compileArgs 2>&1)
+          Write-Host "--- Ahk2Exe Output Start (Actual Compilation) ---"
           Write-Host $ahk2ExeOutput
-          Write-Host "--- Ahk2Exe Output End ---"
+          Write-Host "--- Ahk2Exe Output End (Actual Compilation) ---"
 
           if (-not (Test-Path $outputExe)) {
             Write-Error "Compilation failed. $outputExe not found. See Ahk2Exe output above for details."

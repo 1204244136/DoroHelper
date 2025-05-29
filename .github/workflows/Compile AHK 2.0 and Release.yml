@@ -13,51 +13,52 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download and Setup AutoHotkey v2
+      - name: Install AutoHotkey v2 using Chocolatey
         shell: pwsh
         run: |
-          # 使用 GitHub Releases 的稳定下载链接，避免 Cloudflare
-          # 请务必检查 AutoHotkey 的 GitHub Releases 页面，获取最新的稳定版本链接
-          # 例如：https://github.com/AutoHotkey/AutoHotkey/releases/tag/v2.0.19
-          # 找到对应的 .zip 文件下载链接
-          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19.zip" 
-          $ahkExtractPath = "AutoHotkey_v2_Files"
-          Write-Host "Downloading AutoHotkey v2 from $ahkZipUrl"
-          Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2.zip"
-          Write-Host "Extracting AutoHotkey v2 to $ahkExtractPath"
-          Expand-Archive -Path "ahk-v2.zip" -DestinationPath $ahkExtractPath -Force
+          # 确保 Chocolatey 已安装 (GitHub Actions 的 Windows runner 通常预装了)
+          # choco upgrade chocolatey # 可以选择升级 Chocolatey 到最新版本
 
-          # 打印解压后的文件结构，以便调试 Ahk2Exe 和基础 exe 的路径
-          Write-Host "Listing contents of $ahkExtractPath after extraction:"
-          Get-ChildItem -Path $ahkExtractPath -Recurse | Select-Object FullName, Name, DirectoryName | Sort-Object FullName
+          # 安装 AutoHotkey v2.
+          # 包名通常是 autohotkey.v2
+          # 你可以在 https://community.chocolatey.org/packages/autohotkey.v2 查看可用的版本和安装命令。
+          # 我们将安装最新的稳定版本。如果需要特定版本，请确保它存在。
+          Write-Host "Installing AutoHotkey v2 via Chocolatey..."
+          choco install autohotkey.v2 -y 
+          # 如果你需要一个特定的版本，比如 2.0.18 (请先确认它存在于 Chocolatey)
+          # choco install autohotkey.v2 --version 2.0.18 -y
+          # 如果 2.0.19 是预发布版本，你可能需要:
+          # choco install autohotkey.v2 --version 2.0.19 --pre -y
 
-          # 根据解压后的目录结构，将 Ahk2Exe 和基础 exe 所在的目录添加到 PATH
-          # 假设 Ahk2Exe 在 AutoHotkey_v2_Files\Compiler 或 AutoHotkey_v2_Files 根目录
-          # 假设 AutoHotkey 解释器在 AutoHotkey_v2_Files 或 AutoHotkey_v2_Files\UX 目录
-
-          # 首先尝试将 Ahk2Exe 的可能路径添加到 PATH
-          $Ahk2ExePathCandidate1 = Join-Path $PWD $ahkExtractPath "Compiler"
-          $Ahk2ExePathCandidate2 = Join-Path $PWD $ahkExtractPath 
-
-          if (Test-Path "$Ahk2ExePathCandidate1\Ahk2Exe.exe") {
-              Write-Host "Adding $Ahk2ExePathCandidate1 to PATH"
-              Add-Content $env:GITHUB_PATH "$Ahk2ExePathCandidate1"
-          } elseif (Test-Path "$Ahk2ExePathCandidate2\Ahk2Exe.exe") {
-              Write-Host "Adding $Ahk2ExePathCandidate2 to PATH"
-              Add-Content $env:GITHUB_PATH "$Ahk2ExePathCandidate2"
-          } else {
-              Write-Error "Ahk2Exe.exe not found in expected paths. Check extraction."
-              exit 1
-          }
-
-          # 验证 Ahk2Exe.exe 是否在 PATH 中
-          Write-Host "Verifying Ahk2Exe command..."
-          if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
-            Write-Error "Ahk2Exe.exe not found in PATH. Please check extraction and PATH setup."
+          # 验证 AutoHotkey.exe (v2) 和 Ahk2Exe.exe 是否在 PATH 中
+          Write-Host "Verifying AutoHotkey and Ahk2Exe commands after Chocolatey install..."
+          if (-not (Get-Command AutoHotkey -ErrorAction SilentlyContinue)) {
+            Write-Error "AutoHotkey.exe not found in PATH after Chocolatey installation."
             Write-Host "Current PATH: $env:PATH"
             exit 1
           }
-          Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
+          Write-Host "AutoHotkey found in PATH at: $((Get-Command AutoHotkey).Path)"
+
+          if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
+            Write-Error "Ahk2Exe.exe not found in PATH after Chocolatey installation. Please check the Chocolatey package details."
+            Write-Host "Current PATH: $env:PATH"
+            # 尝试在标准安装路径查找 Ahk2Exe.exe
+            $ahkUxPath = "C:\Program Files\AutoHotkey\UX\Ahk2Exe.exe"
+            if (Test-Path $ahkUxPath) {
+                Write-Warning "Ahk2Exe.exe found at '$ahkUxPath' but not in PATH. Attempting to add to PATH for this session."
+                $env:PATH = "$($env:ProgramFiles)\AutoHotkey\UX;" + $env:PATH
+                if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
+                    Write-Error "Failed to add Ahk2Exe to PATH. Manual adjustment of PATH or Ahk2Exe call might be needed."
+                    exit 1
+                }
+                 Write-Host "Ahk2Exe now found in PATH at: $((Get-Command Ahk2Exe).Path)"
+            } else {
+                Write-Error "Ahk2Exe.exe also not found at '$ahkUxPath'."
+                exit 1
+            }
+          } else {
+            Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
+          }
 
       - name: Extract Version from AHK script
         id: get_version

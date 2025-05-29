@@ -16,70 +16,65 @@ jobs:
       - name: Install AutoHotkey v2 using Chocolatey
         shell: pwsh
         run: |
-          # 确保 Chocolatey 已安装 (GitHub Actions 的 Windows runner 通常预装了)
-          # choco upgrade chocolatey # 可以选择升级 Chocolatey 到最新版本
+          Write-Host "Installing AutoHotkey via Chocolatey..."
+          choco install autohotkey -y --no-progress # 使用 autohotkey 包, --no-progress 减少日志输出
 
-          # 安装 AutoHotkey v2.
-          # 包名通常是 autohotkey.v2
-          # 你可以在 https://community.chocolatey.org/packages/autohotkey.v2 查看可用的版本和安装命令。
-          # 我们将安装最新的稳定版本。如果需要特定版本，请确保它存在。
-          Write-Host "Installing AutoHotkey v2 via Chocolatey..."
-          choco install autohotkey -y 
-          # 如果你需要一个特定的版本，比如 2.0.18 (请先确认它存在于 Chocolatey)
-          # choco install autohotkey.v2 --version 2.0.18 -y
-          # 如果 2.0.19 是预发布版本，你可能需要:
-          # choco install autohotkey.v2 --version 2.0.19 --pre -y
+          Write-Host "Listing contents of suspected AutoHotkey installation directory for verification..."
+          $ahkInstallDirRoot = "$env:ProgramFiles\AutoHotkey"
+          if (Test-Path $ahkInstallDirRoot) {
+            Get-ChildItem -Path $ahkInstallDirRoot -Recurse -Depth 2 | Select-Object FullName, Length
+          } else {
+            Write-Warning "AutoHotkey installation directory '$ahkInstallDirRoot' not found for listing. This might indicate an installation issue."
+          }
 
-          # 验证 AutoHotkey.exe (v2) 和 Ahk2Exe.exe 是否在 PATH 中
-          Write-Host "Verifying AutoHotkey and Ahk2Exe commands after Chocolatey install..."
+          # 统一处理 PATH，将需要的目录都加到前面，避免重复判断和添加
+          $ahkCorePath = "$env:ProgramFiles\AutoHotkey"
+          $ahkUxPathDir = Join-Path $ahkCorePath "UX"
+
+          Write-Host "Ensuring AutoHotkey directories are in PATH for this session..."
+          $originalPath = $env:PATH
+          $pathsToAdd = New-Object System.Collections.Generic.List[string]
+
+          if (Test-Path $ahkCorePath) {
+              $pathsToAdd.Add($ahkCorePath)
+          }
+          if (Test-Path $ahkUxPathDir) {
+              $pathsToAdd.Add($ahkUxPathDir)
+          }
+
+          # 去重并添加到PATH头部
+          $uniquePathsToAdd = $pathsToAdd | Select-Object -Unique
+          foreach ($p in $uniquePathsToAdd) {
+              if (-not ($originalPath -split ';' -contains $p)) {
+                  $env:PATH = "$p;" + $env:PATH
+                  Write-Host "Added '$p' to session PATH."
+              }
+          }
+          Write-Host "Updated session PATH: $env:PATH"
+          Start-Sleep -Milliseconds 500 # 短暂等待，确保PATH更新被shell感知
+
+          # 验证 AutoHotkey.exe (v2)
+          Write-Host "Verifying AutoHotkey command after PATH adjustment..."
           if (-not (Get-Command AutoHotkey -ErrorAction SilentlyContinue)) {
-            Write-Error "AutoHotkey.exe not found in PATH after Chocolatey installation."
-            Write-Host "Current PATH: $env:PATH"
+            Write-Error "AutoHotkey.exe still not found in PATH after attempting to add '$ahkCorePath'."
+            Write-Host "Listing contents of '$ahkCorePath' (if it exists):"
+            if(Test-Path $ahkCorePath) { Get-ChildItem -Path $ahkCorePath }
             exit 1
           }
           Write-Host "AutoHotkey found in PATH at: $((Get-Command AutoHotkey).Path)"
 
+          # 验证 Ahk2Exe.exe
+          Write-Host "Verifying Ahk2Exe command after PATH adjustment..."
           if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
-            Write-Error "Ahk2Exe.exe not found in PATH after Chocolatey installation. Please check the Chocolatey package details."
-            Write-Host "Current PATH: $env:PATH"
-            # 尝试在标准安装路径查找 Ahk2Exe.exe
-            $ahkUxPath = "C:\Program Files\AutoHotkey\UX\Ahk2Exe.exe"
-            if (Test-Path $ahkUxPath) {
-                Write-Warning "Ahk2Exe.exe found at '$ahkUxPath' but not in PATH. Attempting to add to PATH for this session."
-                $env:PATH = "$($env:ProgramFiles)\AutoHotkey\UX;" + $env:PATH
-                if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
-                    Write-Error "Failed to add Ahk2Exe to PATH. Manual adjustment of PATH or Ahk2Exe call might be needed."
-                    exit 1
-                }
-                 Write-Host "Ahk2Exe now found in PATH at: $((Get-Command Ahk2Exe).Path)"
-            } else {
-                Write-Error "Ahk2Exe.exe also not found at '$ahkUxPath'."
-                exit 1
-            }
-          } else {
-            Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
-          }
-
-      - name: Extract Version from AHK script
-        id: get_version
-        shell: pwsh
-        run: |
-          $scriptPath = "DoroHelper.ahk"
-          if (-not (Test-Path $scriptPath)) {
-            Write-Error "Script file '$scriptPath' not found."
+            # Ahk2Exe 可能在 UX 目录，也可能（较少见）在核心目录
+            Write-Error "Ahk2Exe.exe still not found in PATH after attempting to add '$ahkUxPathDir' (and potentially '$ahkCorePath')."
+            Write-Host "Listing contents of '$ahkUxPathDir' (if it exists):"
+            if(Test-Path $ahkUxPathDir) { Get-ChildItem -Path $ahkUxPathDir }
+            Write-Host "Listing contents of '$ahkCorePath' for Ahk2Exe (if it exists):"
+            if(Test-Path $ahkCorePath) { Get-ChildItem -Path $ahkCorePath -Filter "Ahk2Exe.exe" }
             exit 1
           }
-          $content = Get-Content -Path $scriptPath -Raw
-          # 匹配 currentVersion := "v1.0.0-beta" 这样的格式
-          $match = $content | Select-String -Pattern 'currentVersion\s*:=\s*"([^"]+)"'
-          if ($match) {
-            $version = $match.Matches[0].Groups[1].Value
-            Write-Host "Version found: $version"
-            echo "VERSION_TAG=$version" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Error "Version pattern (currentVersion := \"...\") not found in $scriptPath"
-            exit 1
-          }
+          Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
 
       - name: Compile AutoHotkey Script
         id: compile_script

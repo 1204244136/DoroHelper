@@ -20,10 +20,10 @@ jobs:
           Get-ChildItem -Path (Get-Location) -Recurse | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
           Write-Host "--- End of repository file listing ---"
 
-      - name: Download and Setup AutoHotkey v2 Core (Specific Version for Compatibility) # <--- 修改步骤名称
+      - name: Download and Setup AutoHotkey v2 Core (v2.0.19) # <--- 再次使用 v2.0.19
         shell: pwsh
         run: |
-          $ahkVersion = "v2.0.11" # <--- 指定一个更早的 AutoHotkey v2 版本
+          $ahkVersion = "v2.0.19" # <--- 确认使用 v2.0.19
           $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/$ahkVersion/AutoHotkey_${ahkVersion}.zip" 
           $ahkExtractPath = "AutoHotkey_v2_Core_Files" 
           Write-Host "Downloading AutoHotkey v2 Core from $ahkZipUrl"
@@ -55,10 +55,10 @@ jobs:
               exit 1
           }
 
-      - name: Download and Setup Ahk2Exe (Specific Version for Compatibility) # <--- 修改步骤名称
+      - name: Download and Setup Ahk2Exe (v2.0.01) # <--- 指定 Ahk2Exe 版本为 v2.0.01
         shell: pwsh
         run: |
-          $ahk2ExeVersion = "v2.0.01" # <--- 指定一个更早的 Ahk2Exe 版本
+          $ahk2ExeVersion = "v2.0.01" # <--- 指定 Ahk2Exe 版本
           $repoOwner = "AutoHotkey"
           $repoName = "Ahk2Exe"
           $apiURL = "https://api.github.com/repos/$repoOwner/$repoName/releases/tags/$ahk2ExeVersion" # <--- 根据标签下载
@@ -115,16 +115,17 @@ jobs:
         shell: pwsh
         run: |
           $scriptToTest = "test_compile.ahk"
-          $ahkExeName = "AutoHotkey32.exe" # <--- 尝试使用 32 位解释器
+          $ahkExeName = "AutoHotkey64.exe" # 优先使用 64 位解释器进行测试
           $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
 
           $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath $ahkExeName
           if (-not (Test-Path $ahkInterpreterPath)) {
               $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath "UX" $ahkExeName 
           }
+          # 如果 64 位不存在，尝试 32 位
           if (-not (Test-Path $ahkInterpreterPath)) {
-              Write-Error "Could not find AutoHotkey interpreter ($ahkExeName) for testing. Attempting AutoHotkey64.exe instead."
-              $ahkExeName = "AutoHotkey64.exe" # 回退到 64 位
+              Write-Warning "64-bit interpreter ($ahkExeName) not found for testing. Falling back to AutoHotkey32.exe."
+              $ahkExeName = "AutoHotkey32.exe"
               $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath $ahkExeName
               if (-not (Test-Path $ahkInterpreterPath)) {
                   $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath "UX" $ahkExeName 
@@ -132,7 +133,7 @@ jobs:
           }
 
           if (-not (Test-Path $ahkInterpreterPath)) {
-              Write-Error "Could not find any AutoHotkey interpreter ($ahkExeName) for testing."
+              Write-Error "Could not find any AutoHotkey interpreter for testing in '$ahkCoreExtractPath'."
               Get-ChildItem -Path (Join-Path $PWD $ahkCoreExtractPath) -Recurse | Select-Object FullName, Name
               exit 1
           }
@@ -206,16 +207,16 @@ jobs:
           Get-ChildItem -Path (Get-Location) -Recurse -Depth 1 | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
           Write-Host "--- End of current working directory listing ---"
 
-          # 优先尝试使用 32 位基础二进制文件进行编译
-          $baseBinaryName = "AutoHotkey32.exe" 
+          # 优先尝试使用 64 位基础二进制文件进行编译，因为 Ahk2Exe 默认可能更偏向 64 位
+          $baseBinaryName = "AutoHotkey64.exe" 
           $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
           if (-not (Test-Path $baseBinaryPath)) {
               $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName 
           }
-          # 如果 32 位不存在，回退到 64 位
+          # 如果 64 位不存在，回退到 32 位
           if (-not (Test-Path $baseBinaryPath)) {
-              Write-Warning "32-bit base binary ($baseBinaryName) not found. Falling back to AutoHotkey64.exe."
-              $baseBinaryName = "AutoHotkey64.exe"
+              Write-Warning "64-bit base binary ($baseBinaryName) not found. Falling back to AutoHotkey32.exe."
+              $baseBinaryName = "AutoHotkey32.exe"
               $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
               if (-not (Test-Path $baseBinaryPath)) {
                   $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName 
@@ -223,7 +224,7 @@ jobs:
           }
 
           if (-not (Test-Path $baseBinaryPath)) {
-              Write-Error "Could not find a suitable 32-bit or 64-bit base binary ($baseBinaryName) in '$ahkCoreExtractPath' or '$($ahkCoreExtractPath)\UX'."
+              Write-Error "Could not find a suitable 64-bit or 32-bit base binary ($baseBinaryName) in '$ahkCoreExtractPath' or '$($ahkCoreExtractPath)\UX'."
               Write-Host "Listing contents of ${ahkCoreExtractPath}:"
               Get-ChildItem -Path (Join-Path $PWD $ahkCoreExtractPath) -Recurse | Select-Object FullName
               exit 1

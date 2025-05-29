@@ -113,7 +113,6 @@ jobs:
         id: get_version
         shell: pwsh
         run: |
-          # 修正路径：直接指向 DoroHelper.ahk
           $scriptPath = "DoroHelper.ahk" 
           if (-not (Test-Path $scriptPath)) {
             Write-Error "Script file '$scriptPath' not found. Current directory: $(Get-Location)"
@@ -199,13 +198,14 @@ jobs:
           Write-Host "Icon: $iconFile"
           Write-Host "Base Binary for compilation: $baseBinaryPath"
 
-          # *** 关键变化：添加 /include 参数 ***
-          $compileArgs = @("/in", "`"$scriptFile`"", "/out", "`"$outputExe`"", "/bin", "`"$baseBinaryPath`"", "/cp", "65001", "/include", "`"$libPath`"") 
+          # 添加 /debug 参数
+          $compileArgs = @("/in", "`"$scriptFile`"", "/out", "`"$outputExe`"", "/bin", "`"$baseBinaryPath`"", "/cp", "65001", "/include", "`"$libPath`"", "/debug") 
           if ($iconFile -and (Test-Path $iconFile)) {
               $compileArgs += @("/icon", "`"$iconFile`"")
           }
 
           Write-Host "Attempting to compile with Ahk2Exe.exe..."
+          Write-Host "Compilation Arguments: $($compileArgs -join ' ')" # 打印出实际的编译参数
           $ahk2ExeOutput = (Ahk2Exe.exe $compileArgs 2>&1)
           Write-Host "--- Ahk2Exe Output Start (Actual Compilation) ---"
           Write-Host $ahk2ExeOutput

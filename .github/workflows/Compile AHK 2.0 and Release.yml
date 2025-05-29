@@ -20,87 +20,63 @@ jobs:
           Get-ChildItem -Path (Get-Location) -Recurse | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
           Write-Host "--- End of repository file listing ---"
 
-      - name: Download and Setup AutoHotkey v2 (using AutoHotkey_H for compiler) # <--- 修改步骤名称
+      - name: Download and Setup AutoHotkey v2 Core (Specific Version for Compatibility) # <--- 修改步骤名称
         shell: pwsh
         run: |
-          # 尝试下载 AutoHotkey_H 的 V2 版本，作为编译器的基础
-          # 查找最新稳定版 AutoHotkey_H for v2 的 URL
-          $ahkHRepoOwner = "HotKeyIt"
-          $ahkHRepoName = "AutoHotkey_H"
-          $ahkHApiURL = "https://api.github.com/repos/$ahkHRepoOwner/$ahkHRepoName/releases/latest"
-          $ahkExtractPath = "AutoHotkey_v2_Compiler_Files" # <--- 修改提取路径名称
-
-          Write-Host "Fetching latest AutoHotkey_H v2 release information from $ahkHApiURL"
-          try {
-              $releaseInfo = Invoke-RestMethod -Uri $ahkHApiURL -Headers @{ Authorization = "token ${{ secrets.GITHUB_TOKEN }}" }
-              # 查找包含 "v2" 且是 x64 版本的 zip 或 exe
-              $ahkHAsset = $releaseInfo.assets | Where-Object { $_.name -like "*v2*x64*.zip" -or $_.name -like "*v2*x64*.exe" } | Select-Object -First 1
-              
-              if (-not $ahkHAsset) {
-                  Write-Error "Could not find a suitable AutoHotkey_H v2 x64 asset in the latest release."
-                  Write-Host "Available assets:"
-                  $releaseInfo.assets | Select-Object name, browser_download_url | Format-List
-                  exit 1
-              }
-              $ahkHUrl = $ahkHAsset.browser_download_url
-              Write-Host "Found latest AutoHotkey_H v2 x64 at: $ahkHUrl"
-          } catch {
-              Write-Error "Failed to fetch latest AutoHotkey_H v2 release information: $($_.Exception.Message)"
-              exit 1
-          }
-
-          if ($ahkHUrl -like "*.zip") {
-              Write-Host "Downloading AutoHotkey_H v2 from $ahkHUrl"
-              Invoke-WebRequest -Uri $ahkHUrl -OutFile "ahk_h_v2.zip"
-              Write-Host "Extracting AutoHotkey_H v2 to $ahkExtractPath"
-              Expand-Archive -Path "ahk_h_v2.zip" -DestinationPath $ahkExtractPath -Force
-          } elseif ($ahkHUrl -like "*.exe") {
-              Write-Host "Downloading AutoHotkey_H v2 standalone exe from $ahkHUrl"
-              # 直接下载exe，并确保文件夹存在
-              New-Item -ItemType Directory -Force -Path $ahkExtractPath
-              Invoke-WebRequest -Uri $ahkHUrl -OutFile (Join-Path $ahkExtractPath "AutoHotkey64.exe") # 假设是AutoHotkey64.exe
-          } else {
-              Write-Error "Unsupported AutoHotkey_H v2 asset type: $ahkHUrl"
-              exit 1
-          }
-
+          $ahkVersion = "v2.0.11" # <--- 指定一个更早的 AutoHotkey v2 版本
+          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/$ahkVersion/AutoHotkey_${ahkVersion}.zip" 
+          $ahkExtractPath = "AutoHotkey_v2_Core_Files" 
+          Write-Host "Downloading AutoHotkey v2 Core from $ahkZipUrl"
+          Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2-core.zip"
+          Write-Host "Extracting AutoHotkey v2 Core to $ahkExtractPath"
+          Expand-Archive -Path "ahk-v2-core.zip" -DestinationPath $ahkExtractPath -Force
 
           Write-Host "Listing contents of $ahkExtractPath after extraction:"
           Get-ChildItem -Path $ahkExtractPath -Recurse | Select-Object FullName, Name, DirectoryName | Sort-Object FullName
-          Write-Host "--- End of AutoHotkey_H v2 file listing ---"
+          Write-Host "--- End of AutoHotkey v2 Core file listing ---"
 
-          # 确保将 AutoHotkey_H 的目录添加到 PATH
-          $ahkCompilerPath = Join-Path $PWD $ahkExtractPath
-          Write-Host "Adding $ahkCompilerPath to PATH (for AutoHotkey_H compiler)"
-          Add-Content $env:GITHUB_PATH "$ahkCompilerPath"
+          $ahkMainPath = Join-Path $PWD $ahkExtractPath
+          $ahkUXPath = Join-Path $PWD $ahkExtractPath "UX" 
 
-          # 额外验证是否有 AutoHotkey64.exe 或类似的编译器
-          if (-not (Test-Path "$ahkCompilerPath\AutoHotkey64.exe") -and `
-              -not (Test-Path "$ahkCompilerPath\AutoHotkeyU64.exe")) {
-              Write-Warning "Could not find expected AutoHotkey64.exe or AutoHotkeyU64.exe in $ahkCompilerPath. Compilation might fail."
+          if ((Test-Path "$ahkMainPath\AutoHotkey.exe") -or `
+              (Test-Path "$ahkMainPath\AutoHotkey64.exe") -or `
+              (Test-Path "$ahkUXPath\AutoHotkey.exe") -or `
+              (Test-Path "$ahkUXPath\AutoHotkey64.exe")) {
+              
+              Write-Host "AutoHotkey interpreter found in main or UX directory."
+              Write-Host "Adding $ahkMainPath to PATH (for AutoHotkey interpreter)"
+              Add-Content $env:GITHUB_PATH "$ahkMainPath"
+              if (Test-Path $ahkUXPath) {
+                  Write-Host "Adding $ahkUXPath to PATH (for AutoHotkey interpreter in UX folder)"
+                  Add-Content $env:GITHUB_PATH "$ahkUXPath"
+              }
+          } else {
+              Write-Error "AutoHotkey interpreter (e.g., AutoHotkey.exe, AutoHotkey64.exe) not found in expected paths. Check the file listing above."
+              exit 1
           }
 
-      - name: Download and Setup Ahk2Exe (Latest Dynamic)
+      - name: Download and Setup Ahk2Exe (Specific Version for Compatibility) # <--- 修改步骤名称
         shell: pwsh
         run: |
+          $ahk2ExeVersion = "v2.0.01" # <--- 指定一个更早的 Ahk2Exe 版本
           $repoOwner = "AutoHotkey"
           $repoName = "Ahk2Exe"
-          $apiURL = "https://api.github.com/repos/$repoOwner/$repoName/releases/latest"
+          $apiURL = "https://api.github.com/repos/$repoOwner/$repoName/releases/tags/$ahk2ExeVersion" # <--- 根据标签下载
           $ahk2ExeExtractPath = "AutoHotkey_Ahk2Exe_Files" 
 
-          Write-Host "Fetching latest Ahk2Exe release information from $apiURL"
+          Write-Host "Fetching Ahk2Exe release information for $ahk2ExeVersion from $apiURL"
           try {
               $releaseInfo = Invoke-RestMethod -Uri $apiURL -Headers @{ Authorization = "token ${{ secrets.GITHUB_TOKEN }}" }
               $ahk2ExeZipAsset = $releaseInfo.assets | Where-Object { $_.name -like "Ahk2Exe*.zip" } | Select-Object -First 1
               
               if (-not $ahk2ExeZipAsset) {
-                  Write-Error "Could not find Ahk2Exe.zip asset in the latest release."
+                  Write-Error "Could not find Ahk2Exe.zip asset for version $ahk2ExeVersion."
                   exit 1
               }
               $ahk2ExeZipUrl = $ahk2ExeZipAsset.browser_download_url
-              Write-Host "Found latest Ahk2Exe.zip at: $ahk2ExeZipUrl"
+              Write-Host "Found Ahk2Exe.zip for $ahk2ExeVersion at: $ahk2ExeZipUrl"
           } catch {
-              Write-Error "Failed to fetch latest Ahk2Exe release information: $($_.Exception.Message)"
+              Write-Error "Failed to fetch Ahk2Exe release information for $ahk2ExeVersion: $($_.Exception.Message)"
               exit 1
           }
 
@@ -135,25 +111,29 @@ jobs:
           }
           Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
 
-      - name: Test AutoHotkey Interpreter # 这个步骤现在会使用 AutoHotkey_H 解释器
+      - name: Test AutoHotkey Interpreter
         shell: pwsh
         run: |
           $scriptToTest = "test_compile.ahk"
-          $ahkExeName = "AutoHotkey64.exe" # 假设 AutoHotkey_H 提供了这个名称的 exe
-          $ahkCompilerExtractPath = "AutoHotkey_v2_Compiler_Files" # <--- 使用新的路径
+          $ahkExeName = "AutoHotkey32.exe" # <--- 尝试使用 32 位解释器
+          $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
 
-          $ahkInterpreterPath = Join-Path $PWD $ahkCompilerExtractPath $ahkExeName
+          $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath $ahkExeName
           if (-not (Test-Path $ahkInterpreterPath)) {
-              $ahkInterpreterPath = Join-Path $PWD $ahkCompilerExtractPath "UX" $ahkExeName 
+              $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath "UX" $ahkExeName 
           }
-          # 检查 AutoHotkey_H 是否有其他命名的 exe，例如 "AutoHotkey_H.exe"
           if (-not (Test-Path $ahkInterpreterPath)) {
-              $ahkInterpreterPath = Join-Path $PWD $ahkCompilerExtractPath "AutoHotkey_H.exe" 
+              Write-Error "Could not find AutoHotkey interpreter ($ahkExeName) for testing. Attempting AutoHotkey64.exe instead."
+              $ahkExeName = "AutoHotkey64.exe" # 回退到 64 位
+              $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath $ahkExeName
+              if (-not (Test-Path $ahkInterpreterPath)) {
+                  $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath "UX" $ahkExeName 
+              }
           }
 
           if (-not (Test-Path $ahkInterpreterPath)) {
-              Write-Error "Could not find AutoHotkey interpreter ($ahkExeName or AutoHotkey_H.exe) for testing in '$ahkCompilerExtractPath'."
-              Get-ChildItem -Path (Join-Path $PWD $ahkCompilerExtractPath) -Recurse | Select-Object FullName, Name
+              Write-Error "Could not find any AutoHotkey interpreter ($ahkExeName) for testing."
+              Get-ChildItem -Path (Join-Path $PWD $ahkCoreExtractPath) -Recurse | Select-Object FullName, Name
               exit 1
           }
 
@@ -197,7 +177,7 @@ jobs:
         id: compile_script
         shell: pwsh
         run: |
-          $ahkCompilerExtractPath = "AutoHotkey_v2_Compiler_Files" # <--- 使用新的路径
+          $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
           $scriptFile = "test_compile.ahk" 
           $iconFile = "doro.ico" 
           $outputExe = "test_compile.exe" 
@@ -215,28 +195,37 @@ jobs:
             Write-Host "AHK script file found: $(Resolve-Path $scriptFile)"
           }
 
-          if (-not (Test-Path $iconFile)) {
-            Write-Warning "Icon file '$iconFile' not found at $(Resolve-Path $iconFile -ErrorAction SilentlyContinue). Proceeding without custom icon. Current working directory: $(Get-Location)."
-            $iconFile = "" 
-          } else {
+          if ($iconFile -and (Test-Path $iconFile)) {
             Write-Host "Icon file found: $(Resolve-Path $iconFile)"
+          } else {
+            Write-Warning "Icon file '$iconFile' not found. Proceeding without custom icon."
+            $iconFile = "" 
           }
 
           Write-Host "Listing contents of current working directory ($(Get-Location)):"
           Get-ChildItem -Path (Get-Location) -Recurse -Depth 1 | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
           Write-Host "--- End of current working directory listing ---"
 
-          # 寻找 AutoHotkey_H 提供的 64 位编译器
-          $baseBinaryName = "AutoHotkey64.exe" # 优先找这个
-          $baseBinaryPath = Join-Path $PWD $ahkCompilerExtractPath $baseBinaryName
+          # 优先尝试使用 32 位基础二进制文件进行编译
+          $baseBinaryName = "AutoHotkey32.exe" 
+          $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
           if (-not (Test-Path $baseBinaryPath)) {
-              $baseBinaryName = "AutoHotkey_H.exe" # 其次找这个
-              $baseBinaryPath = Join-Path $PWD $ahkCompilerExtractPath $baseBinaryName
+              $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName 
           }
+          # 如果 32 位不存在，回退到 64 位
           if (-not (Test-Path $baseBinaryPath)) {
-              Write-Error "Could not find a suitable 64-bit base binary (AutoHotkey64.exe or AutoHotkey_H.exe) in '$ahkCompilerExtractPath'."
-              Write-Host "Listing contents of ${ahkCompilerExtractPath}:"
-              Get-ChildItem -Path (Join-Path $PWD $ahkCompilerExtractPath) -Recurse | Select-Object FullName
+              Write-Warning "32-bit base binary ($baseBinaryName) not found. Falling back to AutoHotkey64.exe."
+              $baseBinaryName = "AutoHotkey64.exe"
+              $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
+              if (-not (Test-Path $baseBinaryPath)) {
+                  $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName 
+              }
+          }
+
+          if (-not (Test-Path $baseBinaryPath)) {
+              Write-Error "Could not find a suitable 32-bit or 64-bit base binary ($baseBinaryName) in '$ahkCoreExtractPath' or '$($ahkCoreExtractPath)\UX'."
+              Write-Host "Listing contents of ${ahkCoreExtractPath}:"
+              Get-ChildItem -Path (Join-Path $PWD $ahkCoreExtractPath) -Recurse | Select-Object FullName
               exit 1
           }
 

@@ -106,7 +106,8 @@ jobs:
         id: get_version
         shell: pwsh
         run: |
-          $scriptPath = "DoroHelper.ahk"
+          # 脚本现在位于 DoroHelper/DoroHelper.ahk
+          $scriptPath = "DoroHelper/DoroHelper.ahk" 
           if (-not (Test-Path $scriptPath)) {
             Write-Error "Script file '$scriptPath' not found."
             exit 1
@@ -127,9 +128,11 @@ jobs:
         shell: pwsh
         run: |
           $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
-          $scriptFile = "DoroHelper.ahk"
-          $iconFile = "doro.ico"
-          $outputExe = "DoroHelper.exe" 
+          # 根据你的仓库结构，主脚本现在位于 DoroHelper/DoroHelper.ahk
+          $scriptFile = "DoroHelper/DoroHelper.ahk" 
+          # 假设 doro.ico 也在 DoroHelper 文件夹下
+          $iconFile = "DoroHelper/doro.ico" 
+          $outputExe = "DoroHelper.exe" # 输出到工作目录根部
 
           Write-Host "--- Diagnosing Ahk2Exe and Dependencies ---"
           Write-Host "Attempting to run Ahk2Exe.exe without arguments to get usage info..."
@@ -137,39 +140,40 @@ jobs:
           Write-Host "Ahk2Exe.exe no-arg output:"
           Write-Host $ahk2ExeHelpOutput
 
-          # 检查 DoroHelper.ahk 是否存在
+          # 检查 DoroHelper.ahk 是否存在 (使用更新后的路径)
           if (-not (Test-Path $scriptFile)) {
-            Write-Error "AHK script file '$scriptFile' not found at $(Resolve-Path $scriptFile -ErrorAction SilentlyContinue)."
+            Write-Error "AHK script file '$scriptFile' not found at $(Resolve-Path $scriptFile -ErrorAction SilentlyContinue). Current working directory: $(Get-Location)."
             exit 1
           } else {
             Write-Host "AHK script file found: $(Resolve-Path $scriptFile)"
           }
 
-          # 检查 doro.ico 是否存在
+          # 检查 doro.ico 是否存在 (使用更新后的路径)
           if (-not (Test-Path $iconFile)) {
-            Write-Warning "Icon file '$iconFile' not found at $(Resolve-Path $iconFile -ErrorAction SilentlyContinue). Proceeding without custom icon."
+            Write-Warning "Icon file '$iconFile' not found at $(Resolve-Path $iconFile -ErrorAction SilentlyContinue). Proceeding without custom icon. Current working directory: $(Get-Location)."
             $iconFile = "" 
           } else {
             Write-Host "Icon file found: $(Resolve-Path $iconFile)"
           }
 
-          # *** 新增：列出当前工作目录和 lib 文件夹内容 ***
-          Write-Host "Listing contents of current working directory ($(Get-Location)):"
-          Get-ChildItem -Path (Get-Location) -Recurse -Depth 2 | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
-          Write-Host "--- End of current working directory listing ---"
+          # *** 再次调整：列出 DoroHelper 文件夹内容，以及 lib 文件夹内容 ***
+          $doroHelperFolderPath = "DoroHelper"
+          Write-Host "Listing contents of DoroHelper folder ($(Join-Path (Get-Location) $doroHelperFolderPath)):"
+          Get-ChildItem -Path $doroHelperFolderPath -Recurse -Depth 1 | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
+          Write-Host "--- End of DoroHelper folder listing ---"
 
-          # 检查 lib 文件夹是否存在
-          $libPath = Join-Path (Get-Location) "lib"
+          # 检查 lib 文件夹是否存在 (根据 DoroHelper 文件夹内的路径)
+          $libPath = Join-Path $doroHelperFolderPath "lib"
           if (-not (Test-Path $libPath -PathType Container)) {
-              Write-Error "Dependency folder 'lib' not found at expected path: $libPath. This is critical for compilation."
+              Write-Error "Dependency folder 'lib' not found at expected path: $(Resolve-Path $libPath -ErrorAction SilentlyContinue). This is critical for compilation."
               exit 1
           } else {
-              Write-Host "Dependency folder 'lib' found: $libPath"
-              Write-Host "Listing contents of 'lib' folder:"
+              Write-Host "Dependency folder 'lib' found: $(Resolve-Path $libPath)"
+              Write-Host "Listing contents of 'lib' folder ($(Resolve-Path $libPath)): "
               Get-ChildItem -Path $libPath | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
               Write-Host "--- End of 'lib' folder listing ---"
           }
-          # *** 新增诊断结束 ***
+          # *** 诊断步骤结束 ***
 
 
           $baseBinaryName = "AutoHotkey64.exe"

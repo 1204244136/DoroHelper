@@ -13,97 +13,107 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup AutoHotkey v2 using crazy-max Action
-        id: setup_ahk # Give an ID to this step to access its outputs
-        uses: crazy-max/ghaction-setup-autohotkey@v3 # Or check for the latest version
-        with:
-          version: "2.0" # Request a v2 version. You can specify more precise versions like "2.0.11"
-      # PowerShell 脚本现在假设 AutoHotkey v2 已由上一步安装并添加到 PATH
-      # 并且我们可以从上一步的输出中获取 AutoHotkey 的安装路径
-      - name: Setup Ahk2Exe for AutoHotkey v2
+      - name: Download and Setup AutoHotkey v2 Core
         shell: pwsh
-        env:
-          # Pass the ahkPath output from the setup_ahk step to the PowerShell script
-          AHK_INSTALL_PATH: ${{ steps.setup_ahk.outputs.ahkPath }}
         run: |
-          Write-Host "AutoHotkey v2 installation directory (from crazy-max action): $env:AHK_INSTALL_PATH"
-          Write-Host "Current PATH: $env:PATH"
-          # Verify AutoHotkey v2 executable is in PATH and is v2
-          $ahkExeName = "AutoHotkey64.exe" # Common name for 64-bit v2; adjust if needed (e.g., AutoHotkeyUX.exe)
-                                           # The crazy-max action should add the correct one to PATH.
-          $ahkCmdInfo = Get-Command $ahkExeName -ErrorAction SilentlyContinue
-          if (-not $ahkCmdInfo) {
-            Write-Error "$ahkExeName not found in PATH. Check the output of 'crazy-max/ghaction-setup-autohotkey'."
-            Write-Host "Listing contents of AHK_INSTALL_PATH ($env:AHK_INSTALL_PATH):"
-            Get-ChildItem -Path $env:AHK_INSTALL_PATH -Recurse -Depth 2
-            exit 1
-          }
-          Write-Host "Found AutoHotkey executable at: $($ahkCmdInfo.Source)"
-          $ahkVersion = (Get-Item $ahkCmdInfo.Source).VersionInfo.ProductVersion
-          Write-Host "ProductVersion for $($ahkCmdInfo.Source) is '$ahkVersion'."
-          if (-not ($ahkVersion -and $ahkVersion.StartsWith("2."))) {
-            Write-Error "The AutoHotkey executable found ($($ahkCmdInfo.Source) with version $ahkVersion) does not appear to be v2. Expected version 2.x."
-            exit 1
-          }
-          Write-Host "Confirmed AutoHotkey v2 executable."
-          # Paths for install-ahk2exe.ahk and Compiler relative to AHK_INSTALL_PATH
-          # The zip structure usually has UX and Compiler folders in the root.
-          $installScriptDir = Join-Path $env:AHK_INSTALL_PATH "UX"
-          $installScriptName = "install-ahk2exe.ahk"
-          $installScriptFullPath = Join-Path $installScriptDir $installScriptName
+          # 使用 GitHub Releases 的稳定下载链接获取 AutoHotkey v2 核心文件
+          # 这是一个包含解释器文件（如 AutoHotkey64.exe）的包
+          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19.zip" 
+          $ahkExtractPath = "AutoHotkey_v2_Core_Files" # 修改解压路径名称以区分
+          Write-Host "Downloading AutoHotkey v2 Core from $ahkZipUrl"
+          Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2-core.zip"
+          Write-Host "Extracting AutoHotkey v2 Core to $ahkExtractPath"
+          Expand-Archive -Path "ahk-v2-core.zip" -DestinationPath $ahkExtractPath -Force
 
-          $ahk2ExeCompilerDir = Join-Path $env:AHK_INSTALL_PATH "Compiler"
-          $ahk2ExeFinalPath = Join-Path $ahk2ExeCompilerDir "Ahk2Exe.exe"
-          if (Test-Path $installScriptFullPath) {
-            Write-Host "Found '$installScriptName' at '$installScriptFullPath'. Running it with '$ahkExeName'..."
-            Push-Location $installScriptDir
-            & $ahkExeName /ErrorStdOut $installScriptName # Use the AHK executable from PATH
-            $exitCode = $LASTEXITCODE
-            Pop-Location
-            
-            if ($exitCode -ne 0) {
-                Write-Warning "'$installScriptName' execution may have failed with exit code $exitCode."
-            } else {
-                Write-Host "'$installScriptName' executed successfully, exit code $exitCode."
-            }
-            Write-Host "Waiting for Ahk2Exe to be downloaded/prepared by the script (up to 30 seconds)..."
-            Start-Sleep -Seconds 30 # Give time for install-ahk2exe.ahk to download/place Ahk2Exe
-            if (Test-Path $ahk2ExeFinalPath) {
-              Write-Host "Ahk2Exe.exe CONFIRMED at '$ahk2ExeFinalPath'."
-              Write-Host "Adding AutoHotkey Compiler directory '$ahk2ExeCompilerDir' to PATH for this session."
-              $env:PATH = "$ahk2ExeCompilerDir;" + $env:PATH
-              Write-Host "Ahk2Exe.exe command should now be available."
-            } else {
-              Write-Error "Ahk2Exe.exe was NOT found at '$ahk2ExeFinalPath' after running '$installScriptName'."
-              Write-Host "Listing contents of Compiler directory '$ahk2ExeCompilerDir' (if it exists):"
-              if (Test-Path $ahk2ExeCompilerDir) { Get-ChildItem -Path $ahk2ExeCompilerDir -Recurse } else { Write-Host "Directory does not exist."}
-              exit 1
-            }
+          # 打印核心文件列表以供调试，确认解释器存在
+          Write-Host "Listing contents of $ahkExtractPath after extraction:"
+          Get-ChildItem -Path $ahkExtractPath -Recurse | Select-Object FullName, Name, DirectoryName | Sort-Object FullName
+          Write-Host "--- End of AutoHotkey v2 Core file listing ---"
+
+          # 将 AutoHotkey 核心可执行文件（解释器）的路径添加到 PATH
+          # 这样后续编译步骤可以通过 Get-Command AutoHotkey 找到解释器
+          $ahkMainPath = Join-Path $PWD $ahkExtractPath
+          $ahkUXPath = Join-Path $PWD $ahkExtractPath "UX" # 某些版本可能在 UX 目录下
+
+          if (Test-Path "$ahkMainPath\AutoHotkey.exe" -or Test-Path "$ahkMainPath\AutoHotkey64.exe" -or Test-Path "$ahkUXPath\AutoHotkey.exe" -or Test-Path "$ahkUXPath\AutoHotkey64.exe") {
+              Write-Host "Adding $ahkMainPath to PATH (for AutoHotkey interpreter)"
+              Add-Content $env:GITHUB_PATH "$ahkMainPath"
+              # 如果 UX 目录存在，也添加到 PATH，以防解释器在那里
+              if (Test-Path $ahkUXPath) {
+                  Write-Host "Adding $ahkUXPath to PATH (for AutoHotkey interpreter in UX folder)"
+                  Add-Content $env:GITHUB_PATH "$ahkUXPath"
+              }
           } else {
-            Write-Error "'$installScriptFullPath' NOT found. Cannot setup Ahk2Exe."
-            Write-Host "Listing contents of UX directory '$installScriptDir' (if it exists):"
-            if (Test-Path $installScriptDir) { Get-ChildItem -Path $installScriptDir -Recurse } else { Write-Host "Directory does not exist."}
-            Write-Host "Listing contents of AHK_INSTALL_PATH '$env:AHK_INSTALL_PATH' (if it exists):"
-            if (Test-Path $env:AHK_INSTALL_PATH) { Get-ChildItem -Path $env:AHK_INSTALL_PATH -Recurse -Depth 2} else { Write-Host "Directory does not exist."}
-            exit 1
+              Write-Error "AutoHotkey interpreter (e.g., AutoHotkey.exe, AutoHotkey64.exe) not found in expected paths. Check the file listing above."
+              exit 1
           }
 
-          Write-Host "Final session PATH: $env:PATH"
-          Start-Sleep -Milliseconds 500
+      - name: Download and Setup Ahk2Exe
+        shell: pwsh
+        run: |
+          # 获取 Ahk2Exe 的最新发布资产 URL
+          # 根据 install-ahk2exe.ahk，Ahk2Exe 有独立的 GitHub Release 仓库
+          # 这里我们直接构建一个通用的下载链接，获取最新版本的 Ahk2Exe.zip
+          $ahk2ExeZipUrl = "https://github.com/AutoHotkey/Ahk2Exe/releases/latest/download/Ahk2Exe.zip"
+          $ahk2ExeExtractPath = "AutoHotkey_Ahk2Exe_Files" # 专门用于 Ahk2Exe 的解压路径
+          Write-Host "Downloading Ahk2Exe from $ahk2ExeZipUrl"
+          Invoke-WebRequest -Uri $ahk2ExeZipUrl -OutFile "ahk2exe.zip"
+          Write-Host "Extracting Ahk2Exe to $ahk2ExeExtractPath"
+          Expand-Archive -Path "ahk2exe.zip" -DestinationPath $ahk2ExeExtractPath -Force
+
+          # 打印 Ahk2Exe 文件列表以供调试
+          Write-Host "Listing contents of $ahk2ExeExtractPath after extraction:"
+          Get-ChildItem -Path $ahk2ExeExtractPath -Recurse | Select-Object FullName, Name, DirectoryName | Sort-Object FullName
+          Write-Host "--- End of Ahk2Exe file listing ---"
+
+          # 将 Ahk2Exe.exe 所在的目录添加到 PATH
+          # 假设 Ahk2Exe.exe 在 Ahk2Exe.zip 解压后的根目录
+          $ahk2ExeBinPath = Join-Path $PWD $ahk2ExeExtractPath 
+
+          if (Test-Path "$ahk2ExeBinPath\Ahk2Exe.exe") {
+              Write-Host "Adding $ahk2ExeBinPath to PATH (for Ahk2Exe.exe)"
+              Add-Content $env:GITHUB_PATH "$ahk2ExeBinPath"
+          } else {
+              Write-Error "Ahk2Exe.exe not found in '$ahk2ExeBinPath'. Check the Ahk2Exe file listing above."
+              exit 1
+          }
+
+          # 验证 Ahk2Exe.exe 是否在 PATH 中
           Write-Host "Verifying Ahk2Exe command..."
-          $ahk2ExeCmdInfo = Get-Command Ahk2Exe -ErrorAction SilentlyContinue
-          if (-not $ahk2ExeCmdInfo) {
-            Write-Error "Ahk2Exe.exe not found using Get-Command. PATH: $env:PATH"
+          if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
+            Write-Error "Ahk2Exe.exe still not found in PATH after Ahk2Exe setup. This indicates an issue with PATH update or command recognition."
+            Write-Host "Current PATH: $env:PATH"
             exit 1
           }
-          Write-Host "Ahk2Exe found at: $($ahk2ExeCmdInfo.Source)"
-          Write-Host "AutoHotkey v2 and Ahk2Exe setup complete."
+          Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
+
+      - name: Extract Version from AHK script
+        id: get_version
+        shell: pwsh
+        run: |
+          $scriptPath = "DoroHelper.ahk"
+          if (-not (Test-Path $scriptPath)) {
+            Write-Error "Script file '$scriptPath' not found."
+            exit 1
+          }
+          $content = Get-Content -Path $scriptPath -Raw
+          # 匹配 currentVersion := "v1.0.0-beta" 这样的格式
+          $match = $content | Select-String -Pattern 'currentVersion\s*:=\s*"([^"]+)"'
+          if ($match) {
+            $version = $match.Matches[0].Groups[1].Value
+            Write-Host "Version found: $version"
+            echo "VERSION_TAG=$version" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Error "Version pattern (currentVersion := \"...\") not found in $scriptPath"
+            exit 1
+          }
 
       - name: Compile AutoHotkey Script
         id: compile_script
         shell: pwsh
         run: |
-          $ahkExtractPath = "AutoHotkey_v2_Files" # 与上面解压路径一致
+          # 核心文件现在在 AutoHotkey_v2_Core_Files
+          $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
           $scriptFile = "DoroHelper.ahk"
           $iconFile = "doro.ico"
           $outputExe = "DoroHelper.exe" # 输出的 exe 文件名
@@ -118,22 +128,21 @@ jobs:
           }
 
           # 确定用于编译的64位基础二进制文件路径
-          # 根据 AutoHotkey v2.0.19.zip 的内容，通常是 AutoHotkey64.exe 或 AutoHotkeyU64.exe
-          # 在 AutoHotkey_v2_Files 或 AutoHotkey_v2_Files\UX 目录下
+          # 现在我们知道解释器在 AutoHotkey_v2_Core_Files 中
           $baseBinaryName = "AutoHotkey64.exe"
-          $baseBinaryPath = Join-Path $PWD $ahkExtractPath $baseBinaryName
+          $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
           if (-not (Test-Path $baseBinaryPath)) {
-              $baseBinaryPath = Join-Path $PWD $ahkExtractPath "UX" $baseBinaryName # 检查 UX 子目录
+              $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName # 检查 UX 子目录
               if (-not (Test-Path $baseBinaryPath)) {
                   # 如果 AutoHotkey64.exe 未找到，尝试 AutoHotkeyU64.exe
                   $baseBinaryName = "AutoHotkeyU64.exe"
-                  $baseBinaryPath = Join-Path $PWD $ahkExtractPath $baseBinaryName
+                  $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
                    if (-not (Test-Path $baseBinaryPath)) {
-                        $baseBinaryPath = Join-Path $PWD $ahkExtractPath "UX" $baseBinaryName # 检查 UX 子目录
+                        $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName # 检查 UX 子目录
                         if (-not (Test-Path $baseBinaryPath)) {
-                            Write-Error "Could not find a suitable 64-bit base binary (AutoHotkey64.exe or AutoHotkeyU64.exe) in '$ahkExtractPath' or '$($ahkExtractPath)\UX'."
-                            Write-Host "Listing contents of ${ahkExtractPath}:"
-                            Get-ChildItem -Path (Join-Path $PWD $ahkExtractPath) -Recurse | Select-Object FullName
+                            Write-Error "Could not find a suitable 64-bit base binary (AutoHotkey64.exe or AutoHotkeyU64.exe) in '$ahkCoreExtractPath' or '$($ahkCoreExtractPath)\UX'."
+                            Write-Host "Listing contents of ${ahkCoreExtractPath}:"
+                            Get-ChildItem -Path (Join-Path $PWD $ahkCoreExtractPath) -Recurse | Select-Object FullName
                             exit 1
                         }
                    }

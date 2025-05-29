@@ -1,0 +1,116 @@
+name: Compile AHK 2.0 and Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]*" # 匹配 v1, v2.3, v10 等
+      - "v[0-9]*.[0-9]*" # 匹配 v1.0, v2.3.4 等
+      - "v[0-9]*-*" # 匹配带预发布标识的标签
+
+jobs:
+  build_and_release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup AutoHotkey v2
+        run: |
+          $ahk_installer_url = "https://www.autohotkey.com/download/ahk-v2.zip"
+          Invoke-WebRequest -Uri $ahk_installer_url -OutFile ahk-v2.zip
+          Expand-Archive -Path ahk-v2.zip -DestinationPath AutoHotkey_v2
+          Add-Content -Path $env:GITHUB_PATH -Value (Join-Path $PWD AutoHotkey_v2)
+          AutoHotkey.exe -v
+
+      - name: Get currentVersion from AHK script
+        id: get_version
+        run: |
+          $script_file = "DoroHelper.ahk"
+          if (-not (Test-Path $script_file)) {
+              Write-Error "Error: AutoHotkey script '$script_file' not found."
+              exit 1
+          }
+
+          $current_version = $null
+          $is_prerelease = "false"
+
+          Get-Content $script_file | ForEach-Object {
+              $line = $_
+              $match = [regex]::Match($line, '^\s*currentVersion\s*:=\s*"([^"]+)"')
+              if ($match.Success) {
+                  $current_version = $match.Groups[1].Value
+                  Write-Host "Extracted currentVersion: $current_version"
+                  
+                  if ($current_version -like "*beta*" -or $current_version -like "*alpha*" -or $current_version -like "*rc*") {
+                      $is_prerelease = "true"
+                  }
+                  break
+              }
+          }
+
+          if ($current_version -ne $null) {
+              echo "version=$current_version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+              echo "is_prerelease=$is_prerelease" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          } else {
+              Write-Error "Error: Could not find 'currentVersion := \"...\"' in $script_file."
+              exit 1
+          }
+
+      - name: Compile AutoHotkey script
+        id: compile_script
+        run: |
+          $script_name = "DoroHelper.ahk"
+          $icon_name = "doro.ico"
+          $output_exe_name = "${{ steps.get_version.outputs.version }}_64bit.exe"
+
+          if (-not (Test-Path $script_name)) {
+              Write-Error "Error: AutoHotkey script '$script_name' not found."
+              exit 1
+          }
+          if (-not (Test-Path $icon_name)) {
+              Write-Error "Error: Icon file '$icon_name' not found."
+              exit 1
+          }
+
+          $compiler_path = Join-Path (Join-Path $PWD AutoHotkey_v2) "Compiler.ahk"
+          if (-not (Test-Path $compiler_path)) {
+              Write-Error "Error: AutoHotkey v2 Compiler.ahk not found at $compiler_path. Please ensure AutoHotkey v2 is correctly extracted."
+              exit 1
+          }
+
+          $output_dir = "build"
+          if (-not (Test-Path $output_dir)) {
+              New-Item -ItemType Directory -Path $output_dir
+          }
+
+          $full_output_path = Join-Path $output_dir $output_exe_name
+          $full_script_path = Join-Path $PWD $script_name
+          $full_icon_path = Join-Path $PWD $icon_name
+
+          Write-Host "Compiling script: $full_script_path"
+          Write-Host "Output EXE: $full_output_path"
+          Write-Host "Icon: $full_icon_path"
+
+          AutoHotkey.exe "$compiler_path" /in "$full_script_path" /out "$full_output_path" /icon "$full_icon_path" /64
+
+          # 设置输出变量：完整路径和文件名（basename）
+          echo "compiled_exe_path=$full_output_path" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "compiled_exe_name=$output_exe_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append # 新增这一行
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{ steps.compile_script.outputs.compiled_exe_path }}
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          body: |
+            ## 🎉 新版本发布：${{ steps.get_version.outputs.version }}
+
+            此版本包含以下编译文件：
+            - ${{ steps.compile_script.outputs.compiled_exe_name }} 
+
+            感谢您的使用！
+          draft: false
+          prerelease: ${{ steps.get_version.outputs.is_prerelease }}

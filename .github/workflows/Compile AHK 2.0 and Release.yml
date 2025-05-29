@@ -60,10 +60,10 @@ jobs:
               exit 1
           }
 
-      - name: Download and Setup Ahk2Exe (v2.0.01)
+      - name: Download and Setup Ahk2Exe (v1.1.37.02a0) # 更新Ahk2Exe的版本标签
         shell: pwsh
         run: |
-          $ahk2ExeVersion = "v2.0.01" 
+          $ahk2ExeVersion = "Ahk2Exe1.1.37.02a0" # 更改为有效的Ahk2Exe版本标签
           $repoOwner = "AutoHotkey"
           $repoName = "Ahk2Exe"
           $apiURL = "https://api.github.com/repos/$repoOwner/$repoName/releases/tags/$ahk2ExeVersion" 
@@ -81,7 +81,6 @@ jobs:
               $ahk2ExeZipUrl = $ahk2ExeZipAsset.browser_download_url
               Write-Host "Found Ahk2Exe.zip for $ahk2ExeVersion at: $ahk2ExeZipUrl"
           } catch {
-              # 修正此处的语法错误
               Write-Error "Failed to fetch Ahk2Exe release information for version $($ahk2ExeVersion): $($_.Exception.Message)"
               exit 1
           }

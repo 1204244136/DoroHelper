@@ -31,12 +31,12 @@ jobs:
           $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/$ahkTag/$ahkZipFileName" 
           $ahkExtractPath = "AutoHotkey_v2_Core_Files" 
 
-          Write-Host "Downloading AutoHotkey v2 Core from ${ahkZipUrl}" # 修正这里
+          Write-Host "Downloading AutoHotkey v2 Core from ${ahkZipUrl}"
           Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2-core.zip"
-          Write-Host "Extracting AutoHotkey v2 Core to ${ahkExtractPath}" # 修正这里
+          Write-Host "Extracting AutoHotkey v2 Core to ${ahkExtractPath}"
           Expand-Archive -Path "ahk-v2-core.zip" -DestinationPath $ahkExtractPath -Force
 
-          Write-Host "Listing contents of ${ahkExtractPath} after extraction:" # 修正这里
+          Write-Host "Listing contents of ${ahkExtractPath} after extraction:"
           Get-ChildItem -Path $ahkExtractPath -Recurse | Select-Object FullName, Name, DirectoryName | Sort-Object FullName
           Write-Host "--- End of AutoHotkey v2 Core file listing ---"
 
@@ -49,10 +49,10 @@ jobs:
               (Test-Path "$ahkUXPath\AutoHotkey64.exe")) {
               
               Write-Host "AutoHotkey interpreter found in main or UX directory."
-              Write-Host "Adding ${ahkMainPath} to PATH (for AutoHotkey interpreter)" # 修正这里
+              Write-Host "Adding ${ahkMainPath} to PATH (for AutoHotkey interpreter)"
               Add-Content $env:GITHUB_PATH "$ahkMainPath"
               if (Test-Path $ahkUXPath) {
-                  Write-Host "Adding ${ahkUXPath} to PATH (for AutoHotkey interpreter in UX folder)" # 修正这里
+                  Write-Host "Adding ${ahkUXPath} to PATH (for AutoHotkey interpreter in UX folder)"
                   Add-Content $env:GITHUB_PATH "$ahkUXPath"
               }
           } else {
@@ -72,8 +72,8 @@ jobs:
 
           while ($attempt -lt $maxRetries -and -not $success) {
               $attempt++
-              # 修正了变量引用：使用 ${} 包裹 $ahk2ExeZipUrl
-              Write-Host "Attempt $attempt of $maxRetries: Downloading Ahk2Exe from ${ahk2ExeZipUrl}" 
+              # 关键修正：使用 ${} 包裹变量名以避免解析错误
+              Write-Host "Attempt ${attempt} of ${maxRetries}: Downloading Ahk2Exe from ${ahk2ExeZipUrl}" 
               try {
                   # 使用 -ErrorAction Stop 确保 Invoke-WebRequest 失败时抛出异常
                   Invoke-WebRequest -Uri $ahk2ExeZipUrl -OutFile "ahk2exe.zip" -ErrorAction Stop
@@ -82,32 +82,32 @@ jobs:
               } catch {
                   Write-Warning "Download failed: $($_.Exception.Message)"
                   if ($attempt -lt $maxRetries) {
-                      Write-Host "Retrying in $retryDelaySeconds seconds..."
+                      Write-Host "Retrying in ${retryDelaySeconds} seconds..."
                       Start-Sleep -Seconds $retryDelaySeconds
                   }
               }
           }
 
           if (-not $success) {
-              Write-Error "Failed to download Ahk2Exe after $maxRetries attempts."
+              Write-Error "Failed to download Ahk2Exe after ${maxRetries} attempts."
               exit 1
           }
 
-          Write-Host "Extracting Ahk2Exe to ${ahk2ExeExtractPath}" # 修正这里
+          Write-Host "Extracting Ahk2Exe to ${ahk2ExeExtractPath}"
           Expand-Archive -Path "ahk2exe.zip" -DestinationPath $ahk2ExeExtractPath -Force
 
-          Write-Host "Listing contents of ${ahk2ExeExtractPath} after extraction:" # 修正这里
+          Write-Host "Listing contents of ${ahk2ExeExtractPath} after extraction:"
           Get-ChildItem -Path $ahk2ExeExtractPath -Recurse | Select-Object FullName, Name, DirectoryName | Sort-Object FullName
           Write-Host "--- End of Ahk2Exe file listing ---"
 
           $ahk2ExeBinPath = Join-Path $PWD $ahk2ExeExtractPath 
 
           if (Test-Path "$ahk2ExeBinPath\Ahk2Exe.exe") {
-              Write-Host "Found Ahk2Exe.exe in: ${ahk2ExeBinPath}" # 修正这里
-              Write-Host "Adding ${ahk2ExeBinPath} to PATH (for Ahk2Exe.exe)" # 修正这里
+              Write-Host "Found Ahk2Exe.exe in: ${ahk2ExeBinPath}"
+              Write-Host "Adding ${ahk2ExeBinPath} to PATH (for Ahk2Exe.exe)"
               Add-Content $env:GITHUB_PATH "$ahk2ExeBinPath"
           } else {
-              Write-Error "Ahk2Exe.exe not found in '${ahk2ExeBinPath}'. Check the Ahk2Exe file listing above." # 修正这里
+              Write-Error "Ahk2Exe.exe not found in '${ahk2ExeBinPath}'. Check the Ahk2Exe file listing above."
               exit 1
           }
 
@@ -117,10 +117,10 @@ jobs:
           Write-Host "Verifying Ahk2Exe command in new PowerShell session..."
           if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
             Write-Error "Ahk2Exe.exe not found in PATH. This is unexpected after previous setup."
-            Write-Host "Current PATH: ${env:PATH}" # 修正这里
+            Write-Host "Current PATH: ${env:PATH}"
             exit 1
           }
-          Write-Host "Ahk2Exe found in PATH at: ${((Get-Command Ahk2Exe).Path)}" # 修正这里
+          Write-Host "Ahk2Exe found in PATH at: ${((Get-Command Ahk2Exe).Path)}"
 
       - name: Test AutoHotkey Interpreter (Optional but good for debugging)
         shell: pwsh
@@ -134,7 +134,7 @@ jobs:
               $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath "UX" $ahkExeName 
           }
           if (-not (Test-Path $ahkInterpreterPath)) {
-              Write-Warning "64-bit interpreter (${ahkExeName}) not found for testing. Falling back to AutoHotkey32.exe." # 修正这里
+              Write-Warning "64-bit interpreter (${ahkExeName}) not found for testing. Falling back to AutoHotkey32.exe."
               $ahkExeName = "AutoHotkey32.exe"
               $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath $ahkExeName
               if (-not (Test-Path $ahkInterpreterPath)) {
@@ -143,21 +143,21 @@ jobs:
           }
 
           if (-not (Test-Path $ahkInterpreterPath)) {
-              Write-Error "Could not find any AutoHotkey interpreter for testing in '${ahkCoreExtractPath}'." # 修正这里
+              Write-Error "Could not find any AutoHotkey interpreter for testing in '${ahkCoreExtractPath}'."
               Get-ChildItem -Path (Join-Path $PWD $ahkCoreExtractPath) -Recurse | Select-Object FullName, Name
               exit 1
           }
 
-          Write-Host "Attempting to run ${scriptToTest} with ${ahkInterpreterPath}..." # 修正这里
+          Write-Host "Attempting to run ${scriptToTest} with ${ahkInterpreterPath}..."
           $testOutput = (& "$ahkInterpreterPath" "$scriptToTest" 2>&1)
           $testExitCode = $LASTEXITCODE
 
           Write-Host "--- AutoHotkey Interpreter Test Output ---"
           Write-Host $testOutput
-          Write-Host "Interpreter Exit Code: ${testExitCode}" # 修正这里
+          Write-Host "Interpreter Exit Code: ${testExitCode}"
           Write-Host "--- End of Interpreter Test Output ---"
           if ($testExitCode -ne 0) {
-              Write-Warning "Interpreter test failed with exit code ${testExitCode}. This might indicate an issue with the script or interpreter setup." # 修正这里
+              Write-Warning "Interpreter test failed with exit code ${testExitCode}. This might indicate an issue with the script or interpreter setup."
           } else {
               Write-Host "Interpreter test successful."
           }
@@ -184,7 +184,7 @@ jobs:
           }
 
           if (-not (Test-Path $scriptFile)) {
-            Write-Error "AHK script file '${scriptFile}' not found at $(Resolve-Path $scriptFile -ErrorAction SilentlyContinue). Current working directory: $(Get-Location)." # 修正这里
+            Write-Error "AHK script file '${scriptFile}' not found at $(Resolve-Path $scriptFile -ErrorAction SilentlyContinue). Current working directory: $(Get-Location)."
             exit 1
           } else {
             Write-Host "AHK script file found: $(Resolve-Path $scriptFile)"
@@ -193,7 +193,7 @@ jobs:
           if ($iconFile -and (Test-Path $iconFile)) {
             Write-Host "Icon file found: $(Resolve-Path $iconFile)"
           } else {
-            Write-Warning "Icon file '${iconFile}' not found. Proceeding without custom icon." # 修正这里
+            Write-Warning "Icon file '${iconFile}' not found. Proceeding without custom icon."
             $iconFile = "" 
           }
 
@@ -209,7 +209,7 @@ jobs:
           }
           # 如果 64 位不存在，回退到 32 位
           if (-not (Test-Path $baseBinaryPath)) {
-              Write-Warning "64-bit base binary (${baseBinaryName}) not found. Falling back to AutoHotkey32.exe." # 修正这里
+              Write-Warning "64-bit base binary (${baseBinaryName}) not found. Falling back to AutoHotkey32.exe."
               $baseBinaryName = "AutoHotkey32.exe"
               $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
               if (-not (Test-Path $baseBinaryPath)) {
@@ -218,17 +218,17 @@ jobs:
           }
 
           if (-not (Test-Path $baseBinaryPath)) {
-              Write-Error "Could not find a suitable 64-bit or 32-bit base binary (${baseBinaryName}) in '${ahkCoreExtractPath}' or '$(${ahkCoreExtractPath})\UX'." # 修正这里
-              Write-Host "Listing contents of ${ahkCoreExtractPath}:" # 修正这里
+              Write-Error "Could not find a suitable 64-bit or 32-bit base binary (${baseBinaryName}) in '${ahkCoreExtractPath}' or '$(${ahkCoreExtractPath})\UX'."
+              Write-Host "Listing contents of ${ahkCoreExtractPath}:"
               Get-ChildItem -Path (Join-Path $PWD $ahkCoreExtractPath) -Recurse | Select-Object FullName
               exit 1
           }
 
           Write-Host "Using Ahk2Exe from PATH."
-          Write-Host "Script: ${scriptFile}" # 修正这里
-          Write-Host "Output: ${outputExe}" # 修正这里
-          Write-Host "Icon: ${iconFile}" # 修正这里
-          Write-Host "Base Binary for compilation: ${baseBinaryPath}" # 修正这里
+          Write-Host "Script: ${scriptFile}"
+          Write-Host "Output: ${outputExe}"
+          Write-Host "Icon: ${iconFile}"
+          Write-Host "Base Binary for compilation: ${baseBinaryPath}"
 
           # 构建编译参数
           $compileArgs = @("/in", "`"$scriptFile`"", "/out", "`"$outputExe`"", "/bin", "`"$baseBinaryPath`"", "/cp", "65001", "/debug") 
@@ -252,20 +252,20 @@ jobs:
           Write-Host "--- Ahk2Exe Output Start (Actual Compilation) ---"
           Write-Host $ahk2ExeOutput
           Write-Host "--- Ahk2Exe Output End (Actual Compilation) ---"
-          Write-Host "Ahk2Exe Exit Code: ${ahk2ExeExitCode}" # 修正这里
+          Write-Host "Ahk2Exe Exit Code: ${ahk2ExeExitCode}"
 
           if ($ahk2ExeExitCode -ne 0) {
-            Write-Error "Compilation failed with exit code ${ahk2ExeExitCode}. ${outputExe} not found. See Ahk2Exe output above for details." # 修正这里
+            Write-Error "Compilation failed with exit code ${ahk2ExeExitCode}. ${outputExe} not found. See Ahk2Exe output above for details."
             exit 1 # 编译失败，终止工作流
           }
 
           # 再次验证文件是否存在，以防 Ahk2Exe 退出代码为0但文件未生成
           if (-not (Test-Path $outputExe)) {
-              Write-Error "Ahk2Exe reported success (exit code 0), but '${outputExe}' was not found. This indicates an issue with Ahk2Exe itself." # 修正这里
+              Write-Error "Ahk2Exe reported success (exit code 0), but '${outputExe}' was not found. This indicates an issue with Ahk2Exe itself."
               exit 1
           }
 
-          Write-Host "${outputExe} compiled successfully." # 修正这里
+          Write-Host "${outputExe} compiled successfully."
           echo "EXE_NAME=$outputExe" >> $env:GITHUB_OUTPUT
 
       - name: Extract Version from AHK script
@@ -274,7 +274,7 @@ jobs:
         run: |
           $scriptPath = "DoroHelper.ahk" # 确保这里是您的主脚本文件路径
           if (-not (Test-Path $scriptPath)) {
-            Write-Warning "Script file '${scriptPath}' not found for version extraction. Current directory: $(Get-Location)" # 修正这里
+            Write-Warning "Script file '${scriptPath}' not found for version extraction. Current directory: $(Get-Location)"
             echo "VERSION_TAG=0.0.0" >> $env:GITHUB_OUTPUT 
             exit 0
           }
@@ -282,10 +282,10 @@ jobs:
           $match = $content | Select-String -Pattern 'currentVersion\s*:=\s*"([^"]+)"'
           if ($match) {
             $version = $match.Matches[0].Groups[1].Value
-            Write-Host "Version found: ${version}" # 修正这里
+            Write-Host "Version found: ${version}"
             echo "VERSION_TAG=$version" >> $env:GITHUB_OUTPUT
           } else {
-            Write-Warning "Version pattern (currentVersion := \"...\") not found in ${scriptPath}. Using default '0.0.0'." # 修正这里
+            Write-Warning "Version pattern (currentVersion := \"...\") not found in ${scriptPath}. Using default '0.0.0'."
             echo "VERSION_TAG=0.0.0" >> $env:GITHUB_OUTPUT
           }
 
@@ -299,7 +299,7 @@ jobs:
             IS_PRERELEASE="true"
           fi
           echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_OUTPUT
-          echo "Release version: ${VERSION_TAG}, Is Prerelease: ${IS_PRERELEASE}" # 修正这里
+          echo "Release version: ${VERSION_TAG}, Is Prerelease: ${IS_PRERELEASE}"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

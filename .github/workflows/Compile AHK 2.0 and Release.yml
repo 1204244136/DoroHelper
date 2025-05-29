@@ -109,14 +109,49 @@ jobs:
           }
           Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
 
-      - name: Extract Version from AHK script # 这个步骤仍然指向 DoroHelper.ahk 以获取版本号
+      - name: Test AutoHotkey Interpreter
+        shell: pwsh
+        run: |
+          $scriptToTest = "test_compile.ahk"
+          $ahkExeName = "AutoHotkey64.exe"
+          $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
+
+          $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath $ahkExeName
+          if (-not (Test-Path $ahkInterpreterPath)) {
+              $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath "UX" $ahkExeName 
+          }
+          if (-not (Test-Path $ahkInterpreterPath)) {
+              Write-Error "Could not find AutoHotkey interpreter ($ahkExeName) for testing."
+              exit 1
+          }
+
+          Write-Host "Attempting to run $scriptToTest with $ahkInterpreterPath..."
+          # Start-Process -FilePath $ahkInterpreterPath -ArgumentList "$scriptToTest" -Wait -NoNewWindow
+          # Above will not capture output, so we need to call directly and capture output
+          $testOutput = (& "$ahkInterpreterPath" "$scriptToTest" 2>&1)
+          $testExitCode = $LASTEXITCODE
+
+          Write-Host "--- AutoHotkey Interpreter Test Output ---"
+          Write-Host $testOutput
+          Write-Host "Interpreter Exit Code: $testExitCode"
+          Write-Host "--- End of Interpreter Test Output ---"
+
+          if ($testExitCode -ne 0) {
+              Write-Warning "Interpreter test failed with exit code $testExitCode. This might indicate an issue with the script or interpreter setup."
+              # We won't fail the workflow here, but it's a strong warning.
+          } else {
+              Write-Host "Interpreter test successful."
+          }
+
+      - name: Extract Version from AHK script
         id: get_version
         shell: pwsh
         run: |
           $scriptPath = "DoroHelper.ahk" 
           if (-not (Test-Path $scriptPath)) {
-            Write-Error "Script file '$scriptPath' not found. Current directory: $(Get-Location)"
-            exit 1
+            Write-Warning "Script file '$scriptPath' not found for version extraction. Current directory: $(Get-Location)"
+            echo "VERSION_TAG=0.0.0" >> $env:GITHUB_OUTPUT # 提供一个默认版本号
+            exit 0 # 不要在此处失败，因为我们是为了测试编译
           }
           $content = Get-Content -Path $scriptPath -Raw
           $match = $content | Select-String -Pattern 'currentVersion\s*:=\s*"([^"]+)"'
@@ -126,17 +161,17 @@ jobs:
             echo "VERSION_TAG=$version" >> $env:GITHUB_OUTPUT
           } else {
             Write-Warning "Version pattern (currentVersion := \"...\") not found in $scriptPath. Using default '0.0.0'."
-            echo "VERSION_TAG=0.0.0" >> $env:GITHUB_OUTPUT # 提供一个默认版本号
+            echo "VERSION_TAG=0.0.0" >> $env:GITHUB_OUTPUT
           }
 
-      - name: Compile AutoHotkey Script (Test Simple) # <--- 修改步骤名称以示区别
+      - name: Compile AutoHotkey Script (Test Simple)
         id: compile_script
         shell: pwsh
         run: |
           $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
-          $scriptFile = "test_compile.ahk" # <--- 修改这里：指向测试文件
+          $scriptFile = "test_compile.ahk" 
           $iconFile = "doro.ico" 
-          $outputExe = "test_compile.exe" # <--- 修改这里：输出测试可执行文件
+          $outputExe = "test_compile.exe" 
 
           Write-Host "--- Diagnosing Ahk2Exe and Dependencies (Simple Test) ---"
           Write-Host "Attempting to run Ahk2Exe.exe without arguments to get usage info..."
@@ -161,18 +196,6 @@ jobs:
           Write-Host "Listing contents of current working directory ($(Get-Location)):"
           Get-ChildItem -Path (Get-Location) -Recurse -Depth 1 | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
           Write-Host "--- End of current working directory listing ---"
-
-          # 暂时注释掉 lib 文件夹检查，因为 test_compile.ahk 没有依赖
-          # $libPath = "lib" 
-          # if (-not (Test-Path $libPath -PathType Container)) {
-          #     Write-Error "Dependency folder 'lib' not found at expected path: $(Resolve-Path $libPath -ErrorAction SilentlyContinue). This is critical for compilation."
-          #     exit 1
-          # } else {
-          #     Write-Host "Dependency folder 'lib' found: $(Resolve-Path $libPath)"
-          #     Write-Host "Listing contents of 'lib' folder ($(Resolve-Path $libPath)): "
-          #     Get-ChildItem -Path $libPath | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
-          #     Write-Host "--- End of 'lib' folder listing ---"
-          # }
 
           $baseBinaryName = "AutoHotkey64.exe"
           $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
@@ -199,7 +222,6 @@ jobs:
           Write-Host "Icon: $iconFile"
           Write-Host "Base Binary for compilation: $baseBinaryPath"
 
-          # 编译参数，移除 /include 因为 test_compile.ahk 没有依赖
           $compileArgs = @("/in", "`"$scriptFile`"", "/out", "`"$outputExe`"", "/bin", "`"$baseBinaryPath`"", "/cp", "65001", "/debug") 
           if ($iconFile -and (Test-Path $iconFile)) {
               $compileArgs += @("/icon", "`"$iconFile`"")
@@ -207,14 +229,17 @@ jobs:
 
           Write-Host "Attempting to compile with Ahk2Exe.exe..."
           Write-Host "Compilation Arguments: $($compileArgs -join ' ')" 
-          $ahk2ExeOutput = (Ahk2Exe.exe $compileArgs 2>&1)
+          $ahk2ExeOutput = (Ahk2Exe.exe $compileArgs 2>&1) # Capture stdout and stderr
+          $ahk2ExeExitCode = $LASTEXITCODE # Capture exit code immediately
+
           Write-Host "--- Ahk2Exe Output Start (Actual Compilation) ---"
           Write-Host $ahk2ExeOutput
           Write-Host "--- Ahk2Exe Output End (Actual Compilation) ---"
+          Write-Host "Ahk2Exe Exit Code: $ahk2ExeExitCode" # Log the exit code
 
-          if (-not (Test-Path $outputExe)) {
-            Write-Error "Compilation failed. $outputExe not found. See Ahk2Exe output above for details."
-            exit 1
+          if ($ahk2ExeExitCode -ne 0) {
+              Write-Error "Compilation failed with exit code $ahk2ExeExitCode. $outputExe not found. See Ahk2Exe output above for details."
+              exit 1
           }
           Write-Host "$outputExe compiled successfully."
           echo "EXE_NAME=$outputExe" >> $env:GITHUB_OUTPUT
@@ -242,6 +267,6 @@ jobs:
           draft: false
           prerelease: ${{ steps.prerelease_check.outputs.IS_PRERELEASE }}
           files: |
-            test_compile.exe # <--- 修改这里：上传测试可执行文件
+            test_compile.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

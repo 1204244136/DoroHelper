@@ -19,17 +19,20 @@ jobs:
           # 确保 Chocolatey 已安装 (GitHub Actions 的 Windows runner 通常预装了)
           # choco upgrade chocolatey # 可以选择升级 Chocolatey 到最新版本
 
-          # 安装 AutoHotkey v2。请注意，Chocolatey 包的名称和版本可能需要验证。
-          # 你可以在 https://community.chocolatey.org/packages/autohotkey 查看可用的版本和安装命令。
-          # 这里我们安装 AutoHotkey.ahk2，它是专门用于 v2 的，并且通常会包含 Ahk2Exe.exe
+          # 安装 AutoHotkey v2。不指定 --version，让 Chocolatey 自动选择最新稳定版
+          # 或者，如果你确定需要特定版本，且该版本是稳定版，可以写成 choco install autohotkey.ahk2 --version X.Y.Z -y
+          # 如果是预发布版本（例如 beta, rc），则需要加上 --pre 参数
           Write-Host "Installing AutoHotkey v2 via Chocolatey..."
-          choco install autohotkey.ahk2 --version 2.0.19 -y
+          choco install autohotkey.ahk2 -y
 
           # 验证 Ahk2Exe.exe 是否在 PATH 中
           Write-Host "Verifying Ahk2Exe command after Chocolatey install..."
           if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
             Write-Error "Ahk2Exe.exe not found in PATH after Chocolatey installation. Please check the Chocolatey package details."
             Write-Host "Current PATH: $env:PATH"
+            # 再次尝试列出 Chocolatey 安装目录的内容，以帮助调试
+            Write-Host "Listing contents of C:\Program Files\AutoHotkey after Chocolatey install:"
+            Get-ChildItem -Path "C:\Program Files\AutoHotkey" -Recurse | Select-Object FullName
             exit 1
           }
           Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
@@ -59,8 +62,6 @@ jobs:
         id: compile_script
         shell: pwsh
         run: |
-          # Chocolatey 安装通常会将 Ahk2Exe 和 AutoHotkey 解释器放在标准位置，并添加到 PATH
-          # 所以我们不再需要手动指定 AhkExtractPath 或搜索基础二进制文件
           $scriptFile = "DoroHelper.ahk"
           $iconFile = "doro.ico"
           $outputExe = "DoroHelper.exe" # 输出的 exe 文件名
@@ -76,7 +77,6 @@ jobs:
 
           # 获取 AutoHotkey v2 解释器的路径作为 /bin 参数
           # 通常是 AutoHotkey.exe 或 AutoHotkey64.exe，安装在 C:\Program Files\AutoHotkey
-          # 我们可以通过 Get-Command 找到它
           $ahkExeCommand = Get-Command AutoHotkey -ErrorAction SilentlyContinue
           if (-not $ahkExeCommand) {
               Write-Error "AutoHotkey interpreter (AutoHotkey.exe) not found in PATH. Chocolatey installation might have failed or located it elsewhere."

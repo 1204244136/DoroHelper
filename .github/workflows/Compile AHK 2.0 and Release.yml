@@ -16,7 +16,11 @@ jobs:
       - name: Download and Setup AutoHotkey v2
         shell: pwsh
         run: |
-          $ahkZipUrl = "https://www.autohotkey.com/download/ahk-v2.zip" # 官方通用下载链接
+          # 使用 GitHub Releases 的稳定下载链接，避免 Cloudflare
+          # 请定期检查 AutoHotkey GitHub Releases 页面，获取最新的稳定版本链接
+          # 例如：https://github.com/AutoHotkey/AutoHotkey/releases
+          # 这里假设最新的 v2 版本是 v2.0.17
+          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.17/AutoHotkey_2.0.19.zip" 
           $ahkExtractPath = "AutoHotkey_v2_Files"
           Write-Host "Downloading AutoHotkey v2 from $ahkZipUrl"
           Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2.zip"
@@ -35,7 +39,7 @@ jobs:
           Write-Host "Verifying Ahk2Exe command..."
           if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
             Write-Error "Ahk2Exe.exe not found in PATH. Please check extraction and PATH setup."
-            Write-Host "Contents of ${ahkExtractPath}:" # <--- 修改在这里
+            Write-Host "Contents of ${ahkExtractPath}:"
             Get-ChildItem -Path $MainAhkPath -Recurse | Select-Object FullName
             Write-Host "Current PATH: $env:PATH"
             exit 1
@@ -94,13 +98,13 @@ jobs:
                   $baseBinaryName = "AutoHotkeyU64.exe"
                   $baseBinaryPath = Join-Path $PWD $ahkExtractPath $baseBinaryName
                    if (-not (Test-Path $baseBinaryPath)) {
-                       $baseBinaryPath = Join-Path $PWD $ahkExtractPath "UX" $baseBinaryName # 检查 UX 子目录
-                       if (-not (Test-Path $baseBinaryPath)) {
-                           Write-Error "Could not find a suitable 64-bit base binary (AutoHotkey64.exe or AutoHotkeyU64.exe) in '$ahkExtractPath' or '$($ahkExtractPath)\UX'."
-                           Write-Host "Listing contents of ${ahkExtractPath}:" # <--- 同时修改这里以保持一致性
-                           Get-ChildItem -Path (Join-Path $PWD $ahkExtractPath) -Recurse | Select-Object FullName
-                           exit 1
-                       }
+                        $baseBinaryPath = Join-Path $PWD $ahkExtractPath "UX" $baseBinaryName # 检查 UX 子目录
+                        if (-not (Test-Path $baseBinaryPath)) {
+                            Write-Error "Could not find a suitable 64-bit base binary (AutoHotkey64.exe or AutoHotkeyU64.exe) in '$ahkExtractPath' or '$($ahkExtractPath)\UX'."
+                            Write-Host "Listing contents of ${ahkExtractPath}:"
+                            Get-ChildItem -Path (Join-Path $PWD $ahkExtractPath) -Recurse | Select-Object FullName
+                            exit 1
+                        }
                    }
               }
           }
@@ -120,7 +124,6 @@ jobs:
 
           if (-not (Test-Path $outputExe)) {
             Write-Error "Compilation failed. $outputExe not found."
-            # 打印 Ahk2Exe 的输出或日志（如果它生成的话）可能会有帮助，但这取决于 Ahk2Exe 的行为
             exit 1
           }
           Write-Host "$outputExe compiled successfully."

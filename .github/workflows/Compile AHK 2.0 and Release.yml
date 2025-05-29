@@ -16,34 +16,52 @@ jobs:
       - name: Install AutoHotkey v2 and Setup Ahk2Exe
         shell: pwsh
         run: |
-          Write-Host "Attempting to uninstall potentially conflicting AutoHotkey versions to ensure a clean slate..."
-          # It's okay if these fail if the packages aren't installed. The `|| Write-Warning` handles that.
+          Write-Host "Attempting to uninstall any existing Chocolatey AutoHotkey packages..."
+          # It's okay if these fail if the packages aren't installed.
+          choco uninstall autohotkey -y --remove-dependencies -nfy         || Write-Warning "Uninstall of autohotkey (choco package) skipped or failed, continuing..."
           choco uninstall autohotkey.install -y --remove-dependencies -nfy || Write-Warning "Uninstall of autohotkey.install skipped or failed, continuing..."
           choco uninstall autohotkey.v1 -y --remove-dependencies -nfy      || Write-Warning "Uninstall of autohotkey.v1 skipped or failed, continuing..."
-          # We will reinstall 'autohotkey', so try uninstalling it first to get a cleaner state
-          choco uninstall autohotkey -y --remove-dependencies -nfy         || Write-Warning "Uninstall of autohotkey (meta) skipped or failed, continuing..."
 
-          $ahkInstallDirRoot = "$env:ProgramFiles\AutoHotkey"
-          if (Test-Path $ahkInstallDirRoot) {
-            Write-Host "Removing existing AutoHotkey installation directory: $ahkInstallDirRoot to ensure a clean install."
-            Remove-Item -Recurse -Force $ahkInstallDirRoot -ErrorAction SilentlyContinue
-            Start-Sleep -Seconds 5 # Allow time for file system operations
+          # Define custom installation directory for AHK v2
+          $ahkCustomInstallDir = "$env:ProgramData\AutoHotkey_v2_Custom" # Using ProgramData to avoid permission issues and for clarity
+          $ahkDownloadUrl = "https://www.autohotkey.com/download/ahk-v2.zip" # Official link for latest v2 zip
+          $ahkZipPath = Join-Path $env:TEMP "ahk-v2.zip"
+
+          Write-Host "Ensuring clean state for custom AutoHotkey v2 installation directory: $ahkCustomInstallDir"
+          if (Test-Path $ahkCustomInstallDir) {
+            Write-Host "Removing existing directory: $ahkCustomInstallDir"
+            Remove-Item -Recurse -Force $ahkCustomInstallDir -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 3 # Give FS time
           }
+          New-Item -ItemType Directory -Path $ahkCustomInstallDir -Force | Out-Null
 
-          Write-Host "Installing AutoHotkey (should default to v2) via Chocolatey..."
-          # Using the main 'autohotkey' package, which should provide v2
-          choco install autohotkey -y --force --no-progress
-
-          $ahkInstallDir = "$env:ProgramFiles\AutoHotkey" 
-          Write-Host "AutoHotkey nominal installation directory: $ahkInstallDir"
-
-          if (-not (Test-Path $ahkInstallDir)) {
-            Write-Error "AutoHotkey installation directory '$ahkInstallDir' not found after choco install. This is unexpected."
+          Write-Host "Downloading AutoHotkey v2 from '$ahkDownloadUrl' to '$ahkZipPath'..."
+          try {
+            Invoke-WebRequest -Uri $ahkDownloadUrl -OutFile $ahkZipPath -UseBasicParsing -TimeoutSec 300
+            Write-Host "Download complete."
+          } catch {
+            Write-Error "Failed to download AutoHotkey v2: $($_.Exception.Message)"
             exit 1
           }
 
-          Write-Host "Listing all EXE files in AutoHotkey installation directory '$ahkInstallDir' with version info:"
-          Get-ChildItem -Path $ahkInstallDir -Filter "*.exe" | ForEach-Object {
+          Write-Host "Extracting '$ahkZipPath' to '$ahkCustomInstallDir'..."
+          try {
+            Expand-Archive -Path $ahkZipPath -DestinationPath $ahkCustomInstallDir -Force
+            Write-Host "Extraction complete."
+          } catch {
+            Write-Error "Failed to extract AutoHotkey v2 zip: $($_.Exception.Message)"
+            exit 1
+          }
+
+          # Verify extraction
+          if (-not (Test-Path (Join-Path $ahkCustomInstallDir "AutoHotkey64.exe"))) { # A common v2 exe name
+             Write-Error "Key AutoHotkey v2 files not found in $ahkCustomInstallDir after extraction. Listing contents:"
+             Get-ChildItem -Path $ahkCustomInstallDir -Recurse
+             exit 1
+          }
+
+          Write-Host "Listing all EXE files in AutoHotkey v2 custom installation directory '$ahkCustomInstallDir' with version info:"
+          Get-ChildItem -Path $ahkCustomInstallDir -Filter "*.exe" -Recurse | ForEach-Object {
             $versionInfo = "N/A"
             try { $versionInfo = $_.VersionInfo.ProductVersion } catch {}
             [PSCustomObject]@{
@@ -55,128 +73,117 @@ jobs:
             }
           } | Format-Table -AutoSize
 
-          # Find a suitable AutoHotkey v2 executable
+          # Find a suitable AutoHotkey v2 executable within the custom directory
           $ahkExePathToUse = ""
-          # Order of preference for v2 executables - explicitly look for v2 indicators.
-          # Chocolatey package 'autohotkey' might place AutoHotkey64.exe as v2
-          $v2ExeCandidates = Get-ChildItem -Path $ahkInstallDir -Filter "AutoHotkey*.exe" | Sort-Object Name
+          # Prefer 64-bit, then 32-bit v2 executables from the root of the custom install dir
+          $v2ExeCandidatesInOrder = @(
+            Join-Path $ahkCustomInstallDir "AutoHotkey64.exe"
+            Join-Path $ahkCustomInstallDir "AutoHotkeyUX.exe" # Some v2 distributions use this.
+            Join-Path $ahkCustomInstallDir "AutoHotkey.exe"   # If it's v2
+            Join-Path $ahkCustomInstallDir "AutoHotkey32.exe"
+          )
 
-          Write-Host "Evaluating potential AutoHotkey executables:"
-          foreach ($exeFile in $v2ExeCandidates) {
-              $currentTestPath = $exeFile.FullName
-              Write-Host "Checking candidate: '$currentTestPath'"
+          Write-Host "Evaluating potential AutoHotkey v2 executables from '$ahkCustomInstallDir':"
+          foreach ($candidatePath in $v2ExeCandidatesInOrder) {
+              if (-not (Test-Path $candidatePath)) {
+                  # Write-Host "Candidate '$candidatePath' does not exist, skipping." # Can be verbose
+                  continue
+              }
+              Write-Host "Checking candidate: '$candidatePath'"
               $fileProductVersion = ""
               try {
-                  $fileProductVersion = (Get-Item $currentTestPath).VersionInfo.ProductVersion
+                  $fileProductVersion = (Get-Item $candidatePath).VersionInfo.ProductVersion
               } catch {
-                  Write-Warning "Could not retrieve ProductVersion for '$currentTestPath'."
+                  Write-Warning "Could not retrieve ProductVersion for '$candidatePath'."
                   Continue
               }
 
-              Write-Host "ProductVersion for '$currentTestPath' is '$fileProductVersion'."
-              # AutoHotkey v2.x versions usually start with "2."
+              Write-Host "ProductVersion for '$candidatePath' is '$fileProductVersion'."
               if ($fileProductVersion -and $fileProductVersion.StartsWith("2.")) {
-                  Write-Host "'$currentTestPath' IS AutoHotkey v2 (ProductVersion: $fileProductVersion)."
-                  # Prefer executables with "64" in the name if multiple v2 found, or shorter names.
-                  if (-not $ahkExePathToUse -or ($exeFile.Name -match "64" -and $ahkExePathToUse -notmatch "64") -or ($exeFile.Name.Length -lt (Split-Path $ahkExePathToUse -Leaf).Length)) {
-                     $ahkExePathToUse = $currentTestPath
-                     Write-Host "Selected '$ahkExePathToUse' as the current best v2 candidate."
-                  }
+                  Write-Host "'$candidatePath' IS AutoHotkey v2 (ProductVersion: $fileProductVersion)."
+                  $ahkExePathToUse = $candidatePath
+                  break # Found a suitable v2 executable
               } else {
-                  Write-Warning "'$currentTestPath' (ProductVersion: $fileProductVersion) does NOT appear to be a v2 executable. Current interpreter might be v1 if this is AutoHotkey.exe."
+                  Write-Warning "'$candidatePath' (ProductVersion: $fileProductVersion) does NOT appear to be a v2 executable."
               }
           }
 
           if (-not $ahkExePathToUse) {
-              Write-Error "Could not find a confirmed AutoHotkey v2 executable in '$ahkInstallDir' after checking all candidates. Please review the EXE listing above."
+              Write-Error "Could not find a confirmed AutoHotkey v2 executable in '$ahkCustomInstallDir' after checking candidates. Please review the EXE listing above."
               exit 1
           }
           Write-Host "DEFINITIVELY Using AutoHotkey v2 executable: '$ahkExePathToUse'"
 
-          # Add AutoHotkey main directory (of the chosen executable) to PATH
-          $chosenAhkDir = Split-Path $ahkExePathToUse -Parent
-          Write-Host "Adding AutoHotkey directory '$chosenAhkDir' (containing the chosen v2 exe) to PATH for this session."
+          $chosenAhkDir = Split-Path $ahkExePathToUse -Parent # This will be $ahkCustomInstallDir
+          Write-Host "Adding AutoHotkey v2 directory '$chosenAhkDir' to PATH for this session."
           $env:PATH = "$chosenAhkDir;" + $env:PATH
 
-          # Run install-ahk2exe.ahk script
-          # The UX directory is typically relative to the *root* of the AHK installation,
-          # not necessarily the same directory as a specific AHK executable (e.g. if v2 is in a subfolder).
-          # Assuming $ahkInstallDir is the root (e.g., C:\Program Files\AutoHotkey)
-          $installScriptDir = Join-Path $ahkInstallDir "UX"
+          # Paths for install-ahk2exe.ahk and Compiler relative to our custom install directory
+          $installScriptDir = Join-Path $ahkCustomInstallDir "UX"
           $installScriptName = "install-ahk2exe.ahk"
           $installScriptFullPath = Join-Path $installScriptDir $installScriptName
 
-          $ahk2ExeCompilerDir = Join-Path $ahkInstallDir "Compiler" # Standard expected location
+          $ahk2ExeCompilerDir = Join-Path $ahkCustomInstallDir "Compiler"
           $ahk2ExeFinalPath = Join-Path $ahk2ExeCompilerDir "Ahk2Exe.exe"
 
           if (Test-Path $installScriptFullPath) {
-            Write-Host "Found '$installScriptName'. Running it with the selected v2 executable '$ahkExePathToUse' to ensure Ahk2Exe is installed..."
-            # Ensure working directory is where the script is, if it has relative includes
+            Write-Host "Found '$installScriptName'. Running it with the selected v2 executable '$ahkExePathToUse'..."
             Push-Location $installScriptDir
-            & $ahkExePathToUse /ErrorStdOut $installScriptName # Run the v2 script with the v2 executable
+            & $ahkExePathToUse /ErrorStdOut $installScriptName
             $exitCode = $LASTEXITCODE
             Pop-Location
             
             if ($exitCode -ne 0) {
-                Write-Warning "'$installScriptName' execution may have failed with exit code $exitCode. Check logs for errors from the script itself (stdout/stderr)."
-                # Continue, as it might create the folder structure anyway or partially succeed
+                Write-Warning "'$installScriptName' execution may have failed with exit code $exitCode."
             } else {
-                Write-Host "'$installScriptName' executed, exit code $exitCode (0 usually means success)."
+                Write-Host "'$installScriptName' executed, exit code $exitCode."
             }
 
-            Write-Host "Waiting briefly for Ahk2Exe installation/download to complete..."
-            Start-Sleep -Seconds 25 # Increased sleep time
+            Write-Host "Waiting for Ahk2Exe installation/download (up to 30 seconds)..."
+            Start-Sleep -Seconds 30
 
             if (Test-Path $ahk2ExeFinalPath) {
               Write-Host "Ahk2Exe.exe CONFIRMED at '$ahk2ExeFinalPath'."
             } else {
               Write-Error "Ahk2Exe.exe was NOT found at '$ahk2ExeFinalPath' after running '$installScriptName'."
-              Write-Host "Listing contents of expected Compiler directory '$ahk2ExeCompilerDir' (if it exists):"
-              if (Test-Path $ahk2ExeCompilerDir) { Get-ChildItem -Path $ahk2ExeCompilerDir -Recurse } else { Write-Host "Directory $ahk2ExeCompilerDir does not exist."}
-              Write-Host "Listing contents of UX directory '$installScriptDir' (if it exists):"
-              if (Test-Path $installScriptDir) { Get-ChildItem -Path $installScriptDir -Recurse } else { Write-Host "Directory $installScriptDir does not exist."}
-              exit 1 # Fail the job if Ahk2Exe isn't found
+              Write-Host "Listing contents of Compiler directory '$ahk2ExeCompilerDir' (if it exists):"
+              if (Test-Path $ahk2ExeCompilerDir) { Get-ChildItem -Path $ahk2ExeCompilerDir -Recurse } else { Write-Host "Directory does not exist."}
+              exit 1
             }
           } else {
-            Write-Error "'$installScriptFullPath' NOT found. Cannot setup Ahk2Exe. This script is essential."
-            Write-Host "Listing contents of expected UX directory '$installScriptDir' (if it exists):"
-            if (Test-Path $installScriptDir) { Get-ChildItem -Path $installScriptDir -Recurse } else { Write-Host "Directory $installScriptDir does not exist."}
-            Write-Host "Listing contents of AHK root directory '$ahkInstallDir' (if it exists):"
-            if (Test-Path $ahkInstallDir) { Get-ChildItem -Path $ahkInstallDir -Recurse -Depth 1} else { Write-Host "Directory $ahkInstallDir does not exist."}
-            exit 1 # Fail the job
+            Write-Error "'$installScriptFullPath' NOT found. Cannot setup Ahk2Exe."
+            Write-Host "Listing contents of UX directory '$installScriptDir' (if it exists):"
+            if (Test-Path $installScriptDir) { Get-ChildItem -Path $installScriptDir -Recurse } else { Write-Host "Directory does not exist."}
+            Write-Host "Listing contents of AHK custom root directory '$ahkCustomInstallDir' (if it exists):"
+            if (Test-Path $ahkCustomInstallDir) { Get-ChildItem -Path $ahkCustomInstallDir -Recurse -Depth 2} else { Write-Host "Directory does not exist."}
+            exit 1
           }
 
-          # Add Compiler directory to PATH if it exists and contains Ahk2Exe.exe
           if (Test-Path $ahk2ExeFinalPath) {
             Write-Host "Adding AutoHotkey Compiler directory '$ahk2ExeCompilerDir' to PATH for this session."
             $env:PATH = "$ahk2ExeCompilerDir;" + $env:PATH
-          } else {
-            Write-Warning "AutoHotkey Compiler directory '$ahk2ExeCompilerDir' or Ahk2Exe.exe missing. Ahk2Exe will likely not be found in PATH."
-            # This should have been caught above, but as a safeguard.
           }
 
           Write-Host "Final session PATH: $env:PATH"
           Start-Sleep -Milliseconds 500
 
-          # Verify AutoHotkey command (the one we chose, by its name)
           $chosenAhkExeName = Split-Path $ahkExePathToUse -Leaf
-          Write-Host "Verifying selected AutoHotkey command '$chosenAhkExeName' is in PATH..."
-          if (-not (Get-Command $chosenAhkExeName -ErrorAction SilentlyContinue)) {
-            Write-Error "$chosenAhkExeName not found using Get-Command after PATH adjustment. Current PATH: $env:PATH"
+          Write-Host "Verifying selected AutoHotkey command '$chosenAhkExeName'..."
+          $ahkCmdInfo = Get-Command $chosenAhkExeName -ErrorAction SilentlyContinue
+          if (-not $ahkCmdInfo) {
+            Write-Error "$chosenAhkExeName not found using Get-Command. PATH: $env:PATH"
             exit 1
           }
-          $ahkCmdInfo = Get-Command $chosenAhkExeName
-          Write-Host "$chosenAhkExeName found via Get-Command at: $($ahkCmdInfo.Source) (Version: $($ahkCmdInfo.Version))"
+          Write-Host "$chosenAhkExeName found at: $($ahkCmdInfo.Source)"
 
-          # Verify Ahk2Exe.exe
-          Write-Host "Verifying Ahk2Exe command is in PATH..."
-          if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
-            Write-Error "Ahk2Exe.exe not found using Get-Command after PATH adjustment. Current PATH: $env:PATH"
-            Write-Host "Re-checking expected location: $ahk2ExeFinalPath (Exists: $(Test-Path $ahk2ExeFinalPath))"
+          Write-Host "Verifying Ahk2Exe command..."
+          $ahk2ExeCmdInfo = Get-Command Ahk2Exe -ErrorAction SilentlyContinue
+          if (-not $ahk2ExeCmdInfo) {
+            Write-Error "Ahk2Exe.exe not found using Get-Command. PATH: $env:PATH"
             exit 1
           }
-          $ahk2ExeCmdInfo = Get-Command Ahk2Exe
-          Write-Host "Ahk2Exe found via Get-Command at: $($ahk2ExeCmdInfo.Source) (Version: $($ahk2ExeCmdInfo.Version))"
+          Write-Host "Ahk2Exe found at: $($ahk2ExeCmdInfo.Source)"
+          Write-Host "AutoHotkey v2 and Ahk2Exe setup complete."
 
       - name: Compile AutoHotkey Script
         id: compile_script

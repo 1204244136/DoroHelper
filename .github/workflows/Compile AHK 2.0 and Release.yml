@@ -13,106 +13,148 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install AutoHotkey and Setup Ahk2Exe
+      - name: Install AutoHotkey v2 and Setup Ahk2Exe
         shell: pwsh
         run: |
-          Write-Host "Installing AutoHotkey via Chocolatey..."
-          choco install autohotkey -y --no-progress
+          Write-Host "Attempting to uninstall potentially conflicting AutoHotkey versions to ensure a clean slate..."
+          choco uninstall autohotkey.install -y --remove-dependencies -nfy || Write-Warning "autohotkey.install not found or uninstall failed, continuing..."
+          choco uninstall autohotkey -y --remove-dependencies -nfy         || Write-Warning "autohotkey (meta) not found or uninstall failed, continuing..."
+          choco uninstall autohotkey.v1 -y --remove-dependencies -nfy      || Write-Warning "autohotkey.v1 not found or uninstall failed, continuing..."
+          # -nfy: --no-progress, --force, --yes (combines common flags)
 
-          $ahkInstallDir = "$env:ProgramFiles\AutoHotkey"
-          Write-Host "AutoHotkey nominal installation directory: $ahkInstallDir"
+          $ahkInstallDirRoot = "$env:ProgramFiles\AutoHotkey"
+          if (Test-Path $ahkInstallDirRoot) {
+            Write-Host "Removing existing AutoHotkey installation directory: $ahkInstallDirRoot to ensure a clean install."
+            Remove-Item -Recurse -Force $ahkInstallDirRoot -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 3 # Allow time for file system operations
+          }
+
+          Write-Host "Installing AutoHotkey.v2 via Chocolatey..."
+          choco install autohotkey.v2 -y --force --no-progress
+
+          $ahkInstallDir = "$env:ProgramFiles\AutoHotkey" # Standard install location for the choco package
+          Write-Host "AutoHotkey v2 nominal installation directory: $ahkInstallDir"
 
           if (-not (Test-Path $ahkInstallDir)) {
-            Write-Error "AutoHotkey installation directory '$ahkInstallDir' not found after choco install. This is unexpected."
+            Write-Error "AutoHotkey v2 installation directory '$ahkInstallDir' not found after choco install. This is unexpected."
             exit 1
           }
 
-          # 确定 AutoHotkey v2 的主执行文件路径
-          # Chocolatey 通常会将 AutoHotkey.exe (64-bit Unicode) 放在安装目录下
-          # 或者名为 AutoHotkey64.exe / AutoHotkeyU64.exe 等
-          $ahkExeName = "AutoHotkey.exe" # 默认尝试这个
-          $ahkExePath = Join-Path $ahkInstallDir $ahkExeName
-          if (-not (Test-Path $ahkExePath)) {
-              # 尝试查找其他可能的 v2 执行文件名
-              $potentialExes = Get-ChildItem -Path $ahkInstallDir -Filter "AutoHotkey*.exe" | Where-Object { $_.Name -notmatch "UIA|WindowSpy|Launcher" } | Sort-Object Name -Descending
-              if ($potentialExes.Count -gt 0) {
-                  $ahkExePath = $potentialExes[0].FullName
-                  $ahkExeName = $potentialExes[0].Name
-                  Write-Host "Found AutoHotkey v2 executable as '$ahkExePath'"
-              } else {
-                  Write-Error "Could not find a suitable AutoHotkey v2 executable in '$ahkInstallDir'."
-                  Get-ChildItem -Path $ahkInstallDir -Recurse -Depth 1 | Select-Object FullName
-                  exit 1
+          Write-Host "Listing all EXE files in AutoHotkey installation directory '$ahkInstallDir' with version info:"
+          Get-ChildItem -Path $ahkInstallDir -Filter "*.exe" | ForEach-Object {
+            $versionInfo = "N/A"
+            try { $versionInfo = $_.VersionInfo.ProductVersion } catch {}
+            [PSCustomObject]@{
+                Name = $_.Name
+                Length = $_.Length
+                ProductVersion = $versionInfo
+                FullName = $_.FullName
+            }
+          } | Format-Table -AutoSize
+
+          # Find a suitable AutoHotkey v2 executable, prioritizing common v2 names
+          $ahkExePathToUse = ""
+          # Order of preference for v2 executables
+          $v2ExeNames = @("AutoHotkey64.exe", "AutoHotkeyU64.exe", "AutoHotkey.exe") 
+
+          foreach ($exeName in $v2ExeNames) {
+              $currentTestPath = Join-Path $ahkInstallDir $exeName
+              if (Test-Path $currentTestPath) {
+                  Write-Host "Checking version of '$currentTestPath'..."
+                  $fileProductVersion = ""
+                  try {
+                      $fileProductVersion = (Get-Item $currentTestPath).VersionInfo.ProductVersion
+                  } catch {
+                      Write-Warning "Could not retrieve ProductVersion for '$currentTestPath'."
+                  }
+
+                  Write-Host "ProductVersion for '$currentTestPath' is '$fileProductVersion'."
+                  # AutoHotkey v2.x versions usually start with "2."
+                  if ($fileProductVersion -and $fileProductVersion.StartsWith("2.")) {
+                      Write-Host "'$currentTestPath' identified as AutoHotkey v2 (ProductVersion: $fileProductVersion)."
+                      $ahkExePathToUse = $currentTestPath
+                      break 
+                  } else {
+                      Write-Warning "'$currentTestPath' (ProductVersion: $fileProductVersion) does not appear to be a v2 executable or version unknown. Checking next candidate."
+                  }
               }
-          } else {
-              Write-Host "Using AutoHotkey v2 executable at '$ahkExePath'"
           }
 
-          # 将 AutoHotkey 主目录添加到 PATH，以便运行 ahk 脚本
-          Write-Host "Adding AutoHotkey core directory to PATH for this session: $ahkInstallDir"
-          $env:PATH = "$ahkInstallDir;" + $env:PATH
+          if (-not $ahkExePathToUse) {
+              Write-Error "Could not find a confirmed AutoHotkey v2 executable in '$ahkInstallDir' (tried $($v2ExeNames -join ', ')). Please check the EXE listing above."
+              exit 1
+          }
+          Write-Host "Using AutoHotkey v2 executable: '$ahkExePathToUse'"
 
-          # 运行 install-ahk2exe.ahk 脚本来安装或确认 Ahk2Exe
-          $installScriptDir = Join-Path $ahkInstallDir "UX"
+          # Add AutoHotkey main directory to PATH using the directory of the chosen executable
+          $chosenAhkDir = Split-Path $ahkExePathToUse -Parent
+          Write-Host "Adding AutoHotkey core directory ('$chosenAhkDir') to PATH for this session."
+          $env:PATH = "$chosenAhkDir;" + $env:PATH
+
+          # Run install-ahk2exe.ahk script
+          $installScriptDir = Join-Path $ahkInstallDir "UX" # UX is typically relative to the root install dir
           $installScriptName = "install-ahk2exe.ahk"
           $installScriptFullPath = Join-Path $installScriptDir $installScriptName
           $ahk2ExeCompilerDir = Join-Path $ahkInstallDir "Compiler"
           $ahk2ExeFinalPath = Join-Path $ahk2ExeCompilerDir "Ahk2Exe.exe"
 
           if (Test-Path $installScriptFullPath) {
-            Write-Host "Found '$installScriptName'. Running it with '$ahkExeName' to ensure Ahk2Exe is installed..."
-            # 使用 & 操作符和完整路径执行
-            # 添加 /ErrorStdOut 将 AHK 脚本的错误输出到 stderr，以便 Actions 捕获
-            # 切换工作目录到脚本所在目录，以防脚本依赖相对路径
+            Write-Host "Found '$installScriptName'. Running it with '$ahkExePathToUse' to ensure Ahk2Exe is installed..."
             Push-Location $installScriptDir
-            & $ahkExePath /ErrorStdOut $installScriptName # 这里假设脚本不需要额外参数，并且能静默执行
+            & $ahkExePathToUse /ErrorStdOut $installScriptName # Run the v2 script with the v2 executable
+            $exitCode = $LASTEXITCODE
             Pop-Location
             
+            if ($exitCode -ne 0) {
+                Write-Error "'$installScriptName' execution failed with exit code $exitCode. Check logs for errors from the script itself (stdout/stderr)."
+            } else {
+                Write-Host "'$installScriptName' executed successfully (exit code $exitCode)."
+            }
+
             Write-Host "Waiting a few seconds for Ahk2Exe installation/download to complete..."
-            Start-Sleep -Seconds 20 # 留出足够时间给下载和解压
+            Start-Sleep -Seconds 20 # Allow time for download and extraction
 
             if (Test-Path $ahk2ExeFinalPath) {
               Write-Host "Ahk2Exe.exe confirmed/installed at '$ahk2ExeFinalPath'."
             } else {
               Write-Warning "Ahk2Exe.exe NOT found at '$ahk2ExeFinalPath' even after running '$installScriptName'."
               Write-Host "Listing contents of Compiler directory '$ahk2ExeCompilerDir' (if it exists):"
-              if (Test-Path $ahk2ExeCompilerDir) { Get-ChildItem -Path $ahk2ExeCompilerDir }
-              # 在这里可以考虑是否要失败，或者让后续的 PATH 检查来处理
+              if (Test-Path $ahk2ExeCompilerDir) { Get-ChildItem -Path $ahk2ExeCompilerDir } else { Write-Host "Directory does not exist."}
             }
           } else {
             Write-Warning "'$installScriptFullPath' not found. Ahk2Exe might not be set up by this method."
             Write-Host "Listing contents of UX directory '$installScriptDir' (if it exists):"
-            if (Test-Path $installScriptDir) { Get-ChildItem -Path $installScriptDir }
+            if (Test-Path $installScriptDir) { Get-ChildItem -Path $installScriptDir } else { Write-Host "Directory does not exist."}
           }
 
-          # 将 Compiler 目录 (Ahk2Exe 所在地) 添加到 PATH
+          # Add Compiler directory to PATH if it exists
           if (Test-Path $ahk2ExeCompilerDir) {
             Write-Host "Adding AutoHotkey Compiler directory to PATH for this session: $ahk2ExeCompilerDir"
             $env:PATH = "$ahk2ExeCompilerDir;" + $env:PATH
           } else {
-            Write-Warning "AutoHotkey Compiler directory '$ahk2ExeCompilerDir' does not exist. Ahk2Exe will likely not be found."
+            Write-Warning "AutoHotkey Compiler directory '$ahk2ExeCompilerDir' does not exist. Ahk2Exe will likely not be found in PATH."
           }
 
-          Write-Host "Updated session PATH: $env:PATH"
-          Start-Sleep -Milliseconds 500 # 短暂等待
+          Write-Host "Final session PATH: $env:PATH"
+          Start-Sleep -Milliseconds 500
 
-          # 验证 AutoHotkey.exe (v2)
-          Write-Host "Verifying AutoHotkey command after PATH adjustment..."
-          if (-not (Get-Command $ahkExeName -ErrorAction SilentlyContinue)) {
-            Write-Error "$ahkExeName not found in PATH after PATH adjustment. Current PATH: $env:PATH"
+          # Verify AutoHotkey command (the one we chose, by its name)
+          $chosenAhkExeName = Split-Path $ahkExePathToUse -Leaf
+          Write-Host "Verifying selected AutoHotkey command '$chosenAhkExeName' is in PATH..."
+          if (-not (Get-Command $chosenAhkExeName -ErrorAction SilentlyContinue)) {
+            Write-Error "$chosenAhkExeName not found using Get-Command after PATH adjustment. Current PATH: $env:PATH"
             exit 1
           }
-          Write-Host "$ahkExeName found in PATH at: $((Get-Command $ahkExeName).Path)"
+          Write-Host "$chosenAhkExeName found via Get-Command at: $((Get-Command $chosenAhkExeName).Source)"
 
-          # 验证 Ahk2Exe.exe
-          Write-Host "Verifying Ahk2Exe command after PATH adjustment..."
+          # Verify Ahk2Exe.exe
+          Write-Host "Verifying Ahk2Exe command is in PATH..."
           if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
-            Write-Error "Ahk2Exe.exe not found in PATH after PATH adjustment. Current PATH: $env:PATH"
-            Write-Host "Checking common locations for Ahk2Exe.exe:"
-            Write-Host "Expected at: $ahk2ExeFinalPath (Exists: $(Test-Path $ahk2ExeFinalPath))"
+            Write-Error "Ahk2Exe.exe not found using Get-Command after PATH adjustment. Current PATH: $env:PATH"
+            Write-Host "Checking expected location: $ahk2ExeFinalPath (Exists: $(Test-Path $ahk2ExeFinalPath))"
             exit 1
           }
-          Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
+          Write-Host "Ahk2Exe found via Get-Command at: $((Get-Command Ahk2Exe).Source)"
 
       - name: Compile AutoHotkey Script
         id: compile_script

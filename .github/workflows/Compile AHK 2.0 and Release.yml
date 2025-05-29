@@ -13,27 +13,259 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 使用 CCCC-L/Action-Ahk2Exe 编译 AutoHotkey v2 脚本
-      - name: Compile AutoHotkey V2 Script
-        uses: CCCC-L/Action-Ahk2Exe@main
-        with:
-          in: DoroHelper.ahk # 假设您的主脚本文件是 DoroHelper.ahk
-          out: DoroHelper.exe # 输出的可执行文件名称
-          base: 64 # 编译为 64 位应用程序，如果需要 32 位可以改为 32
-
-      # !!! 新增步骤：验证编译后的 EXE 文件是否存在 !!!
-      - name: Verify Compiled Executable Exists
+      - name: List all files in the repository for debugging
         shell: pwsh
         run: |
-          $expectedExePath = "DoroHelper.exe"
-          Write-Host "Checking for compiled executable at: $(Resolve-Path $expectedExePath -ErrorAction SilentlyContinue)"
-          if (-not (Test-Path $expectedExePath)) {
-            Write-Error "Error: Compiled executable '$expectedExePath' was not found after compilation."
-            Write-Host "Listing contents of current directory for debugging:"
-            Get-ChildItem -Path (Get-Location) -Recurse -Depth 2 | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
-            exit 1 # 显式地使当前步骤失败
+          Write-Host "--- Listing all files in the repository root ($(Get-Location)) after checkout ---"
+          Get-ChildItem -Path (Get-Location) -Recurse | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
+          Write-Host "--- End of repository file listing ---"
+
+      - name: Download and Setup AutoHotkey v2 Core (v2.0.19)
+        shell: pwsh
+        run: |
+          $ahkTag = "v2.0.19" # GitHub release tag name, usually starts with 'v'
+          $ahkFileNameVersion = "2.0.19" # File name part, usually without 'v'
+
+          # 正确的文件名应该是 AutoHotkey_2.0.19.zip
+          $ahkZipFileName = "AutoHotkey_${ahkFileNameVersion}.zip" 
+          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/$ahkTag/$ahkZipFileName" 
+          $ahkExtractPath = "AutoHotkey_v2_Core_Files" 
+
+          Write-Host "Downloading AutoHotkey v2 Core from $ahkZipUrl"
+          Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2-core.zip"
+          Write-Host "Extracting AutoHotkey v2 Core to $ahkExtractPath"
+          Expand-Archive -Path "ahk-v2-core.zip" -DestinationPath $ahkExtractPath -Force
+
+          Write-Host "Listing contents of $ahkExtractPath after extraction:"
+          Get-ChildItem -Path $ahkExtractPath -Recurse | Select-Object FullName, Name, DirectoryName | Sort-Object FullName
+          Write-Host "--- End of AutoHotkey v2 Core file listing ---"
+
+          $ahkMainPath = Join-Path $PWD $ahkExtractPath
+          $ahkUXPath = Join-Path $PWD $ahkExtractPath "UX" 
+
+          if ((Test-Path "$ahkMainPath\AutoHotkey.exe") -or `
+              (Test-Path "$ahkMainPath\AutoHotkey64.exe") -or `
+              (Test-Path "$ahkUXPath\AutoHotkey.exe") -or `
+              (Test-Path "$ahkUXPath\AutoHotkey64.exe")) {
+              
+              Write-Host "AutoHotkey interpreter found in main or UX directory."
+              Write-Host "Adding $ahkMainPath to PATH (for AutoHotkey interpreter)"
+              Add-Content $env:GITHUB_PATH "$ahkMainPath"
+              if (Test-Path $ahkUXPath) {
+                  Write-Host "Adding $ahkUXPath to PATH (for AutoHotkey interpreter in UX folder)"
+                  Add-Content $env:GITHUB_PATH "$ahkUXPath"
+              }
+          } else {
+              Write-Error "AutoHotkey interpreter (e.g., AutoHotkey.exe, AutoHotkey64.exe) not found in expected paths. Check the file listing above."
+              exit 1
           }
-          Write-Host "Compiled executable '$expectedExePath' found. Proceeding with release."
+
+      - name: Download and Setup Ahk2Exe (with Retry Logic)
+        shell: pwsh
+        run: |
+          $ahk2ExeZipUrl = "https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe1.1.37.02a0a/Ahk2Exe1.1.37.02a0.zip" 
+          $ahk2ExeExtractPath = "AutoHotkey_Ahk2Exe_Files" 
+          $maxRetries = 5
+          $retryDelaySeconds = 10 # 每次重试等待10秒
+          $attempt = 0
+          $success = $false
+
+          while ($attempt -lt $maxRetries -and -not $success) {
+              $attempt++
+              Write-Host "Attempt $attempt of $maxRetries: Downloading Ahk2Exe from $ahk2ExeZipUrl"
+              try {
+                  # 使用 -ErrorAction Stop 确保 Invoke-WebRequest 失败时抛出异常
+                  Invoke-WebRequest -Uri $ahk2ExeZipUrl -OutFile "ahk2exe.zip" -ErrorAction Stop
+                  $success = $true
+                  Write-Host "Ahk2Exe downloaded successfully."
+              } catch {
+                  Write-Warning "Download failed: $($_.Exception.Message)"
+                  if ($attempt -lt $maxRetries) {
+                      Write-Host "Retrying in $retryDelaySeconds seconds..."
+                      Start-Sleep -Seconds $retryDelaySeconds
+                  }
+              }
+          }
+
+          if (-not $success) {
+              Write-Error "Failed to download Ahk2Exe after $maxRetries attempts."
+              exit 1
+          }
+
+          Write-Host "Extracting Ahk2Exe to $ahk2ExeExtractPath"
+          Expand-Archive -Path "ahk2exe.zip" -DestinationPath $ahk2ExeExtractPath -Force
+
+          Write-Host "Listing contents of $ahk2ExeExtractPath after extraction:"
+          Get-ChildItem -Path $ahk2ExeExtractPath -Recurse | Select-Object FullName, Name, DirectoryName | Sort-Object FullName
+          Write-Host "--- End of Ahk2Exe file listing ---"
+
+          $ahk2ExeBinPath = Join-Path $PWD $ahk2ExeExtractPath 
+
+          if (Test-Path "$ahk2ExeBinPath\Ahk2Exe.exe") {
+              Write-Host "Found Ahk2Exe.exe in: $ahk2ExeBinPath"
+              Write-Host "Adding $ahk2ExeBinPath to PATH (for Ahk2Exe.exe)"
+              Add-Content $env:GITHUB_PATH "$ahk2ExeBinPath"
+          } else {
+              Write-Error "Ahk2Exe.exe not found in '$ahk2ExeBinPath'. Check the Ahk2Exe file listing above."
+              exit 1
+          }
+
+      - name: Verify Ahk2Exe in PATH
+        shell: pwsh
+        run: |
+          Write-Host "Verifying Ahk2Exe command in new PowerShell session..."
+          if (-not (Get-Command Ahk2Exe -ErrorAction SilentlyContinue)) {
+            Write-Error "Ahk2Exe.exe not found in PATH. This is unexpected after previous setup."
+            Write-Host "Current PATH: $env:PATH"
+            exit 1
+          }
+          Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
+
+      - name: Test AutoHotkey Interpreter (Optional but good for debugging)
+        shell: pwsh
+        run: |
+          $scriptToTest = "test_compile.ahk" # 或者 DoroHelper.ahk
+          $ahkExeName = "AutoHotkey64.exe" 
+          $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
+
+          $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath $ahkExeName
+          if (-not (Test-Path $ahkInterpreterPath)) {
+              $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath "UX" $ahkExeName 
+          }
+          if (-not (Test-Path $ahkInterpreterPath)) {
+              Write-Warning "64-bit interpreter ($ahkExeName) not found for testing. Falling back to AutoHotkey32.exe."
+              $ahkExeName = "AutoHotkey32.exe"
+              $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath $ahkExeName
+              if (-not (Test-Path $ahkInterpreterPath)) {
+                  $ahkInterpreterPath = Join-Path $PWD $ahkCoreExtractPath "UX" $ahkExeName 
+              }
+          }
+
+          if (-not (Test-Path $ahkInterpreterPath)) {
+              Write-Error "Could not find any AutoHotkey interpreter for testing in '$ahkCoreExtractPath'."
+              Get-ChildItem -Path (Join-Path $PWD $ahkCoreExtractPath) -Recurse | Select-Object FullName, Name
+              exit 1
+          }
+
+          Write-Host "Attempting to run $scriptToTest with $ahkInterpreterPath..."
+          $testOutput = (& "$ahkInterpreterPath" "$scriptToTest" 2>&1)
+          $testExitCode = $LASTEXITCODE
+
+          Write-Host "--- AutoHotkey Interpreter Test Output ---"
+          Write-Host $testOutput
+          Write-Host "Interpreter Exit Code: $testExitCode"
+          Write-Host "--- End of Interpreter Test Output ---"
+          if ($testExitCode -ne 0) {
+              Write-Warning "Interpreter test failed with exit code $testExitCode. This might indicate an issue with the script or interpreter setup."
+          } else {
+              Write-Host "Interpreter test successful."
+          }
+
+      - name: Compile AutoHotkey Script (Detailed Error Logging)
+        id: compile_script
+        shell: pwsh
+        run: |
+          $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
+          $scriptFile = "DoroHelper.ahk" # 使用您的实际脚本名称
+          $iconFile = "doro.ico" 
+          $outputExe = "DoroHelper.exe" # 输出 EXE 的名称
+
+          Write-Host "--- Diagnosing Ahk2Exe and Dependencies ---"
+          Write-Host "Attempting to run Ahk2Exe.exe without arguments to get usage info..."
+          # 运行 Ahk2Exe.exe 并捕获其所有输出
+          try {
+              $ahk2ExeHelpOutput = (& Ahk2Exe.exe 2>&1)
+              Write-Host "Ahk2Exe.exe no-arg output:"
+              Write-Host $ahk2ExeHelpOutput
+          } catch {
+              Write-Error "Failed to run Ahk2Exe.exe without arguments. Is it in PATH correctly? Error: $($_.Exception.Message)"
+              exit 1
+          }
+
+          if (-not (Test-Path $scriptFile)) {
+            Write-Error "AHK script file '$scriptFile' not found at $(Resolve-Path $scriptFile -ErrorAction SilentlyContinue). Current working directory: $(Get-Location)."
+            exit 1
+          } else {
+            Write-Host "AHK script file found: $(Resolve-Path $scriptFile)"
+          }
+
+          if ($iconFile -and (Test-Path $iconFile)) {
+            Write-Host "Icon file found: $(Resolve-Path $iconFile)"
+          } else {
+            Write-Warning "Icon file '$iconFile' not found. Proceeding without custom icon."
+            $iconFile = "" 
+          }
+
+          Write-Host "Listing contents of current working directory ($(Get-Location)):"
+          Get-ChildItem -Path (Get-Location) -Recurse -Depth 1 | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
+          Write-Host "--- End of current working directory listing ---"
+
+          # 优先尝试使用 64 位基础二进制文件进行编译
+          $baseBinaryName = "AutoHotkey64.exe" 
+          $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
+          if (-not (Test-Path $baseBinaryPath)) {
+              $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName 
+          }
+          # 如果 64 位不存在，回退到 32 位
+          if (-not (Test-Path $baseBinaryPath)) {
+              Write-Warning "64-bit base binary ($baseBinaryName) not found. Falling back to AutoHotkey32.exe."
+              $baseBinaryName = "AutoHotkey32.exe"
+              $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
+              if (-not (Test-Path $baseBinaryPath)) {
+                  $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath "UX" $baseBinaryName 
+              }
+          }
+
+          if (-not (Test-Path $baseBinaryPath)) {
+              Write-Error "Could not find a suitable 64-bit or 32-bit base binary ($baseBinaryName) in '$ahkCoreExtractPath' or '$($ahkCoreExtractPath)\UX'."
+              Write-Host "Listing contents of ${ahkCoreExtractPath}:"
+              Get-ChildItem -Path (Join-Path $PWD $ahkCoreExtractPath) -Recurse | Select-Object FullName
+              exit 1
+          }
+
+          Write-Host "Using Ahk2Exe from PATH."
+          Write-Host "Script: $scriptFile"
+          Write-Host "Output: $outputExe"
+          Write-Host "Icon: $iconFile"
+          Write-Host "Base Binary for compilation: $baseBinaryPath"
+
+          # 构建编译参数
+          $compileArgs = @("/in", "`"$scriptFile`"", "/out", "`"$outputExe`"", "/bin", "`"$baseBinaryPath`"", "/cp", "65001", "/debug") 
+          if ($iconFile -and (Test-Path $iconFile)) {
+              $compileArgs += @("/icon", "`"$iconFile`"")
+          }
+
+          Write-Host "Attempting to compile with Ahk2Exe.exe..."
+          Write-Host "Compilation Arguments: $($compileArgs -join ' ')" 
+
+          # !!! 关键改进：直接执行 Ahk2Exe 并捕获其所有输出和退出代码 !!!
+          $ahk2ExeOutput = ""
+          try {
+              $ahk2ExeOutput = (& Ahk2Exe.exe $compileArgs 2>&1 | Out-String) # 捕获所有输出
+              $ahk2ExeExitCode = $LASTEXITCODE
+          } catch {
+              Write-Error "Executing Ahk2Exe.exe failed. Error: $($_.Exception.Message)"
+              exit 1
+          }
+
+          Write-Host "--- Ahk2Exe Output Start (Actual Compilation) ---"
+          Write-Host $ahk2ExeOutput
+          Write-Host "--- Ahk2Exe Output End (Actual Compilation) ---"
+          Write-Host "Ahk2Exe Exit Code: $ahk2ExeExitCode" 
+
+          if ($ahk2ExeExitCode -ne 0) {
+            Write-Error "Compilation failed with exit code $ahk2ExeExitCode. $outputExe not found. See Ahk2Exe output above for details."
+            exit 1 # 编译失败，终止工作流
+          }
+
+          # 再次验证文件是否存在，以防 Ahk2Exe 退出代码为0但文件未生成
+          if (-not (Test-Path $outputExe)) {
+              Write-Error "Ahk2Exe reported success (exit code 0), but '$outputExe' was not found. This indicates an issue with Ahk2Exe itself."
+              exit 1
+          }
+
+          Write-Host "$outputExe compiled successfully."
+          echo "EXE_NAME=$outputExe" >> $env:GITHUB_OUTPUT
 
       - name: Extract Version from AHK script
         id: get_version
@@ -79,6 +311,6 @@ jobs:
           draft: false
           prerelease: ${{ steps.prerelease_check.outputs.IS_PRERELEASE }}
           files: |
-            DoroHelper.exe # 确保这里与 Compile AutoHotkey V2 Script 步骤的 'out' 参数一致
+            DoroHelper.exe # 确保这里与 Compile AutoHotkey Script 步骤的 'outputExe' 变量一致
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

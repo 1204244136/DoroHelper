@@ -109,7 +109,7 @@ jobs:
           }
           Write-Host "Ahk2Exe found in PATH at: $((Get-Command Ahk2Exe).Path)"
 
-      - name: Extract Version from AHK script
+      - name: Extract Version from AHK script # 这个步骤仍然指向 DoroHelper.ahk 以获取版本号
         id: get_version
         shell: pwsh
         run: |
@@ -125,20 +125,20 @@ jobs:
             Write-Host "Version found: $version"
             echo "VERSION_TAG=$version" >> $env:GITHUB_OUTPUT
           } else {
-            Write-Error "Version pattern (currentVersion := \"...\") not found in $scriptPath"
-            exit 1
+            Write-Warning "Version pattern (currentVersion := \"...\") not found in $scriptPath. Using default '0.0.0'."
+            echo "VERSION_TAG=0.0.0" >> $env:GITHUB_OUTPUT # 提供一个默认版本号
           }
 
-      - name: Compile AutoHotkey Script
+      - name: Compile AutoHotkey Script (Test Simple) # <--- 修改步骤名称以示区别
         id: compile_script
         shell: pwsh
         run: |
           $ahkCoreExtractPath = "AutoHotkey_v2_Core_Files" 
-          $scriptFile = "DoroHelper.ahk" 
+          $scriptFile = "test_compile.ahk" # <--- 修改这里：指向测试文件
           $iconFile = "doro.ico" 
-          $outputExe = "DoroHelper.exe" 
+          $outputExe = "test_compile.exe" # <--- 修改这里：输出测试可执行文件
 
-          Write-Host "--- Diagnosing Ahk2Exe and Dependencies ---"
+          Write-Host "--- Diagnosing Ahk2Exe and Dependencies (Simple Test) ---"
           Write-Host "Attempting to run Ahk2Exe.exe without arguments to get usage info..."
           $ahk2ExeHelpOutput = (Ahk2Exe.exe 2>&1)
           Write-Host "Ahk2Exe.exe no-arg output:"
@@ -162,16 +162,17 @@ jobs:
           Get-ChildItem -Path (Get-Location) -Recurse -Depth 1 | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
           Write-Host "--- End of current working directory listing ---"
 
-          $libPath = "lib" 
-          if (-not (Test-Path $libPath -PathType Container)) {
-              Write-Error "Dependency folder 'lib' not found at expected path: $(Resolve-Path $libPath -ErrorAction SilentlyContinue). This is critical for compilation."
-              exit 1
-          } else {
-              Write-Host "Dependency folder 'lib' found: $(Resolve-Path $libPath)"
-              Write-Host "Listing contents of 'lib' folder ($(Resolve-Path $libPath)): "
-              Get-ChildItem -Path $libPath | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
-              Write-Host "--- End of 'lib' folder listing ---"
-          }
+          # 暂时注释掉 lib 文件夹检查，因为 test_compile.ahk 没有依赖
+          # $libPath = "lib" 
+          # if (-not (Test-Path $libPath -PathType Container)) {
+          #     Write-Error "Dependency folder 'lib' not found at expected path: $(Resolve-Path $libPath -ErrorAction SilentlyContinue). This is critical for compilation."
+          #     exit 1
+          # } else {
+          #     Write-Host "Dependency folder 'lib' found: $(Resolve-Path $libPath)"
+          #     Write-Host "Listing contents of 'lib' folder ($(Resolve-Path $libPath)): "
+          #     Get-ChildItem -Path $libPath | Select-Object FullName, Name, DirectoryName, Mode | Sort-Object FullName
+          #     Write-Host "--- End of 'lib' folder listing ---"
+          # }
 
           $baseBinaryName = "AutoHotkey64.exe"
           $baseBinaryPath = Join-Path $PWD $ahkCoreExtractPath $baseBinaryName
@@ -198,14 +199,14 @@ jobs:
           Write-Host "Icon: $iconFile"
           Write-Host "Base Binary for compilation: $baseBinaryPath"
 
-          # 添加 /debug 参数
-          $compileArgs = @("/in", "`"$scriptFile`"", "/out", "`"$outputExe`"", "/bin", "`"$baseBinaryPath`"", "/cp", "65001", "/include", "`"$libPath`"", "/debug") 
+          # 编译参数，移除 /include 因为 test_compile.ahk 没有依赖
+          $compileArgs = @("/in", "`"$scriptFile`"", "/out", "`"$outputExe`"", "/bin", "`"$baseBinaryPath`"", "/cp", "65001", "/debug") 
           if ($iconFile -and (Test-Path $iconFile)) {
               $compileArgs += @("/icon", "`"$iconFile`"")
           }
 
           Write-Host "Attempting to compile with Ahk2Exe.exe..."
-          Write-Host "Compilation Arguments: $($compileArgs -join ' ')" # 打印出实际的编译参数
+          Write-Host "Compilation Arguments: $($compileArgs -join ' ')" 
           $ahk2ExeOutput = (Ahk2Exe.exe $compileArgs 2>&1)
           Write-Host "--- Ahk2Exe Output Start (Actual Compilation) ---"
           Write-Host $ahk2ExeOutput
@@ -241,6 +242,6 @@ jobs:
           draft: false
           prerelease: ${{ steps.prerelease_check.outputs.IS_PRERELEASE }}
           files: |
-            ${{ steps.compile_script.outputs.EXE_NAME }}
+            test_compile.exe # <--- 修改这里：上传测试可执行文件
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -20,7 +20,7 @@ jobs:
           # 请定期检查 AutoHotkey GitHub Releases 页面，获取最新的稳定版本链接
           # 例如：https://github.com/AutoHotkey/AutoHotkey/releases
           # 这里假设最新的 v2 版本是 v2.0.17
-          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.17/AutoHotkey_2.0.19.zip" 
+          $ahkZipUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19.zip" 
           $ahkExtractPath = "AutoHotkey_v2_Files"
           Write-Host "Downloading AutoHotkey v2 from $ahkZipUrl"
           Invoke-WebRequest -Uri $ahkZipUrl -OutFile "ahk-v2.zip"

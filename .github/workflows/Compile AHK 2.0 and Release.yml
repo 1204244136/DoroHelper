@@ -63,7 +63,7 @@ jobs:
       - name: Download and Setup Ahk2Exe (Direct URL) # 直接使用提供的下载链接
         shell: pwsh
         run: |
-          $ahk2ExeZipUrl = "https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe1.1.37.02a0a/Ahk2Exe1.1.37.02a0.zip" # 您提供的直接下载链接
+          $ahk2ExeZipUrl = "https://github.abskoop.workers.dev/https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe1.1.37.02a0a/Ahk2Exe1.1.37.02a0.zip " # 您提供的直接下载链接
           $ahk2ExeExtractPath = "AutoHotkey_Ahk2Exe_Files" 
 
           Write-Host "Downloading Ahk2Exe from $ahk2ExeZipUrl"

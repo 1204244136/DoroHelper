@@ -287,7 +287,7 @@ doroGui.Tips.SetTip(cbSimulationOverClock, "勾选后，自动进行模拟室超
 TextTowerTitleBattle := doroGui.Add("Text", "R1.2 xs Section +0x0100", "===无限之塔===")
 doroGui.Tips.SetTip(TextTowerTitleBattle, "设置与无限之塔挑战相关的选项")
 cbCompanyTower := AddCheckboxSetting(doroGui, "CompanyTower", "爬企业塔", "R1.2")
-doroGui.Tips.SetTip(cbCompanyTower, "勾选后，自动挑战当前可进入的所有企业塔，直到无法通关或每日次数用尽")
+doroGui.Tips.SetTip(cbCompanyTower, "勾选后，自动挑战当前可进入的所有企业塔，直到无法通关或每日次数用尽`r`n只要有一个是0/3就会判定为打过了从而跳过该任务")
 cbUniversalTower := AddCheckboxSetting(doroGui, "UniversalTower", "爬通用塔", "R1.2")
 doroGui.Tips.SetTip(cbUniversalTower, "勾选后，自动挑战通用无限之塔，直到无法通关")
 Tab.UseTab("奖励")
@@ -1888,7 +1888,7 @@ SimulationOverClock() {
     }
     Text := "|<25>*121$44.U00y000k007U00A000s003000C000k001000DzzUEDzzzzw63zzzzz1Uzzzk00M00Dk006000w003U00C001s001U00y0000Dzzzzw03zzzzz00zzzzzk0001U000000E0010006000s001U00S000M00DU"
     if (ok := !FindText(&X := "wait", &Y := 5, NikkeX, NikkeY, NikkeX + NikkeW, NikkeY + NikkeH, 0.1 * PicTolerance, 0.1 * PicTolerance, Text, , 0, , , , , TrueRatio, TrueRatio)) {
-        AddLog("未选择难度！跳过")
+        AddLog("难度不是25！跳过")
         return
     }
     Text := "|<开始模拟>*177$110.zzzzzzzzzzTztzzzzzzzzzzlzszzXwQDwTzyT0003wTwDzkw00z7Xz3U000T7z7zwC007lsTks000DlzVzz3U01wS0wS0003wTsszkz73z3UD7z3wDw0QCDk3ttz08Flzkz3y077ls0k07U2AQTwDkzU1VwD0A00w1X37z3wDyAEE3wD00Tlsslzkz3zX000T3lz7wSCATwDkzsl007kM00z7XX7U008QQEDlw200Tkszlk00076Dzzy0Vz3w2DsQ0001lXzzzU000w0XyDU000w8s03k000S0MzXzlz3z0C00w3z1zUCCkTsTkzw3U0C0zszx7U47y7wDzUszXUC007ls00zVz3zsCDss3001wS0UDkzkzy1XyDMk00T7UM1sDwDz0MzXyDs1zlkQ8Q7z3zVa7kzXwADwQC763zkzkTU0Dss70S7b1k0zwDwDs03wA3s71zkwMTz3z7y60z33zXkTyTjTzlzzzbzTtzzzyzzzzU"

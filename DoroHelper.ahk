@@ -2837,11 +2837,11 @@ Activity() {
         FindText().Click(X, Y, "L")
         Sleep 3000
         Text红 := "|<红色的关卡的循环图标>B40000-0.70$61.00000000000000000000000000000000000000000000000000000000000000000000000000001U000000000w000000000TU0000003zzsDzs0001zzz7zw0000zzzvzy0000Tzztzz0000DzzkzzU0007kTU07k0003sD003s0001w7001w0000y2000y0000T0000T0000DU000DU0007k0007k0003s0063s0001w00D1w0000y00TUy0000T00TkT0000DzkzzzU0007ztzzzk0003zwzzzs0001zy7zzw0000000zU000000007k000000001s000000000A00000000000000000000000000000000000000000000000000004"
-        Text黄 := "|<黄色的关卡的循环图标>FAA71A-323232$33.0600000w00007s007zzkTzzzz3zzzzsTzzzw3zz0y007s7U00z0k007s0000z00007s0000z00007s0000z000E7s00C0z007k7zw3zzzzUzzzzwDzzzzkTzz000y00001k0000604"
+        Text黄 := "|<黄色的关卡的循环图标>F5A317-0.60$49.0000000000000000000000000000000000000000000000000000A00000007U0000003w00000Dzz1zy00DzzszzU07zzyTzk03zzyDzs01zzw7zw00y3w00y00T1s00T00DUk00DU07k0007k03s0003s01w0001w00y0000y00T000kT00DU01sDU07k03w7k03s03y3s01zy7zzw00zzDzzy00TzXzzz00DzkTzz000007w0000000y0000000700000000U000000000000000001"
         if (ok := FindText(&X := "wait", &Y := 3, NikkeX, NikkeY, NikkeX + NikkeW, NikkeY + NikkeH, 0.1 * PicTolerance, 0.1 * PicTolerance, Text红, , 0, , , , , TrueRatio, TrueRatio)) {
             FindText().Click(X, Y, "L")
         }
-        else if (ok := FindText(&X, &Y, NikkeX, NikkeY, NikkeX + NikkeW, NikkeY + NikkeH, 0.2 * PicTolerance, 0.2 * PicTolerance, Text黄, 0, 0, , , , 3, TrueRatio, TrueRatio)) {
+        else if (ok := FindText(&X, &Y, NikkeX, NikkeY, NikkeX + NikkeW, NikkeY + NikkeH, 0.1 * PicTolerance, 0.1 * PicTolerance, Text黄, 0, 0, , , , 3, TrueRatio, TrueRatio)) {
             FindText().Click(X, Y, "L")
         }
         Text := "|<快速战斗的图标>*194$29.UD0TzUD0TzUD0TzUD0TzUD0TzUD0TzUD0TzUD0TzUD0TzUD0TzUD0Ty0w1zs3k7zUD0Ty0w1zs3k7zUD0Ty0w1zs3k7zUD0Ty0w1zs3k7zs"

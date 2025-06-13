@@ -191,6 +191,9 @@ doroGui.Tips.SetTip(TextTestModeLabel, "直接执行对应任务")
 TestModeEditControl := doroGui.Add("Edit", "x+10 yp-5 w145  h20")
 doroGui.Tips.SetTip(TestModeEditControl, "输入要执行的任务的函数名")
 BtnTestMode := doroGui.Add("Button", "x+5", "←启动").OnEvent("Click", TestMode)
+TextActivityShopLabel := doroGui.Add("Text", "xs R1.2 Section +0x0100", "一键购买当前活动商店")
+doroGui.Tips.SetTip(TextActivityShopLabel, "一键买完当前活动商店内除战斗数据盒、循环能量、芯尘、信用点及珠宝商品外的所有物品")
+BtnActivityShop := doroGui.Add("Button", "x+5 yp-5", "←启动").OnEvent("Click", ActivityShop)
 Tab.UseTab("任务")
 TextTaskInfo := doroGui.Add("Text", " R1.2 +0x0100", "只有下方的内容被勾选后才会执行，右侧是详细设置")
 cbShop := AddCheckboxSetting(doroGui, "Shop", "商店购买", "R1.2")
@@ -3214,6 +3217,127 @@ TestMode(BtnTestMode, Info) {
     ; 尝试动态调用函数
     Initialization()
     %funcName%() ; 无参数调用
+}
+;一键购买活动商店
+ActivityShop(*) {
+    Initialization
+    BackToHall
+    Text := "|<作战出击的出击>*200$78.zzkDzzzzzzzzzzzkDzzzzzzzzzsDkDzzzzzzzzzsDkDzzzzzzzzzsDkDsDzzzsDzzsDkDs7zzzsDzzsDkDs7zzzsDzzsDkDs7zUzsDzzsDkDs7zU007zzsDkDs7zU0007zs7kDs7zU00003s007s7zU00003s00007zzs0003s00007zzzk003s00007zzzs7y3zw0007zzzsDzzzzk007y0zsDzz0zkDzDw0007zz0zkDzzy0000Dz0zkDzzy0000000zkDw3y0000000zkDw1zzk00000zkDw1zzzk0000zkDw1zrzs7s00zkDw1zkTsDzz0zkDw1zkDsDzz0TkDw1zkDsDsD000Dw1zkDsDs70001w1zkDsDs7000001zkDsDs7U00001zkDsDs7z00001zkDsDs7zzw001zk0k7s7zzzzU1zk003s7zzzzw1zk00007zzzzw1zk00007zzzzzzzy00007zzzzzzzzzs007zzzzzzzzzzz07zzzzzzzzzzzs7zzzzzzzzzzzzjU"
+    if (ok := FindText(&X, &Y, NikkeX, NikkeY, NikkeX + NikkeW, NikkeY + NikkeH, 0.1 * PicTolerance, 0.1 * PicTolerance, Text, , 0, , , , , TrueRatio, TrueRatio)) {
+        FindText().Click(X, Y + 100 * TrueRatio, "L")
+        Sleep 1000
+    }
+    AddLog("===活动商店任务开始===")
+    Sleep 1000
+    Confirm
+    AddLog("尝试进入活动商店")
+    Text := "|<商店>**50$39.0DU07k3zzw0z0zszzyTy007zVzk00w00TtszXVzTDDgzTvkkxalzM01gq0PAFBak3Na9gyDv0sBblyM01gk0n81hY06PCRtXwnE3jATaO0RtU0nTwDA06PxXzrwns7zzzyC0S0A3Y"
+    if (ok := FindText(&X := "wait", &Y := 10, NikkeX, NikkeY, NikkeX + NikkeW, NikkeY + NikkeH, 0.1 * PicTolerance, 0.1 * PicTolerance, Text, , 0, , , , , TrueRatio, TrueRatio)) {
+        FindText().Click(X, Y, "L")
+        Sleep 3000
+    }
+    else{
+        AddLog("未找到活动商店，任务结束")
+        return
+    }
+    Text := "|<购买全部>**50$77.03k00003s0T00zzkDzzkDk0yTxztyzzzUtkD7zu0nzU033VsSDUIt3zzr6S9sU38dm0/ziTssxXCnG0wL6Qz3sziRaY1wzYzsDsTAtB8RtntykTUwFkmEvnXnzw07k0YoVbbbbzzXzzzNd39C47wT7nzyvGaEM008yDXlxmls1zlzl0160PZnnnzXzXsyAsm/Vzby8zzlzttUyNzDkwDzXznXDdvMQ7yD007U6yTynhyTzzzzDRUxxzTkDjzzzzz001sQ00000Dbw4"
+    if (ok := FindText(&X := "wait", &Y := 10, NikkeX, NikkeY, NikkeX + NikkeW, NikkeY + NikkeH, 0.1 * PicTolerance, 0.1 * PicTolerance, Text, , 0, , , , , TrueRatio, TrueRatio)) {
+        FindText().Click(X, Y, "L")
+        AddLog("开始购买")
+        Sleep 1000
+    }
+    else{
+        AddLog("未找到购买全部按钮")
+        return
+    }
+    ; 定义所有可购买物品的信息 (使用 Map)
+    PurchaseItems := Map(
+        "高级招募券", {
+            Text: "|<高级招募券>**50$93.0Q070077zXzzUNvbzzktzktzwzzy3jQzryDBq7DybzzlzrrU1llyVzzw804Cvy80ARrIRnnVzzVyzlzx3iunyQQ80A8I2C0crbL77jVE5Xyztzz3wjctxw80AQzb808T5b7zD1k7WaAjU1lygvyj0s0CQUbzzyRhjRrzbe1nrwzk7nxzlwzwX5WTjzu1iMja77yaH4FRzbMRkToUssIzzz1ssu3iTZb77yaXvkT77Txnzzxszo3xkDrsvzyQzzD7zVyy1wT707U3ANszwD7U73kU",
+            Tolerance: 0.1 * PicTolerance
+        },
+        "招募券", {
+            Text: "|<招募券>**50$59.C000QS04QkSTzDzzkRvkxvyTzzUzr3zroEV67zvjwcsTzsDrzTvlkU1kEc2TbbVE2VVECSyz2013wzwzxy70C7DtvxVM8046MPCvytk0CQlrzrxnbSQxzjTDzZ849yzSSSTS59kBzUwsSTzrUS71tzwoTz1wS7nzs/lkDnwD7zkzTUT7kSDzVsy0QDV",
+            Tolerance: 0.1 * PicTolerance
+        },
+        "技能手册1", {
+            Text: "|<技能手册1>**50$89.D1s3kw00Dk00000S3k7tv1zzkTzy00wzwRvz7wzUzjw0vzzxtryDxk1zTs1zzzvybk0/03ivk3zzzbzyQErw7RrU7zVs00ztzjwCvj0CSTyDwznzTsxrS0QxxyTtzXzznivy0vzzwkHU07U7Q7Q1zznlUb8zzzjyzs3xrbXxDtznzDNrU7z7y62TnzjySnj0CSDwCIy3zzsxbS0QwAkTdl03k1nCw0tttktHbU7U3aNs1zzztXjz3z0DQzk3zTjnjTw7w0Tzj03yQ7byTkDk0PyS01",
+            Tolerance: 0.1 * PicTolerance
+        },
+        "爆裂手册1", {
+            Text: "|<爆裂手册1>**50$91.7DzbzUs07s000003bznzzQTzw3zzU01n0Nk/iDty3yTk1sxMwBZr7zs1zDs0xzU6TqvU3k0tbQ0KxSDDDRk1zsQni0/EW9WzCszryCNr05fzJkL3QTvz7Avk2xritzsyDzzDzzQ1Tu14ESG07U703i0gtyzPzzrzzxzbr0KSrRDwTnzDyQnD0/Dunq7sNzrzCNb05ajMs/wwTzz7AnU2nxzttbw0D03atk1PwoEwzg07U3nQs0hrtyDTzUzk1z7w0Ssyz1zbkDs0vyy0681t0T1s7s0RvS00E",
+            Tolerance: 0.1 * PicTolerance
+        },
+        "技能手册2", {
+            Text: "|<技能手册2>**50$93.s70C3U01y00000070s3qQUzzsDzz000tzwTny7xz1zTs0sTzjbjLkzz0Dtz0Dbjxwrus07U1nAs1gpzjbzoMUzwCNb0Baw500GzbzzVnAs1grDj3zTszbwSPrUBaxxwzvz7zzbzzy1gpjxa3L00w0vixkBajtckPaDzznzzw1grbD7zTnzbzCvj0BaszssuzTzztrQs1gr3y7jLVTzwCvb0BasMUzuW07U1rQs1gr7777IQ0w0Svj0BavzytuzVzU3yDs1wzTjbSTs7s0RzT073lkwvlz0z03DPk004",
+            Tolerance: 0.1 * PicTolerance
+        },
+        "爆裂手册2", {
+            Text: "|<爆裂手册2>**50$95.QTyDz3U0TU000000tzyTzzXzzUzzw001n0Qs1bDtz1zTs1svyjMmHCDzU3yzk3lzw0rzaQ0S07RrU7XoyDj7QsVzwCPb0B6fEK5CtnzTsQrC0OBTpyDkHbyzlviw0oOneQzQy7zzbzrw1crY09Uxg0D0CsCQ3FbShrzzRzzzRxzk6XCLDjwTPzbySvj0B6TdbADErzTwxrS0OBznC3zbbzzlviw0oPwrtxby07U3rRs1crtVXvzM0D07Avk3FizDVrzw7y0StzU7XsTz1zbsDs0zzS063U7Y1s3UTU0rww001",
+            Tolerance: 0.1 * PicTolerance
+        },
+        "芯尘盒", {
+            Text: "|<芯尘盒>**50$59.3Vk07U01s073U0D007k3zzw7Ss0Ts7rvsSxs3tyDjrltvsySzjkz7nntzzS3hkD7Xnk0w0w0QD3Wzz00w0E+010+0Rs00w02UI7xvU1s07zsAvbXzzkM0MtkD7wzVzztzVSDzz3zznj3o0S07AnbSCs0w0CNb6zxXzzwzzz0zs7zztzzy1zUDzznzzx",
+            Tolerance: 0.2 * PicTolerance
+        },
+        "火力主机", {
+            Text: "|<火力主机>**50$25.0NX00Ngk0NbA0NZn0NaQkFXbAF1FnF0sQkEo78EG1kk90Qk7U6lnnVbk0ySk0BsMVX0PswU3wTU3iBk13A80Va40Mn606Na01gq00KO0E",
+            Tolerance: 0.1 * PicTolerance
+        },
+        "防御主机", {
+            Text: "|<防御主机>**50$25.0Mn00tgs1lXbX31QQCTvmC3Vt40UYW8EGF48NM24AcF74IAbm+KE15P80WhY0HGn0NdMkQogAMOL3sRBkMQXC0RUnUtUAstU3jtU0NvUE",
+            Tolerance: 0.1 * PicTolerance
+        },
+        "辅助主机", {
+            Text: "|<辅助主机>**50$25.QNtU/NCL6lTiF6/yMFBiMASISGCCBkn7CEzVzUzUysy03ys00/q007hs0zX71tYzkzbAMtqwQIS6D+46Ahn2TJwkQzbcPBaM0na00Aa0E",
+            Tolerance: 0.1 * PicTolerance
+        },
+        "极乐净土主机", {
+            Text: "|<极乐净土主机>**50$25.0Nn00Ngk0NXA0NUn0NUAkNU3ANs3nNa3AlVX39UP0lU70Ak3UCC3MCHX6CQv1iPD0SMn0CMAsCM3CCM0nCM0AyM03CM00mM00AM003s0E",
+            Tolerance: 0.1 * PicTolerance
+        },
+        "米西利斯主机", {
+            Text: "|<米西利斯主机>**50$19.36QVVsEk0880400200102EUVsEkw8sG5w93q4VX2EVV8EkY8MG4A9264V32EVV8EkY8MG4A9264V3yTk",
+            Tolerance: 0.1 * PicTolerance
+        },
+        "泰特拉主机", {
+            Text: "|<泰特拉主机>**50$24.A006M00AE00AE00MTsTs0sM01cM078M0C8M0M8M0k8M0U8M008M008M008M008M008M00Ds00000zzzzU3U3U7U30706zxzwU",
+            Tolerance: 0.1 * PicTolerance
+        },
+        "朝圣者主机", {
+            Text: "|<朝圣者主机>**50$25.0A600A1U0A0M0A460A71UADkMADQ6A7D1g71kQ70Q63067U123s1k3Q1w1X1b1VUlUUMBUk46kk33EM0lcM0MoA06OA03B400qa00/K0E",
+            Tolerance: 0.1 * PicTolerance
+        },
+        "反常主机", {
+            Text: "|<反常主机>**50$25.1UMk1W6A1XlX1XQMlX76BX7lXX6QMX676361n36AT76D7777X76lX6aA36HX36Asn6CCD6DXX6CQsqC7CCC1nWC0MsC06CC01ni00Ty0E",
+            Tolerance: 0.1 * PicTolerance
+        }
+    )
+    ; 遍历并购买所有物品
+    for Name, item in PurchaseItems {
+        if (ok := FindText(&X, &Y, NikkeX, NikkeY, NikkeX + NikkeW, NikkeY + NikkeH, item.Tolerance, item.Tolerance, item.Text, , , , , , , TrueRatio, TrueRatio)) {
+            ; 根据找到的同类图标数量进行循环购买
+            loop ok.Length {
+                FindText().Click(ok[A_Index].x, ok[A_Index].y, "L")
+            }
+        } else {
+            AddLog(Name . "未找到，跳过购买")
+        }
+    }
+    Sleep 500
+    Text := "|<购买>**50$48.00y00000TzW0DzzzE3W08003E3bz8001Fn03A003Hn01DzzaGG011756GEDl115AGETFDl5wGGHF8z40GHnF8D40GGXlA/A0GGYlTTDzGHaFE001GH6HE001EH03E003ES03TwTzQzDX0MHkA7xn3kUwNX7WT1sCll42E7S2XN46EC7WyD4CFs1qU"
+    if (ok := FindText(&X, &Y, NikkeX, NikkeY, NikkeX + NikkeW, NikkeY + NikkeH, 0.1 * PicTolerance, 0.1 * PicTolerance, Text, , 0, , , , , TrueRatio, TrueRatio)) {
+        FindText().Click(X, Y, "L")
+        Sleep 1000
+    }
+    Text := "|<购买>**50$48.00y00000TzW0DzzzE3W08003E3bz8001Fn03A003Hn01DzzaGG011756GEDl115AGETFDl5wGGHF8z40GHnF8D40GGXlA/A0GGYlTTDzGHaFE001GH6HE001EH03E003ES03TwTzQzDX0MHkA7xn3kUwNX7WT1sCll42E7S2XN46EC7WyD4CFs1qU"
+    if (ok := FindText(&X, &Y, NikkeX, NikkeY, NikkeX + NikkeW, NikkeY + NikkeH, 0.1 * PicTolerance, 0.1 * PicTolerance, Text, , 0, , , , , TrueRatio, TrueRatio)) {
+        ; FindText().Click(X, Y, "L")
+    }
+    else{
+        AddLog("未找到购买按钮，资金可能不足")
+    }
+    AddLog("===活动商店任务结束===")
 }
 ;endregion 妙妙工具
 ;region 快捷键

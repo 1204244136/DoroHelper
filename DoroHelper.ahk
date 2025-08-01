@@ -6,7 +6,7 @@ CoordMode "Pixel", "Client"
 CoordMode "Mouse", "Client"
 ;region 设置常量
 try TraySetIcon "doro.ico"
-currentVersion := "v1.4.11"
+currentVersion := "v1.4.12"
 usr := "1204244136"
 repo := "DoroHelper"
 ;endregion 设置常量
@@ -797,7 +797,7 @@ ClickOnDoro(*) {
             SimulationNormal()
         if g_settings["SimulationOverClock"] ;模拟室超频
             SimulationOverClock()
-        BackToHall
+        GoBack
     }
     if g_settings["Arena"] {
         if g_settings["AwardArena"] ;竞技场收菜
@@ -812,18 +812,19 @@ ClickOnDoro(*) {
             ArenaSpecial()
         if g_settings["ArenaChampion"] ;冠军竞技场
             ArenaChampion()
-        BackToHall
+        GoBack
     }
     if g_settings["Tower"] {
         if g_settings["TowerCompany"]
             TowerCompany()
         if g_settings["TowerUniversal"]
             TowerUniversal()
-        BackToHall
+        GoBack
     }
     if g_settings["Interception"]
         if g_settings["InterceptionAnomaly"]
             InterceptionAnomaly()
+    BackToHall
     if g_settings["Award"] {
         if g_settings["AwardOutpost"] ;使用键名检查 Map
             AwardOutpost()
@@ -847,7 +848,6 @@ ClickOnDoro(*) {
             AwardSoloRaid()
         if g_settings["AwardRoadToVillain"]
             AwardRoadToVillain()
-        BackToHall
     }
     if g_settings["Event"] {
         if g_settings["EventSmall"]
@@ -864,6 +864,7 @@ ClickOnDoro(*) {
         if g_settings["AwardPass"]
             AwardPass()
     }
+    BackToHall
     if g_settings["CheckEvent"] {
         if UserGroup = "普通用户" {
             MsgBox("当前用户组不支持活动结束提醒，请点击赞助按钮升级会员组")
@@ -3013,7 +3014,6 @@ ArenaChampion() {
         Sleep 1000
     }
     AddLog("===冠军竞技场任务结束===")
-    BackToHall
 }
 ;endregion 竞技场
 ;region 无限之塔
@@ -3062,7 +3062,6 @@ TowerCompany() {
         AddLog("所有塔都打过了")
     }
     AddLog("===企业塔任务结束===")
-    BackToHall
 }
 ;tag 通用塔
 TowerUniversal() {
@@ -3084,7 +3083,6 @@ TowerUniversal() {
         RefuseSale
     }
     AddLog("===通用塔任务结束===")
-    BackToHall
 }
 ;endregion 无限之塔
 ;region 拦截战
@@ -3203,7 +3201,6 @@ InterceptionAnomaly() {
         Sleep 2000
     }
     AddLog("===异常拦截任务结束===")
-    BackToHall
 }
 ;endregion 拦截战
 ;region 小活动
@@ -3736,7 +3733,6 @@ AwardOutpost() {
     if g_settings["AwardOutpostExpedition"] ;派遣
         AwardOutpostExpedition()
     BackToHall()
-    RefuseSale
 }
 ;tag 派遣
 AwardOutpostExpedition() {

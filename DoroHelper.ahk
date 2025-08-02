@@ -203,6 +203,7 @@ FindText().PicLib("|<进入战斗的进>*150$53.zTzzUTkDzsDzy0z0TzUDzw1y0zy0Dzs3
 FindText().PicLib("|<灰色的进>8A8886-0.90$58.0U00TUDU007001y0z001y007s7w00Dw00TUTk00Ts01y1z000zk07s7w001zU0TUTk003z03y1z0007yDzzzzw00Dkzzzzzk00S3zzzzz001kDzzzzw0000zzzzzk0003zzzzz0000Dzzzzw00000zUTk000001y0z0000007s3w000000TUTk01zz01y1z007zw07s7w00Tzk0zUDk01zz03z1zUU7zwTzzzzy0Tzlzzzzzs01z7zzzzzU07wTzzzzy00Tlzzzzzs01z7zzzzzU07w0Tk7w000Tk1y0Tk001z0Ds1z0007w0zU7w000Tk7w0Tk001z0Tk1z0007w3z07w000TkTs0Tk001z3z01z0007w7w07w000zkDU0Tk007zkQ01z001zzUU00000Dzzk000001zzzy007zkDyDzzzzzz1zkDzzzzzw5y0TzzzzzU3k0Tzzzzy0700Dzzzzs0M001zzzk08", 1)
 FindText().PicLib("|<灰色的AUTO图标>7F8586-0.90$39.003z00003zz0001zzy100zzzwQ0DzzzrU7zUDzw1zk0DzUDs00Ty3y001zkz000Ty7s007zly001zzDU001zvw0000zT00000Ps00000T000003s0000Sy00003zk0000Ty00003vs0000T300003s00000Tk00003vs0000zTs0007nzw001yTzU00DVzs003wDy000z1zk00Ts7zU07y0zz03zU7zzzzs0tzzzw023zzz0007zzU0007zU04", 1)
 FindText().PicLib("|<灰色的射击图标>7F8787-0.90$56.0000TU00000007s00000001y00000000TU00000007s00000001y00000000TU00000007s0000001VyC000001sTXs00001y7szU0000zVyDw0000TsTVzU000Dw7sDw0007w1y0zU003y0TU7w000z07s0z000TU1y07s007k0TU0y003w07s0Dk00y00001w00000000000000000000000000000000000000Dzzw00Dzzzzzz003zzzzzzk00zzzzzzw00Dzzzzzz003zzzzzzk00zzzk00000000000000000000000000003k00003k00y00001w00Dk0TU0z001w07s0DU00TU1y07s003w0TU3w000zU7s1z0007w1y0zU000zkTUzk0007y7sTs0000zlyDw00007wTXy00000T7sy000001lyC0000000TU00000007s00000001y00000000TU00000007s00000001y00000000TU00000007s0002", 1)
+FindText().PicLib("|<灰色的锁>434343-0.90$35.007k0001zw000Dzy000zzy003zzy007yDw00Tk3w00y03s03w07s07k07k0DU0DU0T00T00y00z01w00y03s01w07U03s0000000000007zzzzszzzzztzzzzzrzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzlzzzzz1zzzzw1zzzzs3zzzzk7zzzzkDzzzzkzzzzzXzzzzz7zzzzyDzzzzwTzzzzszzzzzzzzzzzzzzzzzzzzjzzzzzTzzzzwTzzzzkTzzzz4", 1)
 ;普通战斗、无限塔胜利或失败会出现该图标
 FindText().PicLib("|<TAB的图标>*200$49.01zzzzzzU0zzzzzzk0Tzzzzzs0Dzzzzzw07zzzzzy03zzzzzz01zzzzzzU0zzzzzzk0Tzzzzzs0Dzzzzzw07zzzzzy03zzzzzz01z00zzzU0zU0Tzzk0Tk0Dzzs0Ds07zzw07w03zzy03y01zzz01z00zzzU0zU0Tzzk0Tk0Dzzs0Ds07w0007w03y0003y01z0001z00zU000zU0Tk000Tk0Ds000Ds07w0007w03y0003y01z0001z00zU000zU0Tk000Tk0Ds000Ds07w0007w03y0003y01z0001z00zU000zU0Tk000Tk0Ds000Ds07w0007w03y0003y01z00zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzU0000000000000000000000000000000000000000U", 1)
 ;特殊竞技场快速战斗会出现该图标
@@ -2287,6 +2288,13 @@ BattleSettlement() {
     if Screenshot {
         TimeString := FormatTime(, "yyyyMMdd_HHmmss")
         FindText().SavePic(A_ScriptDir "\截图\" TimeString ".jpg", NikkeX, NikkeY, NikkeX + NikkeW, NikkeY + NikkeH, ScreenShot := 1)
+    }
+    ;有灰色的锁代表赢了但次数耗尽
+    if (ok := FindText(&X, &Y, NikkeX + 0.893 * NikkeW . " ", NikkeY + 0.920 * NikkeH . " ", NikkeX + 0.893 * NikkeW + 0.019 * NikkeW . " ", NikkeY + 0.920 * NikkeH + 0.039 * NikkeH . " ", 0.2 * PicTolerance, 0.2 * PicTolerance, FindText().PicLib("灰色的锁"), , , , , , , TrueRatio, TrueRatio)) {
+        Victory := Victory + 1
+        if Victory > 1 {
+            AddLog("共胜利" Victory "次")
+        }
     }
     ;有编队代表输了，点Esc
     if (ok := FindText(&X, &Y, NikkeX, NikkeY, NikkeX + NikkeW, NikkeY + NikkeH, 0.2 * PicTolerance, 0.2 * PicTolerance, FindText().PicLib("编队的图标"), , 0, , , , , TrueRatio, TrueRatio)) {

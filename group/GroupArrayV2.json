@@ -271,6 +271,10 @@
     "tier": "金Doro会员",
     "expiry_date": "20250907"
   },
+  "f0a8f97e1af26f28de9d976d02c0165055619be5dc89d32fab9eac9e2dfaa684": {
+    "tier": "铜Doro会员",
+    "expiry_date": "20250908"
+  },
   "test": {
     "tier": "银Doro会员",
     "expiry_date": "20301231"

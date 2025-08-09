@@ -702,9 +702,9 @@ g_settingPages["Award"].Push(SetAwardFriendPoint)
 SetAwardMail := AddCheckboxSetting(doroGui, "AwardMail", "邮箱收取", "R1.2")
 doroGui.Tips.SetTip(SetAwardMail, "收取邮箱中所有奖励")
 g_settingPages["Award"].Push(SetAwardMail)
-SetAwardRanking := AddCheckboxSetting(doroGui, "AwardRanking", "方舟排名奖励[暂时禁用]", "R1.2")
-doroGui.Tips.SetTip(SetAwardRanking, "自动领取方舟内各类排名活动（如无限之塔排名、竞技场排名等）的结算奖励")
-g_settingPages["Award"].Push(SetAwardRanking)
+; SetAwardRanking := AddCheckboxSetting(doroGui, "AwardRanking", "方舟排名奖励[暂时禁用]", "R1.2")
+; doroGui.Tips.SetTip(SetAwardRanking, "自动领取方舟内各类排名活动（如无限之塔排名、竞技场排名等）的结算奖励")
+; g_settingPages["Award"].Push(SetAwardRanking)
 SetAwardDaily := AddCheckboxSetting(doroGui, "AwardDaily", "任务收取", "R1.2")
 doroGui.Tips.SetTip(SetAwardDaily, "收取每日任务、每周任务、主线任务以及成就等已完成任务的奖励")
 g_settingPages["Award"].Push(SetAwardDaily)
@@ -917,8 +917,8 @@ ClickOnDoro(*) {
             AwardFriendPoint()
         if g_settings["AwardMail"]
             AwardMail()
-        if g_settings["AwardRanking"] ;方舟排名奖励
-            AwardRanking()
+        ; if g_settings["AwardRanking"] ;方舟排名奖励
+        ;     AwardRanking()
         if g_settings["AwardDaily"]
             AwardDaily()
         if g_settings["AwardPass"]

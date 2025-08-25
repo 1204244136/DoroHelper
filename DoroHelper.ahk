@@ -13,7 +13,7 @@ if !A_IsAdmin {
 }
 ;region 设置常量
 try TraySetIcon "doro.ico"
-currentVersion := "v1.5.14"
+currentVersion := "v1.5.15"
 ;tag 检查脚本哈希
 SplitPath A_ScriptFullPath, , , &scriptExtension
 scriptExtension := StrLower(scriptExtension)
@@ -70,7 +70,7 @@ global g_settings := Map(
     ;异常拦截
     "Interception", 0,           ;拦截战
     "InterceptionAnomaly", 0,    ;异常拦截战
-    "InterceptionShot", 0,       ;拦截截图
+    "InterceptionScreenshot", 0, ;拦截截图
     "InterceptionRedCircle", 0,  ;拦截红圈
     "InterceptionExit7", 0,      ;满7退出
     ;常规奖励
@@ -146,10 +146,6 @@ BattleActive := 1
 BattleSkip := 0
 PicTolerance := g_numeric_settings["Tolerance"]
 g_settingPages := Map()
-RedCircle := 0
-Exit7 := 0
-EventStory := 0
-Screenshot := 0
 if A_Username = "12042" {
     UserGroup := "管理员"
     ;0是普通用户，1是铜Doro会员，2是银Doro会员，3是金Doro会员，10是管理员
@@ -711,9 +707,9 @@ DropDownListBoss := doroGui.Add("DropDownList", "Choose" g_numeric_settings["Int
 doroGui.Tips.SetTip(DropDownListBoss, "在此选择异常拦截任务中优先挑战的BOSS`r`n请确保游戏内对应编号的队伍已经配置好针对该BOSS的阵容`r`n例如，选择克拉肯(石)，编队1，则程序会使用你的编队1去挑战克拉肯")
 DropDownListBoss.OnEvent("Change", (Ctrl, Info) => g_numeric_settings["InterceptionBoss"] := Ctrl.Value)
 g_settingPages["Interception"].Push(DropDownListBoss)
-SetInterceptionShot := AddCheckboxSetting(doroGui, "InterceptionShot", "结果截图", "R1.2")
-doroGui.Tips.SetTip(SetInterceptionShot, "勾选后，在每次异常拦截战斗结束后，自动截取结算画面的图片，并保存在程序目录下的「截图」文件夹中")
-g_settingPages["Interception"].Push(SetInterceptionShot)
+SetInterceptionScreenshot := AddCheckboxSetting(doroGui, "InterceptionScreenshot", "结果截图", "R1.2")
+doroGui.Tips.SetTip(SetInterceptionScreenshot, "勾选后，在每次异常拦截战斗结束后，自动截取结算画面的图片，并保存在程序目录下的「截图」文件夹中")
+g_settingPages["Interception"].Push(SetInterceptionScreenshot)
 SetRedCircle := AddCheckboxSetting(doroGui, "InterceptionRedCircle", "自动打红圈", "R1.2")
 doroGui.Tips.SetTip(SetRedCircle, "勾选后，在异常拦截中遇到克拉肯时会自动进行红圈攻击`n请务必在设置-战斗-全部中勾选「同步游标与准星」`n只对克拉肯有效")
 g_settingPages["Interception"].Push(SetRedCircle)
@@ -2488,8 +2484,10 @@ Skipping() {
 }
 ;tag 进入战斗
 EnterToBattle() {
-    global BattleActive ;是否能进入战斗，0表示根本没找到进入战斗的图标，1表示能，2表示能但次数耗尽（灰色的进入战斗）
-    global BattleSkip ;是否能跳过动画
+    ;是否能进入战斗，0表示根本没找到进入战斗的图标，1表示能，2表示能但次数耗尽（灰色的进入战斗）
+    global BattleActive
+    ;是否能跳过动画
+    global BattleSkip
     AddLog("尝试进入战斗")
     if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.506 * NikkeW . " ", NikkeY + 0.826 * NikkeH . " ", NikkeX + 0.506 * NikkeW + 0.145 * NikkeW . " ", NikkeY + 0.826 * NikkeH + 0.065 * NikkeH . " ", 0.2 * PicTolerance, 0.2 * PicTolerance, FindText().PicLib("快速战斗的图标"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("点击快速战斗")
@@ -2522,13 +2520,21 @@ EnterToBattle() {
     }
 }
 ;tag 战斗结算
-BattleSettlement() {
+BattleSettlement(modes*) {
     global Victory
-    global Screenshot
-    global RedCircle
-    global Exit7
-    global EventStory
-    checkred := 0
+    Screenshot := false
+    RedCircle := false
+    Exit7 := false
+    EventStory := false
+    for mode in modes {
+        switch mode {
+            case "Screenshot": Screenshot := true
+            case "RedCircle": RedCircle := true
+            case "Exit7": Exit7 := true
+            case "EventStory": EventStory := true
+            default: MsgBox "格式输入错误"
+        }
+    }
     if (BattleActive = 0 or BattleActive = 2) {
         AddLog("由于无法战斗，跳过战斗结算")
         if BattleActive = 2 {
@@ -2541,7 +2547,6 @@ BattleSettlement() {
         AddLog("有概率误判，请谨慎开启该功能")
     }
     while true {
-        ; Exit7 := true
         if Exit7 {
             if (ok := FindText(&X, &Y, NikkeX + 0.512 * NikkeW . " ", NikkeY + 0.072 * NikkeH . " ", NikkeX + 0.512 * NikkeW + 0.020 * NikkeW . " ", NikkeY + 0.072 * NikkeH + 0.035 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("拦截战·红色框的7"), , , , , , , TrueRatio, TrueRatio)) {
                 Send "{Esc}"
@@ -2556,7 +2561,6 @@ BattleSettlement() {
                 }
             }
         }
-        ; RedCircle := true
         if RedCircle {
             if (ok := FindText(&X, &Y, NikkeX, NikkeY, NikkeX + NikkeW, NikkeY + NikkeH, 0.12 * PicTolerance, 0.12 * PicTolerance, FindText().PicLib("红圈的上边缘黄边"), , 0, , , , , TrueRatio, TrueRatio)) {
                 AddLog("检测到红圈的上边缘黄边")
@@ -3599,9 +3603,6 @@ TowerUniversal() {
 ;region 拦截战
 ;tag 异常拦截
 InterceptionAnomaly() {
-    global RedCircle
-    global Exit7
-    global Screenshot
     EnterToArk
     AddLog("===异常拦截任务开始===")
     while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.401 * NikkeW . " ", NikkeY + 0.813 * NikkeH . " ", NikkeX + 0.401 * NikkeW + 0.069 * NikkeW . " ", NikkeY + 0.813 * NikkeH + 0.028 * NikkeH . " ", 0.45 * PicTolerance, 0.45 * PicTolerance, FindText().PicLib("拦截战"), , , , , , , TrueRatio, TrueRatio)) {
@@ -3701,19 +3702,15 @@ InterceptionAnomaly() {
             AddLog("异常拦截次数已耗尽")
             break
         }
-        if g_settings["InterceptionRedCircle"] and g_numeric_settings["InterceptionBoss"] = 1
-            RedCircle := true
-        if g_settings["InterceptionShot"] {
-            Screenshot := true
-        }
-        if g_settings["InterceptionExit7"] and UserLevel >= 3 {
-            Exit7 := true
-        }
+        modes := []
+        if g_settings["InterceptionRedCircle"]
+            modes.Push("RedCircle")
+        if g_settings["InterceptionScreenshot"]
+            modes.Push("Shot")
+        if g_settings["InterceptionExit7"] and UserLevel >= 3
+            modes.Push("Exit7")
         global BattleActive := 1
-        BattleSettlement
-        Screenshot := false
-        RedCircle := false
-        Exit7 := false
+        BattleSettlement(modes*)  ; 使用*展开数组为多个参数
         Sleep 2000
     }
     AddLog("===异常拦截任务结束===")
@@ -3754,6 +3751,7 @@ EventSmall() {
         while true {
             if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.367 * NikkeW . " ", NikkeY + 0.776 * NikkeH . " ", NikkeX + 0.367 * NikkeW + 0.132 * NikkeW . " ", NikkeY + 0.776 * NikkeH + 0.069 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("小活动·挑战"), , , , , , , TrueRatio, TrueRatio)) {
                 FindText().Click(X, Y, "L")
+                ; 挑战
                 Challenge
                 break
             }

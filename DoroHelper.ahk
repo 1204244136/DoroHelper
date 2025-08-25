@@ -180,16 +180,14 @@ g_default_numeric_settings := g_numeric_settings.Clone()
 SetWorkingDir A_ScriptDir
 try {
     LoadSettings()
-    if currentVersion = "v0.0.0" {
-        MsgBox("该版本有重大调整，所有设置将重置")
-        FileDelete "settings.ini"
+    if currentVersion = "v1.5.15" and g_numeric_settings["Version"] != currentVersion {
+        MsgBox("该版本的「自动打红圈」选项被重置了，请重新勾选")
         ; 使用之前保存的副本恢复默认设置
         g_settings := g_default_settings.Clone()
         g_numeric_settings := g_default_numeric_settings.Clone()
         ; 恢复默认设置后，再将版本号更新为当前最新版本
         g_numeric_settings["Version"] := currentVersion
         ; 将重置后的默认设置写入新的 settings.ini 文件
-        WriteSettings()
     }
 }
 catch {

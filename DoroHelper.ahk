@@ -412,6 +412,7 @@ FindText().PicLib("|<通行证·3+>*200$57.zzzzzzzzDzzzzzzzztzzzzzzzzz7zzzzzzzzw
 FindText().PicLib("|<通行证·任务>**20$71.04001U00s0000T00TU03y0001z0Tv00CM00036zw700szzw0CTw0D03Vzzw0Mw07w0C000Q1ns0T01s000s36zsk0D3zy3UCMylU0w70CC0sk1X00nj1xs1VU3601zrjbU7306A01nXwQ0Q60AM00300k1kA0Mk07y01zzUM0lU1zkC0Tv0zzXznU7zk1bt8001X3z7z77mE0037zbUzwDYU00670Tk0E3Dzszw00lU006M0lU0TzXzzUAk1X00zy3zz0NU3601U000A0n06A03zVzwM1a0AM03z7zwk3A0Mk006A0NU6M0lU00Qs1r0Ak1X001nU3A0Nbz7zUDC06M0nDy7z3stzwk1aM006T7Xzn03Ak00AQS30C06NzzzsTk63s0DnzzzUS0DzU0TU000000000E", 1)
 FindText().PicLib("|<通行证·奖励>**20$70.0TUQ000001k01y3y00000DU1qMAs03zzwq0TNVlzsA00nQ3jaS03sk03Bk7OTU03X00Aq0BdwzyABzznM0zbrTtkq00Bk1qPn1a3Q07ry0tjyAsBzzyDwD6LTr0k04U0nkMAws300G03w1Uk70AwzyTD7a70s0rnztwyyTwD03PA1anTNy3k0Bgz6PBlaly00qnyNgk6Pz003P0Nan0TYU00Bg1aPA00z000qnqNgnzjDzy3PPNinzzwzzwRhhanD00000laqqvAw000036POPAnzzkDzwN99gnBzz0jzVZYarBk0Q3U06KmKMq07bbU0PPNPXM3wzDk1jBbANby7D7zCYy0zaz1sS1wk7k7yNkT0T1nSyTv3XTk0TyDzTjAQDk00DkCtwQzU000000F001s8", 1)
 FindText().PicLib("|<SP灰色的全部>*130$70.00200006000000S0003w000003w000Dk3zs00Tk000TUDzs03zU01zzwzzk0Tz007zzvzy03zy00Tzzjzs0zry01zzyyTUDyDw07zzvty1zkTw07kzDbkTy0zw0T3syT7zU0zw1wTXvwzw01zw3twDjXzzzzzkTjkzyDzzzzyDzzzzkTzzzzkzzzzzUrzzzq3zzzzy0Dzzz0Dzzztw00Dk00Dzzzbk00z000000yDU03w000M03sy0zzzs0DzzDXs3zzzU1zzwyDUDzzy07zznsy0zzzs0TzzDbs3zzzU1zzwzzU03w007sDnzy00Dk00TUzDzk00z001zzwzy7zzzzw7zznvkTzzzzkTzzDU0zzzzz1zzwy03zzzzw7zzns0DzzzzkTUTDU0000000w00008", 1)
+FindText().PicLib("|<购买PASS的图标>*200$45.0Dzzzzzs1zzzzzz07zzzzzs0zzzzzzy000000Dk000000z0000007s000000zU00000Dw000001zk00000Ty000003zs00000zz000007zs00001zzU0000Dzw00003zzk0000zzy00007zzs0001zzz0000Dzzw0003zzz0000Tzzs0007zzy0007zzzUTzzzzzw7zzzzzz1zzzzzzsDzzzzzz00000Dzs00001zzU0000Dzy00001zzw0000Tzzzzzzzzzzzzzzzzy3zzw7zzUDzz0Tzs0zzk3zz07zy0Dzs0zzk1zz07zy0Tzw0zzk3zzUDzz0zzz7zzyDw", 1)
 ;tag 单人突击
 FindText().PicLib("|<灰色的挑战>484A4E-0.90$90.1y07lw000T00TU01y07ly000z00TU01y07ly000z00TXU1y07ly000z00Tjk1y07ly000z00Tjk1y07ly800z00Tbs1y3blyS00z00TXw1yDblyTU0z00TXwTzzrlyzU0zzsTVwzzzzlyz00zzsTVkzzzzlzz00zzsTU0zzzzlzy00zzsDUSzzvzlzw00zzsDzyzztzlzw00z01zzy1y1zlzs00z0Dzzy1y1zlzs00z0Dzzy1y0zlzk00z0Dzzs1y07ly000z07zsU1yE7ly000z07zks1zs7ly000z00Dly1zs7lzU0zzzkDly3zs7lzk0zzzkDlwTzsTlzs0zzzk7nwzzszlzw0zzzk7nszz3zlzy0zzzk7zszy7zlzz0zbjk7zkTyTzlzzUz07k7zkTyzzlyTkz07k7zU1yTzlyTUz07k7zU1yTjlyDUy07k3z01yCTVy70z07k3z01y4TVy20z07k3yA1y0zVy60z07k7wC1y0zVy7Uz07kDyD1y1z1y7kzzzkTyT1y3z1y7kzzzkzzT1y7y1yDkzzzvzzz1yDw1zzkzzzzzzyTyzw1zzUzzzzyTyTyzs1zzUzzzzwTyDwTU0zz0z07vkDwDwD00zz0z07lU7wDk600Dw0000003sU", 1)
 FindText().PicLib("|<RAID>*80$89.zy003y003y0w00Dzw007w003w1k00Dzs007s007s3U00TzU00DU00DU7000zz000T000D0Q000zy000S000S0s001zs000s1U0s3k0M1zk7w1k7w1k70Dk7z0Ds7UDk3UC0zUDy0zUC0zUC0w1y0Tw1z0Q1z0Q1k3w1zk3w0s3y1s3UDs3zUDs3UDs3UD0Tk7z0Tk700070S1zUTy0z0C000C0s3y0zs3y0s000s3k7w1zk203k001k7UDk7zU007U003UC0zUDy000z000C0Q1z0zw001w000Q1s3w0zs001s3y0s3UDs3zU003U7s3k70Tk7z00070Tk70S0z0Dy0z0C0z0C0w3y0zs1y0s1y0M1k7w1zk7w1k7w1k7UDs3zUDs3UDs3UC0TUDy0zUC0TUD0Q1z0Tw1z0Q1z0Q1s3w0zs3y0s3y0s3UDs3zk7s3k7w3k70Tk7z0Tk70Tk70S000Ty0zUC0zUC0s001zw3y0w1y0Q1k007zk7w1k7w1k3U00TzUDs3UDs3UC001zz0zU70TU70Q007zzzz0Tzz0S1s00Tzzzy0zzy0zzzzzzzzzs3zzw1zzzzzzzzzk7zzk7zzzzzzzzzUzzzUzzzzzzzzzy7zzz3zzzzzzzzzwTzzwTzzzzzzzzzvzzzvzzzzzzzzw", 1)
@@ -4531,20 +4532,15 @@ AwardPass() {
         }
         else {
             AddLog("1通行证模式")
-            UserClick(3824, 288, TrueRatio)
-            Sleep 1000
-            OneAwardPass()
-            AddLog("===通行证任务结束===")
-            BackToHall()
-            return
         }
         ; 检查红点并执行通行证
         if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.986 * NikkeW . " ", NikkeY + 0.126 * NikkeH . " ", NikkeX + 0.986 * NikkeW + 0.010 * NikkeW . " ", NikkeY + 0.126 * NikkeH + 0.257 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("红点"), , , , , , , TrueRatio, TrueRatio)) {
             FindText().Click(X, Y, "L")
             t := t + 1
             AddLog("执行第" t "个通行证")
-            Sleep 1000
-            OneAwardPass()
+            if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.553 * NikkeW . " ", NikkeY + 0.227 * NikkeH . " ", NikkeX + 0.553 * NikkeW + 0.090 * NikkeW . " ", NikkeY + 0.227 * NikkeH + 0.051 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("购买PASS的图标"), , , , , , , TrueRatio, TrueRatio)) {
+                OneAwardPass()
+            }
             BackToHall()
             continue
         }
@@ -4581,7 +4577,7 @@ OneAwardPass() {
             Sleep 1000
         }
     }
-    BackToHall()
+    GoBack()
 }
 ;endregion 通行证收取
 ;region 招募

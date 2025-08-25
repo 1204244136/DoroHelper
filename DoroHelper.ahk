@@ -116,6 +116,7 @@ global g_settings := Map(
     ;启动/退出相关
     "CloseAdvertisement", 0,     ;关闭启动提示
     "CloseNoticeSponsor", 0,     ;关闭赞助提示
+    "CloseHelp", 0,              ;关闭帮助提示
     "AutoCheckUpdate", 0,        ;自动检查更新
     "AutoCheckUserGroup", 0,     ;自动检查会员组
     "AutoDeleteOldFile", 0,      ;自动删除旧版本
@@ -863,6 +864,9 @@ if (!g_settings["CloseAdvertisement"] OR UserLevel < 1) {
         MsgBox("普通用户无法关闭广告，请点击赞助按钮升级会员组")
     }
     Advertisement
+}
+if !g_settings["CloseHelp"] {
+    ClickOnHelp
 }
 ;tag 删除旧文件
 if g_settings["AutoDeleteOldFile"]
@@ -2123,35 +2127,36 @@ CalculateSponsorInfo(thisGuiButton, info) {
 }
 ;tag 帮助
 ClickOnHelp(*) {
-    msgbox "
-    (
-1. 游戏分辨率需要设置成 **16:9** 的分辨率，小于1080p 可能有问题，暂不打算特殊支持
-2. 由于使用的是图像识别，请确保游戏画面完整在屏幕内，且**游戏画面没有任何遮挡**
-   - 多显示器请支持的显示器作为主显示器，将游戏放在主显示器内
-   - 未激活正版Windows会有水印提醒，请激活正版Windows
-   - 不要使用微星小飞机、游戏加加等悬浮显示数据的软件
-   - 游戏画质越高，脚本出错的几率越低。
-   - 游戏帧数建议保持60，帧数过低时，部分场景的行动可能会被吞，导致问题
-3. 如遇到识别问题，请尝试关闭会改变画面颜色相关的功能或设置，例如
-   - 软件层面：各种驱动的色彩滤镜，部分笔记本的真彩模式
-   - 设备层面：显示器的护眼模式、色彩模式、色温调节、HDR 等。
-4. 游戏语言设置为**简体中文**，设定-画质-开启光晕效果，设定-画质-开启颜色分级，不要使用太亮的大厅背景
-5. 以**管理员身份**运行 DoroHelper
-6. 推荐使用win11操作系统，win10可能有未知bug
-7. 反馈任何问题前，请先尝试复现，如能复现再进行反馈，反馈时必须有录屏和全部日志
-8. 鼠标悬浮在控件上会有对应的提示，请勾选或点击前仔细阅读！
-9. ctrl+1关闭程序、ctrl+2暂停程序、ctrl+3~7调整游戏大小
-10. 如果遇到启动了但毫无反应的情况，请检查杀毒软件(如360、火绒等)是否拦截了 DoroHelper 的运行，请将其添加信任
-11. 如果遇到ACE安全中心提示，请尝试卸载wegame
-    )"
+    MyHelp := Gui(, "帮助")
+    MyHelp.SetFont('s10', 'Microsoft YaHei UI')
+    MyHelp.Add("Text", "w600", "- 游戏分辨率需要设置成**16:9**的分辨率，小于1080p可能有问题，暂不打算特殊支持")
+    MyHelp.Add("Text", "w600", "- 由于使用的是图像识别，请确保游戏画面完整在屏幕内，且**游戏画面没有任何遮挡**")
+    MyHelp.Add("Text", "w600", "- 多显示器请支持的显示器作为主显示器，将游戏放在主显示器内")
+    MyHelp.Add("Text", "w600", "- 未激活正版Windows会有水印提醒，请激活正版Windows")
+    MyHelp.Add("Text", "w600", "- 不要使用微星小飞机、游戏加加等悬浮显示数据的软件")
+    MyHelp.Add("Text", "w600", "- 游戏画质越高，脚本出错的几率越低。")
+    MyHelp.Add("Text", "w600", "- 游戏帧数建议保持60，帧数过低时，部分场景的行动可能会被吞，导致问题")
+    MyHelp.Add("Text", "w600", "- 如遇到识别问题，请尝试关闭会改变画面颜色相关的功能或设置，例如")
+    MyHelp.Add("Text", "w600", "- 软件层面：各种驱动的色彩滤镜，部分笔记本的真彩模式")
+    MyHelp.Add("Text", "w600", "- 设备层面：显示器的护眼模式、色彩模式、色温调节、HDR等。")
+    MyHelp.Add("Text", "w600", "- 游戏语言设置为**简体中文**，设定-画质-开启光晕效果，设定-画质-开启颜色分级，不要使用太亮的大厅背景")
+    MyHelp.Add("Text", "w600", "- 以**管理员身份**运行DoroHelper")
+    MyHelp.Add("Text", "w600", "- 推荐使用win11操作系统，win10可能有未知bug")
+    MyHelp.Add("Text", "w600", "- 反馈任何问题前，请先尝试复现，如能复现再进行反馈，反馈时必须有录屏和全部日志")
+    MyHelp.Add("Text", "w600", "- 鼠标悬浮在控件上会有对应的提示，请勾选或点击前仔细阅读！")
+    MyHelp.Add("Text", "w600", "- ctrl+1关闭程序、ctrl+2暂停程序、ctrl+3~7调整游戏大小")
+    MyHelp.Add("Text", "w600", "- 如果遇到启动了但毫无反应的情况，请检查杀毒软件(如360、火绒等)是否拦截了DoroHelper的运行，请将其添加信任")
+    MyHelp.Add("Text", "w600", "- 如果遇到ACE安全中心提示，请尝试卸载wegame")
+    AddCheckboxSetting(MyHelp, "CloseHelp", "我已认真阅读以上内容，并保证出现问题反馈前会再次检查，现在我想让这个弹窗不再主动显示", "")
+    MyHelp.Show()
 }
 ;tag 广告
 Advertisement() {
     adTitle := "AD"
     MyAd := Gui(, adTitle)
     MyAd.SetFont('s10', 'Microsoft YaHei UI')
-    MyAd.Add("Text", "w300", "====帮助====")
-    MyAd.Add("Text", , "第一次运行请先点击左上角的帮助")
+    ; MyAd.Add("Text", "w300", "====帮助====")
+    ; MyAd.Add("Text", , "第一次运行请先点击左上角的帮助")
     MyAd.Add("Text", "w300", "====广告位招租====")
     MyAd.Add("Text", , "可以通过赞助免除启动时的广告，启动选项-设置-移除启动广告")
     MyAd.Add("Text", , "详情见左上角的「赞助」按钮")

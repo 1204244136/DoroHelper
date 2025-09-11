@@ -2096,17 +2096,17 @@ GetCpuSerial() {
     }
     return "未找到序列号"
 }
-;tag 获取硬盘序列号的函数
+;tag 获取所有硬盘序列号的函数
 GetDiskSerial() {
     wmi := ComObjGet("winmgmts:\\.\root\cimv2")
-    ; Win32_DiskDrive class contains physical disk drive information
     query := "SELECT * FROM Win32_DiskDrive"
+    diskSerials := [] ; 创建一个空数组
     for disk in wmi.ExecQuery(query) {
-        ; Disk serial is typically in 'SerialNumber'
-        ; Note: For NVMe drives, this might sometimes be empty or different from what you expect
-        return disk.SerialNumber
+        ; 将每个硬盘的序列号添加到数组中
+        diskSerials.Push(disk.SerialNumber)
     }
-    return "未找到序列号"
+    ; 返回包含所有序列号的数组
+    return diskSerials
 }
 ;tag 确定用户组
 CheckUserGroup() {
@@ -2114,16 +2114,19 @@ CheckUserGroup() {
     ; 1. 初始化默认用户组
     try {
         TextUserGroup.Value := "普通用户"
-        UserGroup := "普通用户" ; 同样初始化变量
+        UserGroup := "普通用户"
         expiryDate := "19991231"
     }
-    ; 2. 生成设备唯一标识
+    ; 2. 获取硬件信息
     try {
         mainBoardSerial := GetMainBoardSerial()
         cpuSerial := GetCpuSerial()
-        diskSerial := GetDiskSerial()
-        Hashed := HashSHA256(mainBoardSerial . cpuSerial . diskSerial)
-        ; AddLog("当前设备唯一标识：" Hashed)
+        ; 获取所有硬盘的序列号数组
+        diskSerials := GetDiskSerial()
+        ; 检查是否成功获取硬盘序列号
+        if (diskSerials.Length = 0) {
+            AddLog("警告: 未检测到任何硬盘序列号。")
+        }
     } catch as e {
         AddLog("获取硬件信息失败: " e.Message)
         return
@@ -2148,43 +2151,53 @@ CheckUserGroup() {
     }
     ; 5. 校验用户组成员资格
     CurrentDate := A_YYYY A_MM A_DD
-    if groupData.Has(Hashed) {
-        memberInfo := groupData[Hashed]
-        ; 确保会员信息是对象并且包含有效期和等级键
-        if IsObject(memberInfo) && memberInfo.Has("expiry_date") && memberInfo.Has("tier") {
-            expiryDate := memberInfo["expiry_date"]
-            if (expiryDate >= CurrentDate) {
-                ; 有效期内，根据会员等级设置用户组
-                UserGroup := memberInfo["tier"]
-                TextUserGroup.Value := UserGroup
-                AddLog("验证成功，当前用户组：" UserGroup)
-                AddLog("有效期至" expiryDate)
-                ; 根据用户组设置托盘图标
-                if (UserGroup == "管理员") {
-                    global UserLevel := 10
-                    ; 管理员特殊处理逻辑
-                }
-                if (UserGroup == "金Doro会员") {
-                    try TraySetIcon("icon\GoldDoro.ico")
-                    global UserLevel := 3
-                }
-                if (UserGroup == "银Doro会员") {
-                    try TraySetIcon("icon\SilverDoro.ico")
-                    global UserLevel := 2
-                }
-                if (UserGroup == "铜Doro会员") {
-                    try TraySetIcon("icon\CopperDoro.ico")
-                    global UserLevel := 1
+    ; 标志位，用于表示是否找到匹配项
+    isMember := false
+    ; 为每一块硬盘生成一个哈希值并进行验证
+    for diskSerial in diskSerials {
+        Hashed := HashSHA256(mainBoardSerial . cpuSerial . diskSerial)
+        ; AddLog("正在验证设备唯一标识：" Hashed)
+        if groupData.Has(Hashed) {
+            memberInfo := groupData[Hashed]
+            if IsObject(memberInfo) && memberInfo.Has("expiry_date") && memberInfo.Has("tier") {
+                expiryDate := memberInfo["expiry_date"]
+                if (expiryDate >= CurrentDate) {
+                    ; 有效期内，根据会员等级设置用户组
+                    UserGroup := memberInfo["tier"]
+                    TextUserGroup.Value := UserGroup
+                    AddLog("验证成功，当前用户组：" UserGroup)
+                    AddLog("有效期至" expiryDate)
+                    if (UserGroup == "管理员") {
+                        global UserLevel := 10
+                    }
+                    if (UserGroup == "金Doro会员") {
+                        try TraySetIcon("icon\GoldDoro.ico")
+                        global UserLevel := 3
+                    }
+                    if (UserGroup == "银Doro会员") {
+                        try TraySetIcon("icon\SilverDoro.ico")
+                        global UserLevel := 2
+                    }
+                    if (UserGroup == "铜Doro会员") {
+                        try TraySetIcon("icon\CopperDoro.ico")
+                        global UserLevel := 1
+                    }
+                    isMember := true ; 找到匹配项，设置标志位
+                    break ; 找到匹配项后立即退出循环
+                } else {
+                    ; 有效期已过
+                    AddLog("会员已过期 (到期日: " expiryDate ")。已降级为普通用户")
+                    isMember := false
+                    ; 考虑到可能有多块硬盘，即使一块过期，也不能立即返回
+                    ; 而是继续检查其他硬盘哈希
                 }
             } else {
-                ; 有效期已过
-                AddLog("会员已过期 (到期日: " expiryDate ")。已降级为普通用户")
+                AddLog("警告: 在JSON中找到设备ID，但会员信息不完整")
             }
-        } else {
-            AddLog("警告: 在JSON中找到设备ID，但会员信息不完整")
         }
-    } else {
-        ; 设备识别码不在会员数据中
+    }
+    ; 循环结束后，如果没有找到任何匹配项，则显示非会员信息
+    if (!isMember) {
         AddLog("当前设备非会员")
     }
     UserGroupInfo := { MembershipType: UserGroup, ExpirationTime: expiryDate }

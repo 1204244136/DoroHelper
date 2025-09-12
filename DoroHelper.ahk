@@ -3082,10 +3082,10 @@ EnterToArk() {
 AdvanceMode(Picture, Picture2?) {
     Sleep 500
     while true {
-        if (ok1 := FindText(&X := "wait", &Y := 1, NikkeX + 0.305 * NikkeW . " ", NikkeY + 0.230 * NikkeH . " ", NikkeX + 0.305 * NikkeW + 0.388 * NikkeW . " ", NikkeY + 0.230 * NikkeH + 0.691 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(Picture), , , , , , 3, TrueRatio, TrueRatio)) {
+        if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.305 * NikkeW . " ", NikkeY + 0.230 * NikkeH . " ", NikkeX + 0.305 * NikkeW + 0.388 * NikkeW . " ", NikkeY + 0.230 * NikkeH + 0.691 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(Picture), , , , , , 3, TrueRatio, TrueRatio)) {
             loop 2 {
                 try {
-                    FindText().Click(ok1[A_Index].X, ok1[A_Index].Y, "L")
+                    FindText().Click(ok[A_Index].X, ok[A_Index].Y, "L")
                 }
                 ; 自动填充加成妮姬
                 if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.352 * NikkeW . " ", NikkeY + 0.713 * NikkeH . " ", NikkeX + 0.352 * NikkeW + 0.304 * NikkeW . " ", NikkeY + 0.713 * NikkeH + 0.107 * NikkeH . " ", 0.25 * PicTolerance, 0.25 * PicTolerance, FindText().PicLib("剧情活动·黑色十字"), , , , , , 1, TrueRatio, TrueRatio)) {
@@ -3131,20 +3131,22 @@ AdvanceMode(Picture, Picture2?) {
             }
         }
         else {
-            try {
-                if (ok2 := FindText(&X := "wait", &Y := 1, NikkeX + 0.305 * NikkeW . " ", NikkeY + 0.230 * NikkeH . " ", NikkeX + 0.305 * NikkeW + 0.388 * NikkeW . " ", NikkeY + 0.230 * NikkeH + 0.691 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(Picture2), , , , , , 3, TrueRatio, TrueRatio)) {
-                    loop 2 {
-                        try {
-                            FindText().Click(ok2[A_Index].X, ok2[A_Index].Y, "L")
-                        }
-                        EnterToBattle
-                        BattleSettlement("EventStory")
-                        if BattleActive = 2 {
-                            return
-                        }
-                        if QuickBattle = 1 {
-                            return
-                        }
+            if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.305 * NikkeW . " ", NikkeY + 0.230 * NikkeH . " ", NikkeX + 0.305 * NikkeW + 0.388 * NikkeW . " ", NikkeY + 0.230 * NikkeH + 0.691 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(Picture2), , , , , , 3, TrueRatio, TrueRatio)) {
+                loop 2 {
+                    try {
+                        FindText().Click(ok[A_Index].X, ok[A_Index].Y, "L")
+                    }
+                    EnterToBattle
+                    BattleSettlement("EventStory")
+                    ; 区域变化的提示
+                    if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.445 * NikkeW . " ", NikkeY + 0.561 * NikkeH . " ", NikkeX + 0.445 * NikkeW + 0.111 * NikkeW . " ", NikkeY + 0.561 * NikkeH + 0.056 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("前往区域的图标"), , , , , , , TrueRatio, TrueRatio)) {
+                        FindText().Click(X, Y + 400 * TrueRatio, "L")
+                    }
+                    if BattleActive = 2 {
+                        return
+                    }
+                    if QuickBattle = 1 {
+                        return
                     }
                 }
             }

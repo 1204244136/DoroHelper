@@ -4265,7 +4265,6 @@ EventLarge() {
             Sleep 500
             FindText().Click(X, Y - 100 * TrueRatio, "L")
         }
-        else MsgBox("进入剧情活动超时")
         Confirm
         ; 执行剧情活动流程
         AdvanceMode("大活动·关卡图标", "大活动·关卡图标2")

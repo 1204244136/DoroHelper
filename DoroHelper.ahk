@@ -1088,7 +1088,7 @@ AutoStartNikke() {
                 ; 检查游戏是否已经启动
                 if ProcessExist(gameExe) {
                     AddLog("检测到游戏进程 " gameExe " 已启动，停止点击")
-                    Sleep 5000 ; 等待游戏稳定
+                    Sleep 10000 ; 等待游戏稳定
                     break 2 ; 跳出两层循环
                 }
                 ; 执行点击启动按钮

@@ -2297,8 +2297,8 @@ MsgSponsor(*) {
     LV.Add(, "轮换活动", "", "", "✅️", "✅️", "✅️")
     LV.Add(, "路径和定时启动", "", "", "", "✅️", "✅️")
     LV.Add(, "自动推图", "", "", "", "✅️", "✅️")
-    picUrl1 := "https://www.helloimg.com/i/2025/08/29/68b1b2c15a3bd.jpg"
-    picUrl2 := "https://www.helloimg.com/i/2025/08/29/68b1b2c22d237.jpg"
+    picUrl1 := "https://s1.imagehub.cc/images/2025/09/12/c3fd38a9b6ae2e677b4e2f411ebc49a8.jpg"
+    picUrl2 := "https://s1.imagehub.cc/images/2025/09/12/f69df12697d7bb2a98ef61108e46e787.jpg"
     guiSponsor.Add("ActiveX", "w200 h200", "mshtml:<img src='" picUrl1 "' style='width:100%; height:100%; object-fit:contain;' />")
     guiSponsor.Add("ActiveX", "yp w200 h200", "mshtml:<img src='" picUrl2 "' style='width:100%; height:100%; object-fit:contain;' />")
     ; guiSponsor.Add("ActiveX", "yp w205 h205", "mshtml:<img src='" picUrl2 "' />")

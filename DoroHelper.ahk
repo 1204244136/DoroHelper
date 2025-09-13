@@ -145,7 +145,8 @@ global g_numeric_settings := Map(
     "MirrorCDK", "",              ;Mirror酱的CDK
     "Version", currentVersion,    ;版本号
     "UpdateChannels", "正式版",    ;更新渠道
-    "DownloadSource", "GitHub"    ;下载源
+    "DownloadSource", "GitHub",    ;下载源
+    "UserGroup", "普通用户"      ;用户组
 )
 ;tag 其他全局变量
 outputText := ""
@@ -155,15 +156,6 @@ BattleSkip := 0
 QuickBattle := 0
 PicTolerance := g_numeric_settings["Tolerance"]
 g_settingPages := Map()
-if A_Username = "12042" {
-    UserGroup := "管理员"
-    ;0是普通用户，1是铜Doro会员，2是银Doro会员，3是金Doro会员，10是管理员
-    UserLevel := 10
-}
-else {
-    UserGroup := "普通用户"
-    UserLevel := 0
-}
 Hashed := ""
 stdScreenW := 3840
 stdScreenH := 2160
@@ -198,6 +190,24 @@ try {
 }
 catch {
     WriteSettings()
+}
+;tag 初始化用户组
+;0是普通用户，1是铜Doro会员，2是银Doro会员，3是金Doro会员，10是管理员
+UserGroup := g_numeric_settings["UserGroup"]
+if UserGroup = "管理员" {
+    UserLevel := 10
+}
+if UserGroup = "金Doro会员" {
+    UserLevel := 3
+}
+if UserGroup = "银Doro会员" {
+    UserLevel := 2
+}
+if UserGroup = "铜Doro会员" {
+    UserLevel := 1
+}
+if UserGroup = "普通用户" {
+    UserLevel := 0
 }
 ;endregion 读取设置
 ;region 识图素材
@@ -473,7 +483,7 @@ doroGui.Add("Text", "x20 y40 R1 +0x0100", "版本：" currentVersion)
 cbAutoCheckVersion := AddCheckboxSetting(doroGui, "AutoCheckUpdate", "自动检查", "x170 yp R1")
 doroGui.Tips.SetTip(cbAutoCheckVersion, "启动时自动检查版本`n该功能启用时会略微降低启动速度`nahk版暂时改为下载最新版的压缩包")
 doroGui.Add("Text", "x20 y65 R1 +0x0100 Section", "用户组：")
-TextUserGroup := doroGui.Add("Text", "x+0.5  R1 +0x0100", UserGroup)
+TextUserGroup := doroGui.Add("Text", "x+0.5  R1 +0x0100", g_numeric_settings["UserGroup"])
 MirrorInfo := doroGui.Add("Text", "x150 yp R1 +0x0100", "❔️")
 try doroGui.Add("Text", "x20 y90 R1 +0x0100", "哈希值：" MyFileShortHash)
 doroGui.Tips.SetTip(MirrorInfo, "用户组会在你正式运行Doro时检查，也可以勾选右边的自动检查在每次启动时检查`n你可以通过支持DoroHelper来获得更高级的用户组，支持方式请点击赞助按钮`n普通用户：可以使用大部分功能`r`n会员用户：可以提前使用某些功能")
@@ -2172,6 +2182,7 @@ CheckUserGroup() {
                 if (expiryDate >= CurrentDate) {
                     UserGroup := memberInfo["tier"]
                     TextUserGroup.Value := UserGroup
+                    g_numeric_settings["UserGroup"] := UserGroup
                     AddLog("验证成功，当前用户组：" UserGroup)
                     AddLog("有效期至" expiryDate)
                     ; 设置用户级别和托盘图标的逻辑...

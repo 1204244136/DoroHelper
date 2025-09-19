@@ -14,7 +14,7 @@ if !A_IsAdmin {
 }
 ;region 设置常量
 try TraySetIcon "doro.ico"
-currentVersion := "v1.6.7"
+currentVersion := "v1.6.8"
 ;tag 检查脚本哈希
 SplitPath A_ScriptFullPath, , , &scriptExtension
 scriptExtension := StrLower(scriptExtension)
@@ -123,7 +123,7 @@ global g_settings := Map(
     "AutoCheckUserGroup", 0,     ;自动检查会员组
     "AutoDeleteOldFile", 0,      ;自动删除旧版本
     "DoroClosing", 0,            ;完成后自动关闭Doro
-    "LoopMode", 0,            ;完成后自动关闭游戏
+    "LoopMode", 0,               ;完成后自动关闭游戏
     "OpenBlablalink", 0,         ;完成后打开Blablalink
     "CheckEvent", 0,             ;活动结束提醒
     "AutoStartNikke", 0,         ;使用脚本启动NIKKE
@@ -138,16 +138,16 @@ global g_settings := Map(
 global g_numeric_settings := Map(
     "doroGuiX", 200,                ;DoroHelper窗口X坐标
     "doroGuiY", 200,                ;DoroHelper窗口Y坐标
-    "StartupTime", "",            ;定时启动时间
-    "StartupPath", "",            ;启动路径
-    "SleepTime", 1000,            ;默认等待时间
-    "InterceptionBoss", 1,        ;拦截战BOSS选择
-    "Tolerance", 1,               ;宽容度
-    "MirrorCDK", "",              ;Mirror酱的CDK
-    "Version", currentVersion,    ;版本号
-    "UpdateChannels", "正式版",    ;更新渠道
-    "DownloadSource", "GitHub",    ;下载源
-    "UserGroup", "普通用户"      ;用户组
+    "StartupTime", "",              ;定时启动时间
+    "StartupPath", "",              ;启动路径
+    "SleepTime", 1000,              ;默认等待时间
+    "InterceptionBoss", 1,          ;拦截战BOSS选择
+    "Tolerance", 1,                 ;宽容度
+    "MirrorCDK", "",                ;Mirror酱的CDK
+    "Version", currentVersion,      ;版本号
+    "UpdateChannels", "正式版",      ;更新渠道
+    "DownloadSource", "GitHub",     ;下载源
+    "UserGroup", "普通用户"          ;用户组
 )
 ;tag 其他全局变量
 outputText := ""
@@ -861,14 +861,14 @@ AddCheckboxSetting(doroGui, "StoryModeAutoStar", "自动收藏", "x+5  R1")
 AddCheckboxSetting(doroGui, "StoryModeAutoChoose", "自动抉择", "x+5 R1")
 BtnStoryMode := doroGui.Add("Button", " x+5 yp-3 w60 h30", "←启动").OnEvent("Click", StoryMode)
 TextTestModeLabel := doroGui.Add("Text", "xp R1 xs+10 +0x0100", "调试模式")
-doroGui.Tips.SetTip(TextTestModeLabel, "直接执行对应任务")
+doroGui.Tips.SetTip(TextTestModeLabel, "根据输入的函数直接执行对应任务")
 TestModeEditControl := doroGui.Add("Edit", "x+10 yp w145 h20")
 doroGui.Tips.SetTip(TestModeEditControl, "输入要执行的任务的函数名")
 BtnTestMode := doroGui.Add("Button", " x+5 yp-3 w60 h30", "←启动").OnEvent("Click", TestMode)
 TextQuickBurst := doroGui.Add("Text", "xp R1 xs+10 +0x0100", "快速爆裂模式")
 doroGui.Tips.SetTip(TextQuickBurst, "启动后，会自动使用爆裂，速度比自带的自动快。`n默认先A后S。适合凹分时解手")
 BtnQuickBurst := doroGui.Add("Button", " x+5 yp-3 w60 h30", "←启动").OnEvent("Click", QuickBurst)
-TextAutoAdvance := doroGui.Add("Text", "xp R1 xs+10 +0x0100", "推图模式beta[金Doro专属]")
+TextAutoAdvance := doroGui.Add("Text", "xp R1 xs+10 +0x0100", "推图模式beta[金Doro]")
 doroGui.Tips.SetTip(TextAutoAdvance, "半自动推图。视野调到最大。在地图中靠近怪的地方启动，有时需要手动找怪和找机关")
 BtnAutoAdvance := doroGui.Add("Button", " x+5 yp-3 w60 h30", "←启动").OnEvent("Click", AutoAdvance)
 BtnBluePill := AddCheckboxSetting(doroGui, "BluePill", "蓝色药丸", "xp R1 xs+10 +0x0100")

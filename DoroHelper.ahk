@@ -138,6 +138,7 @@ global g_settings := Map(
 global g_numeric_settings := Map(
     "doroGuiX", 200,                ;DoroHelper窗口X坐标
     "doroGuiY", 200,                ;DoroHelper窗口Y坐标
+    "TestModeValue", "",            ;调试模式值
     "StartupTime", "",              ;定时启动时间
     "StartupPath", "",              ;启动路径
     "SleepTime", 1000,              ;默认等待时间
@@ -864,6 +865,7 @@ TextTestModeLabel := doroGui.Add("Text", "xp R1 xs+10 +0x0100", "调试模式")
 doroGui.Tips.SetTip(TextTestModeLabel, "根据输入的函数直接执行对应任务")
 TestModeEditControl := doroGui.Add("Edit", "x+10 yp w145 h20")
 doroGui.Tips.SetTip(TestModeEditControl, "输入要执行的任务的函数名")
+TestModeEditControl.Value := g_numeric_settings["TestModeValue"]
 BtnTestMode := doroGui.Add("Button", " x+5 yp-3 w60 h30", "←启动").OnEvent("Click", TestMode)
 TextQuickBurst := doroGui.Add("Text", "xp R1 xs+10 +0x0100", "快速爆裂模式")
 doroGui.Tips.SetTip(TextQuickBurst, "启动后，会自动使用爆裂，速度比自带的自动快。`n默认先A后S。适合凹分时解手")
@@ -5243,6 +5245,7 @@ StoryMode(*) {
 }
 ;tag 调试模式
 TestMode(BtnTestMode, Info) {
+    g_numeric_settings["TestModeValue"] := TestModeEditControl.Value
     ; 1. 获取输入
     fullCallString := Trim(TestModeEditControl.Value)
     if (fullCallString = "") {

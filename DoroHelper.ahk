@@ -2314,11 +2314,27 @@ MsgSponsor(*) {
     LV.Add(, "轮换活动", "", "", "✅️", "✅️", "✅️")
     LV.Add(, "路径和定时启动", "", "", "", "✅️", "✅️")
     LV.Add(, "自动推图", "", "", "", "✅️", "✅️")
-    picUrl1 := "https://s1.imagehub.cc/images/2025/09/12/c3fd38a9b6ae2e677b4e2f411ebc49a8.jpg"
-    picUrl2 := "https://s1.imagehub.cc/images/2025/09/12/f69df12697d7bb2a98ef61108e46e787.jpg"
-    guiSponsor.Add("ActiveX", "w200 h200", "mshtml:<img src='" picUrl1 "' style='width:100%; height:100%; object-fit:contain;' />")
-    guiSponsor.Add("ActiveX", "yp w200 h200", "mshtml:<img src='" picUrl2 "' style='width:100%; height:100%; object-fit:contain;' />")
-    ; guiSponsor.Add("ActiveX", "yp w205 h205", "mshtml:<img src='" picUrl2 "' />")
+    if (scriptExtension = "ahk") {
+        picUrl1 := "img\weixin.png"
+        picUrl2 := "img\alipay.png"
+        guiSponsor.Add("Picture", "w200 h200", picUrl1)
+        guiSponsor.Add("Picture", "yp w200 h200", picUrl2)
+    }
+    else {
+        picUrl1 := "https://s1.imagehub.cc/images/2025/09/12/c3fd38a9b6ae2e677b4e2f411ebc49a8.jpg"
+        picUrl2 := "https://s1.imagehub.cc/images/2025/09/12/f69df12697d7bb2a98ef61108e46e787.jpg"
+        local tempFile1 := A_Temp . "\doro_sponsor1.jpg"
+        local tempFile2 := A_Temp . "\doro_sponsor2.jpg"
+        try {
+            Download picUrl1, tempFile1
+            guiSponsor.Add("Picture", "w200 h200", tempFile1)
+            Download picUrl2, tempFile2
+            guiSponsor.Add("Picture", "yp w200 h200", tempFile2)
+        }
+        catch {
+            guiSponsor.Add("Text", "w400 h200 Center", "无法加载赞助图片，请检查网络连接。")
+        }
+    }
     guiSponsor.SetFont('s12', 'Microsoft YaHei UI')
     ; guiSponsor.Add("Text", "xm w400 Wrap cred", "为庆祝1.6版本，在9月4日游戏版本更新前包年免两月`n已包年的用户请凭付款截图联系续期三个月")
     guiSponsor.SetFont('s10', 'Microsoft YaHei UI')

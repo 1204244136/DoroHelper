@@ -5740,7 +5740,7 @@ EventSmall() {
             return
         }
     }
-    while !(ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.003 * NikkeW . " ", NikkeY + 0.007 * NikkeH . " ", NikkeX + 0.003 * NikkeW + 0.089 * NikkeW . " ", NikkeY + 0.007 * NikkeH + 0.054 * NikkeH . " ", 0.33 * PicTolerance, 0.33 * PicTolerance, FindText().PicLib("剧情活动"), , 0, , , , , TrueRatio, TrueRatio)) {
+    while !(ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.003 * NikkeW . " ", NikkeY + 0.007 * NikkeH . " ", NikkeX + 0.003 * NikkeW + 0.089 * NikkeW . " ", NikkeY + 0.007 * NikkeH + 0.054 * NikkeH . " ", 0.35 * PicTolerance, 0.35 * PicTolerance, FindText().PicLib("剧情活动"), , 0, , , , , TrueRatio, TrueRatio)) {
         Confirm
         Send "{]}"
     }

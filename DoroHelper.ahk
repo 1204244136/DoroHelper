@@ -1070,7 +1070,7 @@ ClickOnDoro(*) {
         Run("https://www.blablalink.com/")
     if g_settings["DoroClosing"] {
         if InStr(currentVersion, "beta") {
-            MsgBox ("测试版本禁用自动关闭！", "DoroHelper提示", "IconW")
+            MsgBox ("测试版本禁用自动关闭！", "DoroHelper提示", "iconx")
             Pause
         }
         ExitApp
@@ -1368,7 +1368,7 @@ CheckForUpdate(isManualCheck) {
         AddLog(latestObj.Get("display_name") . " 更新检查：发现新版本 " . latestObj.Get("version") . "，准备提示用户", "Green")
         downloadUrl := latestObj.Get("download_url", "")
         if (downloadUrl == "" && isManualCheck) {
-            MsgBox("已检测到新版本 " . latestObj.Get("version") . "，但未能获取到下载链接。请检查 " . latestObj.Get("display_name") . " 库或手动下载", "更新提示", "IconWarning")
+            MsgBox("已检测到新版本 " . latestObj.Get("version") . "，但未能获取到下载链接。请检查 " . latestObj.Get("display_name") . " 库或手动下载", "更新提示", "iconx")
         }
         DisplayUpdateNotification()
     } else if (checkSucceeded && latestObj.Get("version", "") != "") {
@@ -2717,7 +2717,7 @@ CheckUserGroupByHash(inputHash) {
     global g_MembershipLevels
     AddLog("开始检查输入哈希值 '" . inputHash . "' 的用户组信息……", "Blue")
     if (Trim(inputHash) == "") {
-        MsgBox("请输入要查询的设备哈希值。", "输入错误", "IconW")
+        MsgBox("请输入要查询的设备哈希值。", "输入错误", "iconx")
         AddLog("用户未输入哈希值。", "MAROON")
         return
     }
@@ -2737,7 +2737,7 @@ CheckUserGroupByHash(inputHash) {
             AddLog("哈希值 '" . inputHash . "' 的用户组信息查询成功。", "Green")
         } else {
             resultMessage .= "未找到匹配的用户组信息或已过期。"
-            MsgBox(resultMessage, "用户组查询结果", "IconW")
+            MsgBox(resultMessage, "用户组查询结果", "iconx")
             AddLog("哈希值 '" . inputHash . "' 未找到匹配的用户组信息或已过期。", "MAROON")
         }
     } catch as e {

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version_override:
-        description: "Override version from AHK script (e.g., v1.0.0)"
+        description: 'Override version from AHK script (e.g., v1.0.0)'
         required: false
         type: string
 
@@ -162,6 +162,8 @@ jobs:
           icon: ./doro.ico
           target: x64
           ahk-tag: v2.0.19
+          # 关闭压缩以避免杀毒软件误报（等效于 Ahk2Exe 的 "/compress 0"）
+          compression: none
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release

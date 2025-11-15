@@ -1247,7 +1247,7 @@ Initialization() {
         AddLog("显示器不足1080p分辨率")
     }
     if TrueRatio < 0.5 {
-        Result := MsgBox("检测到NIKKE窗口尺寸过小，建议按ctrl+3调整游戏画面并重启脚本，是否暂停程序？", , "YesNo")
+        Result := MsgBox("检测到NIKKE窗口尺寸过小，建议按ctrl+3调整游戏画面或全屏运行游戏并重启脚本，是否暂停程序？", , "YesNo")
         if Result = "Yes"
             Pause
     }

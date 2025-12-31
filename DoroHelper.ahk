@@ -18,7 +18,7 @@ CoordMode "Pixel", "Client"
 CoordMode "Mouse", "Client"
 ;region 设置常量
 try TraySetIcon "doro.ico"
-currentVersion := "v1.10.0"
+currentVersion := "v1.11.0"
 ; 判断拓展名
 SplitPath A_ScriptFullPath, , , &scriptExtension
 scriptExtension := StrLower(scriptExtension)

@@ -140,6 +140,7 @@ global g_settings := Map(
     "ClearRedProfile", 0,               ; 清除个人页红点
     "ClearRedBla", 0,                   ; 清除Bla红点
     "ClearRedBlaAwards", 0,             ; 自动对话
+    "BriefEncounter", 0,                ; 突发活动
     ;启动/退出相关
     "CloseAdvertisement", 0,            ; 关闭广告提示
     "CloseHelp", 0,                     ; 关闭帮助提示
@@ -738,9 +739,12 @@ g_settingPages["After"].Push(cbClearRedBla)
 cbClearRedBlaAwards := AddCheckboxSetting(doroGui, "ClearRedBlaAwards", "自动对话", "R1 x+5")
 doroGui.Tips.SetTip(cbClearRedBlaAwards, "Open Resource Cases")
 g_settingPages["After"].Push(cbClearRedBlaAwards)
-cbCheckUnderGround := AddCheckboxSetting(doroGui, "CheckUnderGround", "地面玩法提醒", "R1 xs+15")
-doroGui.Tips.SetTip(cbCheckUnderGround, "在作战报告达到上限时进行提醒`nUnderGround Reminder:remind you when the combat report reaches the limit")
-g_settingPages["After"].Push(cbCheckUnderGround)
+cbBriefEncounter := AddCheckboxSetting(doroGui, "BriefEncounter", "突发活动", "R1 xs+15")
+doroGui.Tips.SetTip(cbBriefEncounter, "Auto BriefEncounter")
+g_settingPages["After"].Push(cbBriefEncounter)
+; cbCheckUnderGround := AddCheckboxSetting(doroGui, "CheckUnderGround", "地面玩法提醒", "R1 xs+15")
+; doroGui.Tips.SetTip(cbCheckUnderGround, "在作战报告达到上限时进行提醒`nUnderGround Reminder:remind you when the combat report reaches the limit")
+; g_settingPages["After"].Push(cbCheckUnderGround)
 cbCheckEvent := AddCheckboxSetting(doroGui, "CheckEvent", "活动结束提醒", "R1 xs")
 doroGui.Tips.SetTip(cbCheckEvent, "在大小活动结束前进行提醒`nEvent End Reminder:remind you before the end of major and minor events")
 g_settingPages["After"].Push(cbCheckEvent)
@@ -1061,6 +1065,9 @@ ClickOnDoro(*) {
         }
         if g_settings["ClearRedBla"] {
             ClearRedBla()
+        }
+        if g_settings["BriefEncounter"] {
+            BriefEncounter()
         }
         if g_settings["CheckUnderGround"] {
             CheckUnderGround()
@@ -6744,7 +6751,45 @@ ClearRedBla() {
     }
     BackToHall()
 }
-;tag 提醒
+;tag 突发活动
+BriefEncounter() {
+    AddLog("突发活动", "Fuchsia")
+    EnterToOutpost()
+    while (ok := FindText(&X := "wait", &Y := 5, NikkeX + 0.003 * NikkeW . " ", NikkeY + 0.066 * NikkeH . " ", NikkeX + 0.003 * NikkeW + 0.024 * NikkeW . " ", NikkeY + 0.066 * NikkeH + 0.056 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("左上角的突发活动图标"), , , , , , , TrueRatio, TrueRatio)) {
+        AddLog("点击突发活动")
+        FindText().Click(X, Y, "L")
+        Sleep 1000
+        if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.004 * NikkeW . " ", NikkeY + 0.144 * NikkeH . " ", NikkeX + 0.004 * NikkeW + 0.012 * NikkeW . " ", NikkeY + 0.144 * NikkeH + 0.196 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("突发活动·小尾巴"), , , , , , 1, TrueRatio, TrueRatio)) {
+            FindText().Click(X + 50 * TrueRatio, Y, "L")
+            Sleep 1000
+            if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.596 * NikkeW . " ", NikkeY + 0.796 * NikkeH . " ", NikkeX + 0.596 * NikkeW + 0.020 * NikkeW . " ", NikkeY + 0.796 * NikkeH + 0.040 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("突发活动·建筑内部"), , , , , , , TrueRatio, TrueRatio)) {
+                FindText().Click(X, Y, "L")
+            }
+            else {
+                AddLog("体力已耗尽")
+                BackToHall
+                return
+            }
+            Sleep 1000
+            if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.518 * NikkeW . " ", NikkeY + 0.609 * NikkeH . " ", NikkeX + 0.518 * NikkeW + 0.022 * NikkeW . " ", NikkeY + 0.609 * NikkeH + 0.033 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("带圈白勾"), , , , , , , TrueRatio, TrueRatio)) {
+                FindText().Click(X, Y, "L")
+                Sleep 4000
+                Send "{]}"
+            }
+            Sleep 5000
+            Confirm
+            Sleep 1000
+            Confirm
+            Sleep 1000
+        }
+        else {
+            AddLog("没有突发活动")
+            BackToHall
+            return
+        }
+    }
+}
+;tag 地面玩法提醒
 CheckUnderGround(*) {
     global finalMessageText
     AddLog("地面玩法已结束", "Fuchsia")

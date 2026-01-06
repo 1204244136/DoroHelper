@@ -6731,6 +6731,15 @@ ClearRedBla() {
         FindText().Click(X, Y, "L")
         Sleep 3000
         if g_settings["ClearRedBlaAwards"] {
+            ; 未读对话排序
+            UserClick(2224, 582, TrueRatio)
+            Sleep 500
+            UserClick(1890, 1158, TrueRatio)
+            Sleep 500
+            if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.509 * NikkeW . " ", NikkeY + 0.622 * NikkeH . " ", NikkeX + 0.509 * NikkeW + 0.025 * NikkeW . " ", NikkeY + 0.622 * NikkeH + 0.039 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("带圈白勾"), , , , , , , TrueRatio, TrueRatio)) {
+                FindText().Click(X, Y, "L")
+                Sleep 500
+            }
             while (ok := FindText(&X, &Y, NikkeX + 0.359 * NikkeW . " ", NikkeY + 0.181 * NikkeH . " ", NikkeX + 0.359 * NikkeW + 0.281 * NikkeW . " ", NikkeY + 0.181 * NikkeH + 0.056 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("红底的N图标"), , , , , , 5, TrueRatio, TrueRatio)) {
                 FindText().Click(X, Y, "L")
                 Sleep 1000

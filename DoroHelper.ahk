@@ -6479,6 +6479,13 @@ ClearRedLimit() {
                     FindText().Click(X, Y, "L")
                     Sleep 1000
                 }
+                else {
+                    UserClick(3294, 1958, TrueRatio)
+                    Sleep 1000
+                    AddLog("已快捷佩戴装备以清除红点")
+                    GoBack
+                    continue
+                }
                 if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.416 * NikkeW . " ", NikkeY + 0.822 * NikkeH . " ", NikkeX + 0.416 * NikkeW + 0.171 * NikkeW . " ", NikkeY + 0.822 * NikkeH + 0.074 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("妮姬·极限突破"), , , , , , , TrueRatio, TrueRatio)) {
                     AddLog("点击极限突破")
                     FindText().Click(X, Y, "L")

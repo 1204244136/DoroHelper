@@ -6041,7 +6041,7 @@ EventSmall() {
 ;tag 挑战
 EventSmallChallenge() {
     AddLog("开始任务：小活动·挑战", "Fuchsia")
-    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.430 * NikkeW . " ", NikkeY + 0.723 * NikkeH . " ", NikkeX + 0.430 * NikkeW + 0.024 * NikkeW . " ", NikkeY + 0.723 * NikkeH + 0.026 * NikkeH . " ", 0.35 * PicTolerance, 0.35 * PicTolerance, FindText().PicLib("小活动·挑战"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.419 * NikkeW . " ", NikkeY + 0.723 * NikkeH . " ", NikkeX + 0.419 * NikkeW + 0.029 * NikkeW . " ", NikkeY + 0.723 * NikkeH + 0.030 * NikkeH . " ", 0.35 * PicTolerance, 0.35 * PicTolerance, FindText().PicLib("小活动·挑战"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试进入对应活动页")
         FindText().Click(X, Y, "L")
         Sleep 500

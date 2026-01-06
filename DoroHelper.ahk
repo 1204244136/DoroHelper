@@ -3855,10 +3855,10 @@ Recruit() {
 }
 ;tag 点掉推销
 RefuseSale() {
-    if (ok := FindText(&X, &Y, NikkeX + 0.438 * NikkeW . " ", NikkeY + 0.853 * NikkeH . " ", NikkeX + 0.438 * NikkeW + 0.124 * NikkeW . " ", NikkeY + 0.853 * NikkeH + 0.048 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("黄色的小时"), , , , , , , TrueRatio, TrueRatio)) {
+    if (ok := FindText(&X, &Y, NikkeX + 0.438 * NikkeW . " ", NikkeY + 0.853 * NikkeH . " ", NikkeX + 0.438 * NikkeW + 0.124 * NikkeW . " ", NikkeY + 0.853 * NikkeH + 0.048 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("黄色的小时"), , , , , , , TrueRatio, TrueRatio)) {
         UserClick(333, 2041, TrueRatio)
         Sleep 500
-        if (ok := FindText(&X, &Y, NikkeX + 0.504 * NikkeW . " ", NikkeY + 0.594 * NikkeH . " ", NikkeX + 0.504 * NikkeW + 0.127 * NikkeW . " ", NikkeY + 0.594 * NikkeH + 0.065 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("带圈白勾"), , 0, , , , , TrueRatio, TrueRatio)) {
+        if (ok := FindText(&X, &Y, NikkeX + 0.504 * NikkeW . " ", NikkeY + 0.594 * NikkeH . " ", NikkeX + 0.504 * NikkeW + 0.127 * NikkeW . " ", NikkeY + 0.594 * NikkeH + 0.065 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("带圈白勾"), , 0, , , , , TrueRatio, TrueRatio)) {
             FindText().Click(X, Y, "L")
             Sleep 500
         }

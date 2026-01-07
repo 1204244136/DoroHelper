@@ -5828,8 +5828,7 @@ OneAwardPass() {
     GoBack()
 }
 ;endregion 通行证收取
-;region 招募
-;tag 每日免费招募
+;region 每日免费招募
 AwardFreeRecruit() {
     AddLog("开始任务：每日免费招募", "Fuchsia")
     if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.585 * NikkeW . " ", NikkeY + 0.922 * NikkeH . " ", NikkeX + 0.585 * NikkeW + 0.051 * NikkeW . " ", NikkeY + 0.922 * NikkeH + 0.036 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("白色的每天免费"), , , , , , , TrueRatio, TrueRatio)) {
@@ -5852,9 +5851,12 @@ AwardFreeRecruit() {
             }
         }
     }
+    else {
+        AddLog("没有免费每日招募", "MAROON")
+    }
     BackToHall
 }
-;endregion 招募
+;endregion 每日免费招募
 ;region 协同作战
 ;tag 协同作战入口
 AwardCooperate() {

@@ -1088,6 +1088,8 @@ ClickOnDoro(*) {
     if g_settings["CheckEvent"] {
         CheckEvent()
     }
+    if g_settings["OpenBlablalink"]
+        Run("https://www.blablalink.com/")
     CalculateAndShowSpan()
     finalMessageTitle := "DoroHelper任务完成！"
     finalMessageText := finalMessageText . "Doro完成任务！" . outputText
@@ -1102,8 +1104,6 @@ ClickOnDoro(*) {
         finalMessageText .= "`n感谢你的支持～"
         MsgBox(finalMessageText, finalMessageTitle, "IconI")
     }
-    if g_settings["OpenBlablalink"]
-        Run("https://www.blablalink.com/")
     if g_settings["DoroClosing"] {
         if InStr(currentVersion, "beta") {
             MsgBox ("测试版本禁用自动关闭！", "DoroHelper提示", "iconx")

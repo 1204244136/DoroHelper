@@ -6555,11 +6555,13 @@ ClearRedCube() {
                             if (ok := FindText(&X, &Y, NikkeX + 0.602 * NikkeW . " ", NikkeY + 0.759 * NikkeH . " ", NikkeX + 0.602 * NikkeW + 0.017 * NikkeW . " ", NikkeY + 0.759 * NikkeH + 0.029 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("红点"), , , , , , , TrueRatio, TrueRatio)) {
                                 AddLog("点击强化")
                                 FindText().Click(X, Y, "L")
-                                Sleep 500
+                                Sleep 5000
                                 ; 清除强化后的确认/动画
-                                loop 10 {
-                                    UserClick(1910, 2066, TrueRatio)
-                                    GoBack()
+                                UserClick(1910, 2066, TrueRatio)
+                                Sleep 1000
+                                loop 2 {
+                                    GoBack
+                                    Sleep 1000
                                 }
                             }
                         }

@@ -6959,7 +6959,7 @@ TestMode(BtnTestMode, Info) {
         Result := fn.Call(ParamsArray*)
         ; 根据 Result 是否为空来决定消息，但通常函数执行完毕即可
         if (Result != "") {
-            MsgBox("函数 '" FuncName "' 执行完毕。结果: " Result)
+            MsgBox("函数 '" FuncName "' 执行完毕。")
         } else {
             MsgBox("函数 '" FuncName "' 执行完毕。")
         }

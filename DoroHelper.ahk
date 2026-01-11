@@ -3426,7 +3426,7 @@ ClickOnHelp(*) {
     MyHelp.Show()
 }
 ;tag 广告
-Advertisement() {
+Advertisement(*) {
     adTitle := "AD"
     MyAd := Gui(, adTitle)
     MyAd.SetFont('s10', 'Microsoft YaHei UI')

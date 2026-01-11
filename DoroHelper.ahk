@@ -280,25 +280,33 @@ doroGui.MarginY := Round(doroGui.MarginY * 1)
 doroGui.SetFont('s12', 'Microsoft YaHei UI')
 ;tag 框
 Update := doroGui.AddGroupBox("x10 y10 w250 h210 ", "更新")
-;tag 检查更新
-BtnUpdate := doroGui.Add("Button", "xp+50 yp-1 w80 h25", "检查更新")
-doroGui.Tips.SetTip(BtnUpdate, "Check for updates")
-BtnUpdate.OnEvent("Click", ClickOnCheckForUpdate)
 ;tag 赞助
-BtnSponsor := doroGui.Add("Button", "x+10  w50 h25", "赞助")
+BtnSponsor := doroGui.Add("Button", "x70 yp-1 w50 h25", "赞助")
 doroGui.Tips.SetTip(BtnSponsor, "Sponsor")
 BtnSponsor.OnEvent("Click", MsgSponsor)
 ;tag 帮助
-BtnHelp := doroGui.Add("Button", "x+10 w50 h25", "帮助")
+BtnHelp := doroGui.Add("Button", "x130 yp w50 h25", "帮助")
 doroGui.Tips.SetTip(BtnHelp, "Help")
 BtnHelp.OnEvent("Click", ClickOnHelp)
+;tag 广告
+BtnAdvertisement := doroGui.Add("Button", "x190 yp w50 h25", "广告")
+doroGui.Tips.SetTip(BtnAdvertisement, "Advertisement")
+BtnAdvertisement.OnEvent("Click", Advertisement)
 ;tag 版本
 TextVersion := doroGui.Add("Text", "x20 y40 R1 +0x0100", "版本：" currentVersion)
 doroGui.Tips.SetTip(TextVersion, "Version")
+;tag 检查更新
+BtnUpdate := doroGui.Add("Button", "x190 yp-1 w50 h25", "检查")
+doroGui.Tips.SetTip(BtnUpdate, "Check for updates")
+BtnUpdate.OnEvent("Click", ClickOnCheckForUpdate)
 ;tag 用户组
 TextUserGroup := doroGui.Add("Text", "x20 y+5 R1 +0x0100 Section", "用户组：")
 doroGui.Tips.SetTip(TextUserGroup, "你可以通点击上方的赞助按钮来获得更高级的用户组`nUserGroup:You can upgrade your membership by clicking the Sponsor button above`n普通用户:Normal User|铜:Copper|银:Silver|金:Gold")
 VariableUserGroup := doroGui.Add("Text", "x+0.5 w100 R1 +0x0100", g_numeric_settings["UserGroup"])
+;tag 检查用户组
+BtnCheckUserGroup := doroGui.Add("Button", "x190 yp-1 w50 h25", "检查")
+doroGui.Tips.SetTip(BtnCheckUserGroup, "Check for UserGroup")
+BtnCheckUserGroup.OnEvent("Click", (Ctrl, Info) => CheckUserGroup(true))
 ;tag 更新渠道
 TextUpdateChannels := doroGui.Add("Text", "Section x20 y+8 R1 +0x0100", "更新渠道")
 doroGui.Tips.SetTip(TextUpdateChannels, "UpdateChannels`n正式版:稳定，适合大多数用户|Stable: Reliable, recommended for most users.`n测试版|Beta")

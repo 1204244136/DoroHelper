@@ -3391,8 +3391,8 @@ ShowSetting(pageName) {
 ;tag 活动结束提醒
 CheckEvent(*) {
     MyFileShortHash := SubStr(A_Now, 1, 8)
-    if MyFileShortHash = "20251229" {
-        MsgBox "TERMINUS TICKET活动将在今天结束，请尽快完成活动！记得捡垃圾、搬空商店！"
+    if MyFileShortHash = "20260114" {
+        MsgBox "单人突击将在今天结束！"
     }
     if MyFileShortHash = "20251126" {
         MsgBox "GODDESS FALL活动将在今天结束，请尽快完成活动！记得捡垃圾、搬空商店！"

@@ -4281,7 +4281,7 @@ AdvanceMode(Picture, Picture2?) {
         Failed := false
         ; 1. 尝试匹配 Picture (高优先级)
         ; 只有在 Picture 上一轮没有失败时，才进行识别
-        if (!skipped && (ok_Pic := FindText(&X := "wait", &Y := 1, NikkeX + 0.305 * NikkeW . " ", NikkeY + 0.230 * NikkeH . " ", NikkeX + 0.305 * NikkeW + 0.388 * NikkeW . " ", NikkeY + 0.230 * NikkeH + 0.691 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(Picture), , , , , , 4, TrueRatio, TrueRatio))) {
+        if (!skipped && (ok_Pic := FindText(&X := "wait", &Y := 1, NikkeX + 0.370 * NikkeW . " ", NikkeY + 0.326 * NikkeH . " ", NikkeX + 0.370 * NikkeW + 0.261 * NikkeW . " ", NikkeY + 0.326 * NikkeH + 0.471 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(Picture), , , , , , 4, TrueRatio, TrueRatio))) {
             ok := ok_Pic
             currentPic := Picture
             hasAutoFill := true

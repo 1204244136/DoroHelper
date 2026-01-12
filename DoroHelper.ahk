@@ -4268,7 +4268,7 @@ AdvanceMode(Picture, Picture2?) {
         Confirm
     }
     AddLog("进入活动关卡")
-    sleep 500
+    sleep 1000
     AddLog("进行活动推关")
     Failed := false
     while true {

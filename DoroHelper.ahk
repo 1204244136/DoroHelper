@@ -6047,7 +6047,9 @@ EventSmall() {
         Send "{]}"
     }
     AddLog("已进入活动地区")
-    Sleep 3000
+    loop 6 {
+        Confirm
+    }
 }
 ;tag 挑战
 EventSmallChallenge() {

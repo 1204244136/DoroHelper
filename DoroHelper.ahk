@@ -98,8 +98,9 @@ global g_settings := Map(
     "AwardRanking", 0,                  ; 排名奖励
     "AwardDaily", 0,                    ; 任务
     "AwardPass", 0,                     ; 通行证
-    ;小活动
+    ;活动
     "Event", 0,                         ; 活动总开关
+    ;小活动
     "EventSmall", 0,                    ; 小活动
     "EventSmallChallenge", 0,           ; 小活动挑战
     "EventSmallStory", 0,               ; 小活动剧情
@@ -112,14 +113,6 @@ global g_settings := Map(
     "EventLargeCooperate", 0,           ; 大活动协同作战
     "EventLargeMinigame", 0,            ; 大活动小游戏
     "EventLargeDaily", 0,               ; 大活动奖励
-    ;特殊活动
-    "EventSpecial", 0,                  ; 特殊活动
-    "EventSpecialSign", 0,              ; 特殊活动签到
-    "EventSpecialChallenge", 0,         ; 特殊活动挑战
-    "EventSpecialStory", 0,             ; 特殊活动剧情
-    "EventSpecialCooperate", 0,         ; 特殊活动协同作战
-    "EventSpecialMinigame", 0,          ; 特殊活动小游戏
-    "EventSpecialDaily", 0,             ; 特殊活动奖励
     ;限时奖励
     "AwardFreeRecruit", 0,              ; 活动期间每日免费招募
     "AwardCooperate", 0,                ; 协同作战
@@ -688,27 +681,6 @@ g_settingPages["Event"].Push(SetEventLargeMinigame)
 SetEventLargeDaily := AddCheckboxSetting(doroGui, "EventLargeDaily", "大活动奖励", "R1 xs+15")
 doroGui.Tips.SetTip(SetEventLargeDaily, "Large Events Daily Rewards")
 g_settingPages["Event"].Push(SetEventLargeDaily)
-SetEventSpecial := AddCheckboxSetting(doroGui, "EventSpecial", "特殊活动🎁", "R1 xs")
-doroGui.Tips.SetTip(SetEventSpecial, "Special Events[Silver Doro]")
-g_settingPages["Event"].Push(SetEventSpecial)
-SetEventSpecialSign := AddCheckboxSetting(doroGui, "EventSpecialSign", "特殊活动签到", "R1 xs+15")
-doroGui.Tips.SetTip(SetEventSpecialSign, "Special Events Sign-in")
-g_settingPages["Event"].Push(SetEventSpecialSign)
-SetEventSpecialChallenge := AddCheckboxSetting(doroGui, "EventSpecialChallenge", "特殊活动挑战", "R1 xs+15")
-doroGui.Tips.SetTip(SetEventSpecialChallenge, "Special Events Challenge")
-g_settingPages["Event"].Push(SetEventSpecialChallenge)
-SetEventSpecialStory := AddCheckboxSetting(doroGui, "EventSpecialStory", "特殊活动剧情❔️", "R1 xs+15")
-doroGui.Tips.SetTip(SetEventSpecialStory, "部分关卡可能有特殊关，此时需要手动完成任务`nSpecial Events Story:Some levels may have special stages, which need to be completed manually")
-g_settingPages["Event"].Push(SetEventSpecialStory)
-SetEventSpecialCooperate := AddCheckboxSetting(doroGui, "EventSpecialCooperate", "特殊活动协同作战", "R1 xs+15")
-doroGui.Tips.SetTip(SetEventSpecialCooperate, "Special Events Cooperate")
-g_settingPages["Event"].Push(SetEventSpecialCooperate)
-SetEventSpecialMinigame := AddCheckboxSetting(doroGui, "EventSpecialMinigame", "特殊活动小游戏", "R1 xs+15")
-doroGui.Tips.SetTip(SetEventSpecialMinigame, "Special Event Minigame")
-g_settingPages["Event"].Push(SetEventSpecialMinigame)
-SetEventSpecialDaily := AddCheckboxSetting(doroGui, "EventSpecialDaily", "特殊活动奖励", "R1 xs+15")
-doroGui.Tips.SetTip(SetEventSpecialDaily, "Special Events Daily Rewards")
-g_settingPages["Event"].Push(SetEventSpecialDaily)
 ;tag 二级设置After
 SetAfterTitle := doroGui.Add("Text", "x290 y40 R1 +0x0100 Section", "====任务完成后====")
 g_settingPages["After"].Push(SetAfterTitle)
@@ -1040,9 +1012,6 @@ ClickOnDoro(*) {
             if g_settings["AwardPass"] {
                 AwardPass()
             }
-        }
-        if g_settings["EventSpecial"] {
-            EventSpecial()
         }
     }
     if g_settings["ClearRed"] {
@@ -6314,10 +6283,6 @@ EventLargeDaily() {
 }
 ;tag 通行证
 ;endregion 大活动
-;region 特殊活动
-EventSpecial() {
-}
-;endregion 特殊活动
 ;region 任务完成后
 ClearRed() {
 }

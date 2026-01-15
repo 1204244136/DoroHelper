@@ -105,6 +105,11 @@ global g_settings := Map(
     "EventSmallChallenge", 0,           ; 小活动挑战
     "EventSmallStory", 0,               ; 小活动剧情
     "EventSmallMission", 0,             ; 小活动任务
+    ;小活动·额外
+    "EventSmallExtra", 0,               ; 小活动·额外
+    "EventSmallExtraChallenge", 0,      ; 小活动挑战·额外
+    "EventSmallExtraStory", 0,          ; 小活动剧情·额外
+    "EventSmallExtraMission", 0,        ; 小活动任务·额外
     ;大活动
     "EventLarge", 0,                    ; 大活动
     "EventLargeSign", 0,                ; 大活动签到
@@ -113,6 +118,14 @@ global g_settings := Map(
     "EventLargeCooperate", 0,           ; 大活动协同作战
     "EventLargeMinigame", 0,            ; 大活动小游戏
     "EventLargeDaily", 0,               ; 大活动奖励
+    ;大活动·额外
+    "EventLargeExtra", 0,               ; 大活动·额外
+    "EventLargeExtraSign", 0,           ; 大活动签到·额外
+    "EventLargeExtraChallenge", 0,      ; 大活动挑战·额外
+    "EventLargeExtraStory", 0,          ; 大活动剧情·额外
+    "EventLargeExtraCooperate", 0,      ; 大活动协同作战·额外
+    "EventLargeExtraMinigame", 0,       ; 大活动小游戏·额外
+    "EventLargeExtraDaily", 0,          ; 大活动奖励·额外
     ;限时奖励
     "AwardFreeRecruit", 0,              ; 活动期间每日免费招募
     "AwardCooperate", 0,                ; 协同作战
@@ -648,8 +661,8 @@ g_settingPages["Event"].Push(SetAutoFill)
 SetEventTitle := doroGui.Add("Text", "R1 +0x0100", "====活动选项====")
 doroGui.Tips.SetTip(SetEventTitle, "Event Options")
 g_settingPages["Event"].Push(SetEventTitle)
-SetEventSmall := AddCheckboxSetting(doroGui, "EventSmall", "小活动🎁[ARK GUARDIAN]", "R1")
-doroGui.Tips.SetTip(SetEventSmall, "Small Events[Silver Doro]")
+SetEventSmall := AddCheckboxSetting(doroGui, "EventSmall", "小活动🎁[ARK GUARDIAN]", "xs R1")
+doroGui.Tips.SetTip(SetEventSmall, "Small Events")
 g_settingPages["Event"].Push(SetEventSmall)
 SetEventSmallChallenge := AddCheckboxSetting(doroGui, "EventSmallChallenge", "小活动挑战", "R1 xs+15")
 doroGui.Tips.SetTip(SetEventSmallChallenge, "Small Events Challenge")
@@ -660,8 +673,20 @@ g_settingPages["Event"].Push(SetEventSmallStory)
 SetEventSmallMission := AddCheckboxSetting(doroGui, "EventSmallMission", "小活动任务", "R1 xs+15")
 doroGui.Tips.SetTip(SetEventSmallMission, "Small Events Mission")
 g_settingPages["Event"].Push(SetEventSmallMission)
+SetEventSmallExtra := AddCheckboxSetting(doroGui, "EventSmallExtra", "小活动🎁[SIN EDITOR]", "xs R1")
+doroGui.Tips.SetTip(SetEventSmallExtra, "Small Events")
+g_settingPages["Event"].Push(SetEventSmallExtra)
+SetEventSmallExtraChallenge := AddCheckboxSetting(doroGui, "EventSmallExtraChallenge", "小活动挑战", "R1 xs+15")
+doroGui.Tips.SetTip(SetEventSmallExtraChallenge, "Small Events Challenge")
+g_settingPages["Event"].Push(SetEventSmallExtraChallenge)
+SetEventSmallExtraStory := AddCheckboxSetting(doroGui, "EventSmallExtraStory", "小活动剧情", "R1 xs+15")
+doroGui.Tips.SetTip(SetEventSmallExtraStory, "Small Events Story")
+g_settingPages["Event"].Push(SetEventSmallExtraStory)
+SetEventSmallExtraMission := AddCheckboxSetting(doroGui, "EventSmallExtraMission", "小活动任务", "R1 xs+15")
+doroGui.Tips.SetTip(SetEventSmallExtraMission, "Small Events Mission")
+g_settingPages["Event"].Push(SetEventSmallExtraMission)
 SetEventLarge := AddCheckboxSetting(doroGui, "EventLarge", "大活动🎁", "R1 xs")
-doroGui.Tips.SetTip(SetEventLarge, "Large Events[Silver Doro]")
+doroGui.Tips.SetTip(SetEventLarge, "Large Events")
 g_settingPages["Event"].Push(SetEventLarge)
 SetEventLargeSign := AddCheckboxSetting(doroGui, "EventLargeSign", "大活动签到", "R1 xs+15")
 doroGui.Tips.SetTip(SetEventLargeSign, "Large Events Sign-in")
@@ -877,7 +902,7 @@ if g_settings["Timedstart"] {
     }
 }
 ;endregion 前置任务
-;tag 点击运行
+;region 点击运行
 ClickOnDoro(*) {
     global finalMessageText
     ;清空文本
@@ -988,6 +1013,19 @@ ClickOnDoro(*) {
             }
             BackToHall
         }
+        if g_settings["EventSmallExtra"] {
+            EventSmallExtra()
+            if g_settings["EventSmallExtraChallenge"] {
+                EventSmallExtraChallenge()
+            }
+            if g_settings["EventSmallExtraStory"] {
+                EventSmallExtraStory()
+            }
+            if g_settings["EventSmallExtraMission"] {
+                EventSmallExtraMission()
+            }
+            BackToHall
+        }
         if g_settings["EventLarge"] {
             EventLarge()
             if g_settings["EventLargeSign"] {
@@ -1007,6 +1045,31 @@ ClickOnDoro(*) {
             }
             if g_settings["EventLargeDaily"] {
                 EventLargeDaily()
+            }
+            BackToHall
+            if g_settings["AwardPass"] {
+                AwardPass()
+            }
+        }
+        if g_settings["EventLargeExtra"] {
+            EventLargeExtra()
+            if g_settings["EventLargeExtraSign"] {
+                EventLargeExtraSign()
+            }
+            if g_settings["EventLargeExtraChallenge"] {
+                EventLargeExtraChallenge()
+            }
+            if g_settings["EventLargeExtraStory"] {
+                EventLargeExtraStory()
+            }
+            if g_settings["EventLargeExtraCooperate"] {
+                EventLargeExtraCooperate()
+            }
+            if g_settings["EventLargeExtraMinigame"] {
+                EventLargeExtraMinigame()
+            }
+            if g_settings["EventLargeExtraDaily"] {
+                EventLargeExtraDaily()
             }
             BackToHall
             if g_settings["AwardPass"] {
@@ -1089,6 +1152,7 @@ ClickOnDoro(*) {
         ExitApp
     }
 }
+;endregion 点击运行
 ;region 启动辅助函数
 ;tag 脚本启动NIKKE
 AutoStartNikke() {
@@ -6283,6 +6347,110 @@ EventLargeDaily() {
 }
 ;tag 通行证
 ;endregion 大活动
+;region 小活动·额外
+;tag 入口
+EventSmallExtra() {
+    AddLog("开始任务：小活动", "Fuchsia")
+    loop {
+        if (ok := FindText(&X, &Y, NikkeX + 0.632 * NikkeW . " ", NikkeY + 0.794 * NikkeH . " ", NikkeX + 0.632 * NikkeW + 0.140 * NikkeW . " ", NikkeY + 0.794 * NikkeH + 0.108 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("小活动·额外的图标"), , , , , , , TrueRatio, TrueRatio)) {
+            AddLog("已找到小活动")
+            loop 3 {
+                UserClick(2782, 1816, TrueRatio)
+                Sleep 500
+            }
+            break
+        }
+        else if (ok := FindText(&X, &Y, NikkeX + 0.751 * NikkeW . " ", NikkeY + 0.864 * NikkeH . " ", NikkeX + 0.751 * NikkeW + 0.022 * NikkeW . " ", NikkeY + 0.864 * NikkeH + 0.037 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("活动·切换的图标"), , , , , , , TrueRatio, TrueRatio)) {
+            AddLog("切换活动")
+            FindText().Click(X, Y, "L")
+            Sleep 3000
+        }
+        if A_Index > 3 {
+            AddLog("未找到活动，可能是活动已结束")
+            return
+        }
+    }
+    while !(ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.003 * NikkeW . " ", NikkeY + 0.007 * NikkeH . " ", NikkeX + 0.003 * NikkeW + 0.089 * NikkeW . " ", NikkeY + 0.007 * NikkeH + 0.054 * NikkeH . " ", 0.35 * PicTolerance, 0.35 * PicTolerance, FindText().PicLib("剧情活动"), , 0, , , , , TrueRatio, TrueRatio)) {
+        Confirm
+        Send "{]}"
+    }
+    AddLog("已进入活动地区")
+    loop 6 {
+        Confirm
+    }
+}
+;tag 挑战
+EventSmallExtraChallenge() {
+    AddLog("开始任务：小活动·挑战", "Fuchsia")
+    if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.391 * NikkeW . " ", NikkeY + 0.773 * NikkeH . " ", NikkeX + 0.391 * NikkeW + 0.033 * NikkeW . " ", NikkeY + 0.773 * NikkeH + 0.045 * NikkeH . " ", 0.35 * PicTolerance, 0.35 * PicTolerance, FindText().PicLib("小活动·额外·挑战"), , , , , , , TrueRatio, TrueRatio)) {
+        AddLog("尝试进入对应活动页")
+        FindText().Click(X, Y, "L")
+        Sleep 500
+    }
+    Challenge
+    while !(ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.003 * NikkeW . " ", NikkeY + 0.007 * NikkeH . " ", NikkeX + 0.003 * NikkeW + 0.089 * NikkeW . " ", NikkeY + 0.007 * NikkeH + 0.054 * NikkeH . " ", 0.35 * PicTolerance, 0.35 * PicTolerance, FindText().PicLib("剧情活动"), , 0, , , , , TrueRatio, TrueRatio)) {
+        AddLog("尝试返回活动主页面")
+        GoBack
+        Sleep 1000
+    }
+    AddLog("已返回活动主页面")
+}
+;tag 剧情活动
+EventSmallExtraStory() {
+    AddLog("开始任务：小活动·剧情活动", "Fuchsia")
+    if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.471 * NikkeW . " ", NikkeY + 0.856 * NikkeH . " ", NikkeX + 0.471 * NikkeW + 0.068 * NikkeW . " ", NikkeY + 0.856 * NikkeH + 0.034 * NikkeH . " ", 0.3 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("小活动·额外·放大镜的图标"), , , , , , , TrueRatio, TrueRatio)) {
+        AddLog("尝试进入对应活动页")
+        FindText().Click(X, Y - 100 * TrueRatio, "L")
+        Sleep 500
+    }
+    AdvanceMode("小活动·额外·关卡图标", "小活动·额外·关卡图标2")
+    Sleep 1000
+    GoBack
+}
+;tag 任务
+EventSmallExtraMission() {
+    AddLog("开始任务：小活动·任务领取", "Fuchsia")
+    if (ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.646 * NikkeW . " ", NikkeY + 0.744 * NikkeH . " ", NikkeX + 0.646 * NikkeW + 0.015 * NikkeW . " ", NikkeY + 0.744 * NikkeH + 0.026 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("红点"), , , , , , , TrueRatio, TrueRatio)) {
+        FindText().Click(X, Y, "L")
+        Sleep 1000
+        AddLog("已进入任务界面")
+        while (ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.529 * NikkeW . " ", NikkeY + 0.862 * NikkeH . " ", NikkeX + 0.529 * NikkeW + 0.111 * NikkeW . " ", NikkeY + 0.862 * NikkeH + 0.056 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("小活动·额外·全部领取"), , , , , , , TrueRatio, TrueRatio)) {
+            FindText().Click(X + 50 * TrueRatio, Y, "L")
+            AddLog("点击全部领取")
+            Sleep 2000
+            FindText().Click(X + 50 * TrueRatio, Y, "L")
+            Sleep 500
+        }
+    }
+    else {
+        AddLog("没有可领取的任务")
+    }
+}
+;endregion 小活动·额外
+;region 大活动·额外
+;tag 入口
+EventLargeExtra() {
+}
+;tag 签到
+EventLargeExtraSign() {
+}
+;tag 挑战
+EventLargeExtraChallenge() {
+}
+;tag 剧情活动
+EventLargeExtraStory() {
+}
+;tag 协同作战
+EventLargeExtraCooperate() {
+}
+;tag 小游戏
+EventLargeExtraMinigame() {
+}
+;tag 领取奖励
+EventLargeExtraDaily() {
+}
+;tag 通行证
+;endregion 大活动·额外
 ;region 任务完成后
 ClearRed() {
 }

@@ -5926,6 +5926,7 @@ AwardCooperate() {
 }
 ;tag 协同作战核心
 AwardCooperateBattle() {
+OuterLoop:
     while true {
         if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.851 * NikkeW . " ", NikkeY + 0.750 * NikkeH . " ", NikkeX + 0.851 * NikkeW + 0.134 * NikkeW . " ", NikkeY + 0.750 * NikkeH + 0.068 * NikkeH . " ", 0.35 * PicTolerance, 0.35 * PicTolerance, FindText().PicLib("开始匹配的开始"), , , , , , , TrueRatio, TrueRatio)) {
             AddLog("开始匹配")
@@ -5948,10 +5949,18 @@ AwardCooperateBattle() {
         if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.373 * NikkeW . " ", NikkeY + 0.644 * NikkeH . " ", NikkeX + 0.373 * NikkeW + 0.253 * NikkeW . " ", NikkeY + 0.644 * NikkeH + 0.060 * NikkeH . " ", 0.2 * PicTolerance, 0.2 * PicTolerance, FindText().PicLib("确认"), , , , , , , TrueRatio, TrueRatio)) {
             AddLog("确认匹配")
             FindText().Click(X, Y, "L")
+            Sleep 500
         }
         while true {
             if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.511 * NikkeW . " ", NikkeY + 0.660 * NikkeH . " ", NikkeX + 0.511 * NikkeW + 0.106 * NikkeW . " ", NikkeY + 0.660 * NikkeH + 0.054 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("带圈白勾"), , , , , , , TrueRatio, TrueRatio)) {
                 FindText().Click(X, Y, "L")
+                Sleep 500
+            }
+            if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.439 * NikkeW . " ", NikkeY + 0.597 * NikkeH . " ", NikkeX + 0.439 * NikkeW + 0.123 * NikkeW . " ", NikkeY + 0.597 * NikkeH + 0.058 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("带圈白勾"), , , , , , , TrueRatio, TrueRatio)) {
+                AddLog("网络连接中断，重新开始匹配")
+                FindText().Click(X, Y, "L")
+                Sleep 500
+                continue OuterLoop
             }
             if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.444 * NikkeW . " ", NikkeY + 0.915 * NikkeH . " ", NikkeX + 0.444 * NikkeW + 0.112 * NikkeW . " ", NikkeY + 0.915 * NikkeH + 0.052 * NikkeH . " ", 0.2 * PicTolerance, 0.2 * PicTolerance, FindText().PicLib("准备"), , , , , , , TrueRatio, TrueRatio)) {
                 FindText().Click(X, Y, "L")

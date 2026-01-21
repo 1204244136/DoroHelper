@@ -3465,8 +3465,7 @@ ClickOnHelp(*) {
     MyHelp.Add("Text", "w600", "- 反馈任何问题前，请先尝试复现，如能复现再进行反馈，反馈时必须有录屏和全部日志")
     MyHelp.Add("Text", "w600", "- 鼠标悬浮在控件上会有对应的提示和详细信息，请勾选或点击前仔细阅读！")
     MyHelp.Add("Text", "w600", "- ctrl+1关闭程序、ctrl+2暂停程序、ctrl+3~7调整游戏大小")
-    MyHelp.Add("Text", "w600", "- 如果遇到启动了但毫无反应的情况，请检查杀毒软件(如360、火绒等)是否拦截了DoroHelper的运行，请将其添加信任")
-    MyHelp.Add("Text", "w600", "- 如果遇到ACE安全中心提示，请尝试卸载wegame")
+    MyHelp.Add("Text", "w600", "- 如果遇到启动了但毫无反应的情况，请检查杀毒软件(如360、火绒等)或游戏监测软件（如ACE等反作弊软件）是否拦截了DoroHelper的运行，请将其添加信任或关闭相关软件")
     AddCheckboxSetting(MyHelp, "CloseHelp", "我已认真阅读以上内容，并保证出现问题反馈前会再次检查，现在我想让这个弹窗不再主动显示", "")
     MyHelp.Show()
 }

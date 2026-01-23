@@ -4210,7 +4210,9 @@ BackToHall(AD := False) {
             Sleep 500
             if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.477 * NikkeW . " ", NikkeY + 0.082 * NikkeH . " ", NikkeX + 0.477 * NikkeW + 0.021 * NikkeW . " ", NikkeY + 0.082 * NikkeH + 0.042 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("公告的图标"), , , , , , , TrueRatio, TrueRatio)) {
                 ; AddLog("已返回大厅")
-                UserClick(333, 2041, TrueRatio)
+                loop 3 {
+                    Confirm
+                }
                 Sleep 500
                 break
             }

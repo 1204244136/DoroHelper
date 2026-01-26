@@ -600,7 +600,7 @@ g_settingPages["Interception"].Push(SetInterceptionExit7)
 SetInterceptionScreenshot := AddCheckboxSetting(doroGui, "InterceptionScreenshot", "结果截图", "R1.2")
 doroGui.Tips.SetTip(SetInterceptionScreenshot, "自动截取结算画面的图片，并保存在程序目录下的「Screenshot」文件夹中`nAutomatic screenshot of the settlement screen, saved in the 'Screenshot' folder in the program directory")
 g_settingPages["Interception"].Push(SetInterceptionScreenshot)
-SetInterceptionReminder := AddCheckboxSetting(doroGui, "InterceptionReminder", "快速战斗刷新提醒", "R1.2")
+SetInterceptionReminder := AddCheckboxSetting(doroGui, "InterceptionReminder", "每周首次战斗改为手动", "R1.2")
 doroGui.Tips.SetTip(SetInterceptionReminder, "在每周快速战斗功能重置时进行提醒。`n勾选此项后，在手动战斗之前，不会自动战斗`nReminder for Quick Battle reset")
 g_settingPages["Interception"].Push(SetInterceptionReminder)
 ;tag 二级奖励Award

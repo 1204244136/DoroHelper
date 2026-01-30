@@ -1245,8 +1245,7 @@ Initialization() {
         actualWinTitle := WinGetTitle(winID)
         AddLog("找到了进程为 '" . targetExe . "' 的窗口！实际窗口标题是: " . actualWinTitle)
         if actualWinTitle = "胜利女神：新的希望" {
-            MsgBox ("不支持国服，自动关闭！")
-            MsgBox ("为了各自生活的便利，请不要在公开场合发布本软件国服相关的修改版本，谢谢配合！")
+            MsgBox ("不支持国服，自动关闭！为了各自生活的便利，请不要在公开场合发布本软件国服相关的修改版本，谢谢配合！")
             ExitApp
         }
         ;激活该窗口
@@ -3450,6 +3449,7 @@ CheckEvent(*) {
 ClickOnHelp(*) {
     MyHelp := Gui(, "帮助")
     MyHelp.SetFont('s10', 'Microsoft YaHei UI')
+    MyHelp.Add("Text", "w600", "- 本软件不支持多开，如有多账号运行相关需求请联系作者")
     MyHelp.Add("Text", "w600", "- 如有问题请先尝试将更新渠道切换至AHK版并进行更新（需要优质网络）。如果无法更新或仍有问题请加入反馈qq群584275905，反馈必须附带日志和录屏")
     MyHelp.Add("Text", "w600", "- 使用前请先完成所有特殊任务（例如珍藏品任务），以防图标错位")
     MyHelp.Add("Text", "w600", "- 游戏分辨率需要设置成**16:9**的分辨率，小于1080p可能有问题，暂不打算特殊支持")

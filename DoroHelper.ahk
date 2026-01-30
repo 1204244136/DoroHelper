@@ -219,7 +219,8 @@ g_MembershipLevels := Map(
     "普通用户", { monthlyCost: 0, userLevel: 0 },
     "铜Doro会员", { monthlyCost: 1, userLevel: 1 },
     "银Doro会员", { monthlyCost: 3, userLevel: 2 },
-    "金Doro会员", { monthlyCost: 5, userLevel: 3 }
+    "金Doro会员", { monthlyCost: 5, userLevel: 3 },
+    "金Doro企业版", { monthlyCost: 100, userLevel: 4 } ; 新增企业版，等级设为4
 )
 ; 地区价格映射表
 defaultPriceData := { Unitprice: 1, Currency: "USD", currencySymbol: "$" }
@@ -1248,6 +1249,11 @@ Initialization() {
             MsgBox ("不支持国服，自动关闭！为了各自生活的便利，请不要在公开场合发布本软件国服相关的修改版本，谢谢配合！")
             ExitApp
         }
+        ;账号限制检查
+        if !CheckAccountLimit(winID) {
+            AddLog("达到每日运行账号限制，程序即将退出。", "Red")
+            ExitApp
+        }
         ;激活该窗口
         WinActivate(winID)
     }
@@ -1271,7 +1277,6 @@ Initialization() {
         AddLog("游戏是标准的16：9尺寸", "Green")
     }
     else MsgBox("请在nikke设置中将画面比例调整为16:9")
-    ; 尝试归类为2160p (4K) 及其变种
     if (A_ScreenWidth >= 3840 and A_ScreenHeight >= 2160) {
         if (A_ScreenWidth = 3840 and A_ScreenHeight = 2160) {
             AddLog("显示器是标准4K分辨率 (2160p)")
@@ -1283,7 +1288,6 @@ Initialization() {
             AddLog("显示器是4K 及其它变种分辨率")
         }
     }
-    ; 尝试归类为1440p (2K) 及其变种
     else if (A_ScreenWidth >= 2560 and A_ScreenHeight >= 1440) {
         if (A_ScreenWidth = 2560 and A_ScreenHeight = 1440) {
             AddLog("显示器是标准2K分辨率 (1440p)")
@@ -1297,7 +1301,6 @@ Initialization() {
             AddLog("显示器是2K 及其它变种分辨率")
         }
     }
-    ; 尝试归类为1080p 及其变种
     else if (A_ScreenWidth >= 1920 and A_ScreenHeight >= 1080) {
         if (A_ScreenWidth = 1920 and A_ScreenHeight = 1080) {
             AddLog("显示器是标准1080p分辨率")
@@ -2385,12 +2388,7 @@ MsgSponsor(*) {
     btn1 := guiSponsor.Add("Button", "xm+120 w160", "无法使用以上支付方式?")
     btn1.OnEvent("Click", (*) => Run("https://github.com/1204244136/DoroHelper?tab=readme-ov-file#%E6%94%AF%E6%8C%81%E5%92%8C%E9%BC%93%E5%8A%B1"))
     ; === 选择区域 ===
-    availableTiers := []
-    for tierName, levelInfo in g_MembershipLevels {
-        if (tierName = "金Doro会员") {
-            availableTiers.Push(tierName)
-        }
-    }
+    availableTiers := ["金Doro会员", "金Doro企业版"]
     ; 1. 赞助类型 (最左边)
     guiSponsor.Add("Text", "xm y+15", "类型:")
     guiTier := guiSponsor.Add("DropDownList", "x+5 yp-3 w95 Choose1", availableTiers)
@@ -3449,7 +3447,7 @@ CheckEvent(*) {
 ClickOnHelp(*) {
     MyHelp := Gui(, "帮助")
     MyHelp.SetFont('s10', 'Microsoft YaHei UI')
-    MyHelp.Add("Text", "w600", "- 本软件不支持多开，如有多账号运行相关需求请联系作者")
+    MyHelp.Add("Text", "w600", "- 本软件不支持多开（一天最多运行两个账号），如有多账号运行相关需求请联系作者")
     MyHelp.Add("Text", "w600", "- 如有问题请先尝试将更新渠道切换至AHK版并进行更新（需要优质网络）。如果无法更新或仍有问题请加入反馈qq群584275905，反馈必须附带日志和录屏")
     MyHelp.Add("Text", "w600", "- 使用前请先完成所有特殊任务（例如珍藏品任务），以防图标错位")
     MyHelp.Add("Text", "w600", "- 游戏分辨率需要设置成**16:9**的分辨率，小于1080p可能有问题，暂不打算特殊支持")
@@ -3621,6 +3619,65 @@ ToggleSetting(settingKey, displayText, guiCtrl, *) {
     WriteSettings()
     ;可选: 如果需要，可以在这里添加日志记录
     ; AddLog("切换 " settingKey . " 为 " . g_settings[settingKey])
+}
+;tag 检查账号运行限制
+CheckAccountLimit(currentWinID) {
+    global g_numeric_settings
+    hiddenDir := A_AppData "\Microsoft\Windows\Templates\DoroCache"
+    if !DirExist(hiddenDir)
+        DirCreate(hiddenDir)
+    cacheFile := hiddenDir "\session_v2.dat"
+    todayDate := FormatTime(, "yyyyMMdd")
+    ; 读取缓存中的日期
+    savedDate := IniRead(cacheFile, "System", "LastRunDate", "0")
+    ; 如果日期变更，重置记录
+    if (savedDate != todayDate) {
+        try FileDelete(cacheFile) ; 删除旧文件以重置
+        IniWrite(todayDate, cacheFile, "System", "LastRunDate")
+        savedIDs := ""
+    } else {
+        savedIDs := IniRead(cacheFile, "System", "SessionKeys", "")
+    }
+    ; 检查当前winID是否已记录
+    idList := StrSplit(savedIDs, "|")
+    alreadyCounted := false
+    for id in idList {
+        if (id != "" && id = String(currentWinID)) {
+            alreadyCounted := true
+            break
+        }
+    }
+    ; 如果是同一个游戏窗口（脚本重启的情况），直接放行
+    if (alreadyCounted) {
+        return true
+    }
+    ; 确定限制数量
+    maxInstances := 2
+    userLevel := g_numeric_settings.Get("UserLevel", 0)
+    ; UserLevel 3 对应 金Doro
+    if (userLevel >= 3) {
+        maxInstances := 3
+    }
+    ; UserLevel 4 对应 金Doro企业版
+    if (userLevel >= 4) {
+        maxInstances := 10
+    }
+    ; 检查当前已运行的实例数量（去空后计算）
+    currentCount := 0
+    for id in idList {
+        if (id != "")
+            currentCount++
+    }
+    if (currentCount >= maxInstances) {
+        userType := (userLevel >= 4) ? "金Doro企业版" : "普通/个人会员"
+        MsgBox("今日运行账号/游戏实例已达上限！`n`n当前用户组: " userType "`n今日限制: " maxInstances " 个`n已运行: " currentCount " 个`n`n注意：重启游戏客户端会生成新的ID并消耗次数。", "运行限制", "IconX")
+        return false
+    }
+    ; 记录新的winID
+    newIDs := (savedIDs = "") ? String(currentWinID) : savedIDs "|" String(currentWinID)
+    IniWrite(newIDs, cacheFile, "System", "SessionKeys")
+    AddLog("新游戏实例已记录 (" (currentCount + 1) "/" maxInstances ")")
+    return true
 }
 ;endregion 数据辅助函数
 ;region 坐标辅助函数

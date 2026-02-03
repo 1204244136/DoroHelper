@@ -418,7 +418,7 @@ cbCloseAdvertisement := AddCheckboxSetting(doroGui, "CloseAdvertisement", "移�
 doroGui.Tips.SetTip(cbCloseAdvertisement, "Remove ads[Copper Doro]")
 g_settingPages["Settings"].Push(cbCloseAdvertisement)
 cbAutoSwitchLanguage := AddCheckboxSetting(doroGui, "AutoSwitchLanguage", "自动切换语言", "R1")
-doroGui.Tips.SetTip(cbAutoSwitchLanguage, "Switch language automatically")
+doroGui.Tips.SetTip(cbAutoSwitchLanguage, "填入你原本使用的语言，简体中文建议不勾选`nFill in the language you originally used. (For simplified Chinese, please do not select this option.)")
 g_settingPages["Settings"].Push(cbAutoSwitchLanguage)
 DropDownListLanguage := doroGui.Add("DropDownList", "w150 Choose" g_numeric_settings["LanguageList"], ["ENGLISH", "日本语", "中文 (繁体)", "中文 (简体)"])
 doroGui.Tips.SetTip(DropDownListLanguage, "请以你选择的语言运行游戏。程序会最终切换回你选择的语言`nPlease run the game in the language of your choice. The program will eventually switch back to the language you have chosen")

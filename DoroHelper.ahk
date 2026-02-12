@@ -115,7 +115,6 @@ global g_settings := Map(
     "EventLargeSign", 0,                ; 大活动签到
     "EventLargeChallenge", 0,           ; 大活动挑战
     "EventLargeStory", 0,               ; 大活动剧情
-    "EventLargeCooperate", 0,           ; 大活动协同作战
     "EventLargeMinigame", 0,            ; 大活动小游戏
     "EventLargeDaily", 0,               ; 大活动奖励
     ;大活动·额外
@@ -123,7 +122,6 @@ global g_settings := Map(
     "EventLargeExtraSign", 0,           ; 大活动签到·额外
     "EventLargeExtraChallenge", 0,      ; 大活动挑战·额外
     "EventLargeExtraStory", 0,          ; 大活动剧情·额外
-    "EventLargeExtraCooperate", 0,      ; 大活动协同作战·额外
     "EventLargeExtraMinigame", 0,       ; 大活动小游戏·额外
     "EventLargeExtraDaily", 0,          ; 大活动奖励·额外
     ;限时奖励
@@ -698,9 +696,6 @@ g_settingPages["Event"].Push(SetEventLargeChallenge)
 SetEventLargeStory := AddCheckboxSetting(doroGui, "EventLargeStory", "大活动剧情", "R1 xs+15")
 doroGui.Tips.SetTip(SetEventLargeStory, "Large Events Story")
 g_settingPages["Event"].Push(SetEventLargeStory)
-SetEventLargeCooperate := AddCheckboxSetting(doroGui, "EventLargeCooperate", "大活动协同作战", "R1 xs+15")
-doroGui.Tips.SetTip(SetEventLargeCooperate, "Large Events Cooperate")
-g_settingPages["Event"].Push(SetEventLargeCooperate)
 SetEventLargeMinigame := AddCheckboxSetting(doroGui, "EventLargeMinigame", "大活动小游戏", "R1 xs+15")
 doroGui.Tips.SetTip(SetEventLargeMinigame, "Large Event Minigame")
 g_settingPages["Event"].Push(SetEventLargeMinigame)
@@ -1040,7 +1035,7 @@ ClickOnDoro(*) {
                 if g_settings["EventLargeStory"] {
                     EventLargeStory()
                 }
-                if g_settings["EventLargeCooperate"] {
+                if g_settings["AwardCooperate"] {
                     EventLargeCooperate()
                 }
                 if g_settings["EventLargeMinigame"] {

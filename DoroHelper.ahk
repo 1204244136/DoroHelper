@@ -662,7 +662,7 @@ g_settingPages["Event"].Push(SetAutoFill)
 SetEventTitle := doroGui.Add("Text", "R1 +0x0100", "====活动选项====")
 doroGui.Tips.SetTip(SetEventTitle, "Event Options")
 g_settingPages["Event"].Push(SetEventTitle)
-SetEventSmall := AddCheckboxSetting(doroGui, "EventSmall", "小活动🎁[FATAL MAID]", "xs R1")
+SetEventSmall := AddCheckboxSetting(doroGui, "EventSmall", "小活动🎁", "xs R1")
 doroGui.Tips.SetTip(SetEventSmall, "Small Events")
 g_settingPages["Event"].Push(SetEventSmall)
 SetEventSmallChallenge := AddCheckboxSetting(doroGui, "EventSmallChallenge", "小活动挑战", "R1 xs+15")
@@ -674,19 +674,19 @@ g_settingPages["Event"].Push(SetEventSmallStory)
 SetEventSmallMission := AddCheckboxSetting(doroGui, "EventSmallMission", "小活动任务", "R1 xs+15")
 doroGui.Tips.SetTip(SetEventSmallMission, "Small Events Mission")
 g_settingPages["Event"].Push(SetEventSmallMission)
-SetEventSmallExtra := AddCheckboxSetting(doroGui, "EventSmallExtra", "小活动🎁", "xs R1")
-doroGui.Tips.SetTip(SetEventSmallExtra, "Small Events")
-g_settingPages["Event"].Push(SetEventSmallExtra)
-SetEventSmallExtraChallenge := AddCheckboxSetting(doroGui, "EventSmallExtraChallenge", "小活动挑战", "R1 xs+15")
-doroGui.Tips.SetTip(SetEventSmallExtraChallenge, "Small Events Challenge")
-g_settingPages["Event"].Push(SetEventSmallExtraChallenge)
-SetEventSmallExtraStory := AddCheckboxSetting(doroGui, "EventSmallExtraStory", "小活动剧情", "R1 xs+15")
-doroGui.Tips.SetTip(SetEventSmallExtraStory, "Small Events Story")
-g_settingPages["Event"].Push(SetEventSmallExtraStory)
-SetEventSmallExtraMission := AddCheckboxSetting(doroGui, "EventSmallExtraMission", "小活动任务", "R1 xs+15")
-doroGui.Tips.SetTip(SetEventSmallExtraMission, "Small Events Mission")
-g_settingPages["Event"].Push(SetEventSmallExtraMission)
-SetEventLarge := AddCheckboxSetting(doroGui, "EventLarge", "大活动🎁", "R1 xs")
+; SetEventSmallExtra := AddCheckboxSetting(doroGui, "EventSmallExtra", "小活动🎁", "xs R1")
+; doroGui.Tips.SetTip(SetEventSmallExtra, "Small Events")
+; g_settingPages["Event"].Push(SetEventSmallExtra)
+; SetEventSmallExtraChallenge := AddCheckboxSetting(doroGui, "EventSmallExtraChallenge", "小活动挑战", "R1 xs+15")
+; doroGui.Tips.SetTip(SetEventSmallExtraChallenge, "Small Events Challenge")
+; g_settingPages["Event"].Push(SetEventSmallExtraChallenge)
+; SetEventSmallExtraStory := AddCheckboxSetting(doroGui, "EventSmallExtraStory", "小活动剧情", "R1 xs+15")
+; doroGui.Tips.SetTip(SetEventSmallExtraStory, "Small Events Story")
+; g_settingPages["Event"].Push(SetEventSmallExtraStory)
+; SetEventSmallExtraMission := AddCheckboxSetting(doroGui, "EventSmallExtraMission", "小活动任务", "R1 xs+15")
+; doroGui.Tips.SetTip(SetEventSmallExtraMission, "Small Events Mission")
+; g_settingPages["Event"].Push(SetEventSmallExtraMission)
+SetEventLarge := AddCheckboxSetting(doroGui, "EventLarge", "大活动🎁[Lie cause Recoil]", "R1 xs")
 doroGui.Tips.SetTip(SetEventLarge, "Large Events")
 g_settingPages["Event"].Push(SetEventLarge)
 SetEventLargeSign := AddCheckboxSetting(doroGui, "EventLargeSign", "大活动签到", "R1 xs+15")
@@ -4371,7 +4371,7 @@ AdvanceMode(Picture, Picture2?) {
         Failed := false
         ; 1. 尝试匹配 Picture (高优先级)
         ; 只有在 Picture 上一轮没有失败时，才进行识别
-        if (!skipped && (ok_Pic := FindText(&X := "wait", &Y := 1, NikkeX + 0.355 * NikkeW . " ", NikkeY + 0.284 * NikkeH . " ", NikkeX + 0.355 * NikkeW + 0.277 * NikkeW . " ", NikkeY + 0.284 * NikkeH + 0.543 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(Picture), , , , , , 4, TrueRatio, TrueRatio))) {
+        if (!skipped && (ok_Pic := FindText(&X := "wait", &Y := 1, NikkeX + 0.349 * NikkeW . " ", NikkeY + 0.139 * NikkeH . " ", NikkeX + 0.349 * NikkeW + 0.299 * NikkeW . " ", NikkeY + 0.139 * NikkeH + 0.803 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(Picture), , , , , , 4, TrueRatio, TrueRatio))) {
             ok := ok_Pic
             currentPic := Picture
             hasAutoFill := true
@@ -4379,7 +4379,7 @@ AdvanceMode(Picture, Picture2?) {
         }
         ; 2. 尝试匹配 Picture2 (低优先级，使用 else if 确保优先级)
         ; 无论 Picture 是否被跳过，如果 Picture 未找到，都会尝试 Picture2
-        else if (Picture2 && (ok_Pic2 := FindText(&X := "wait", &Y := 1, NikkeX + 0.305 * NikkeW . " ", NikkeY + 0.230 * NikkeH . " ", NikkeX + 0.305 * NikkeW + 0.388 * NikkeW . " ", NikkeY + 0.230 * NikkeH + 0.691 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(Picture2), , , , , , 4, TrueRatio, TrueRatio))) {
+        else if (Picture2 && (ok_Pic2 := FindText(&X := "wait", &Y := 1, NikkeX + 0.349 * NikkeW . " ", NikkeY + 0.139 * NikkeH . " ", NikkeX + 0.349 * NikkeW + 0.299 * NikkeW . " ", NikkeY + 0.139 * NikkeH + 0.803 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(Picture2), , , , , , 4, TrueRatio, TrueRatio))) {
             ok := ok_Pic2
             currentPic := Picture2
             hasAutoFill := false
@@ -6209,9 +6209,9 @@ EventSmallMission() {
 EventLarge() {
     AddLog("开始任务：大活动", "Fuchsia")
     loop {
-        if (ok := FindText(&X, &Y, NikkeX + 0.632 * NikkeW . " ", NikkeY + 0.794 * NikkeH . " ", NikkeX + 0.632 * NikkeW + 0.140 * NikkeW . " ", NikkeY + 0.794 * NikkeH + 0.108 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("大活动·TERMINUS TICKET"), , , , , , , TrueRatio, TrueRatio)) {
+        if (ok := FindText(&X, &Y, NikkeX + 0.632 * NikkeW . " ", NikkeY + 0.794 * NikkeH . " ", NikkeX + 0.632 * NikkeW + 0.140 * NikkeW . " ", NikkeY + 0.794 * NikkeH + 0.108 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("大活动的图标"), , , , , , , TrueRatio, TrueRatio)) {
             AddLog("已找到大活动")
-            while (ok := FindText(&X, &Y, NikkeX + 0.632 * NikkeW . " ", NikkeY + 0.794 * NikkeH . " ", NikkeX + 0.632 * NikkeW + 0.140 * NikkeW . " ", NikkeY + 0.794 * NikkeH + 0.108 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("大活动·TERMINUS TICKET"), , , , , , , TrueRatio, TrueRatio)) {
+            while (ok := FindText(&X, &Y, NikkeX + 0.632 * NikkeW . " ", NikkeY + 0.794 * NikkeH . " ", NikkeX + 0.632 * NikkeW + 0.140 * NikkeW . " ", NikkeY + 0.794 * NikkeH + 0.108 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("大活动的图标"), , , , , , , TrueRatio, TrueRatio)) {
                 UserClick(2782, 1816, TrueRatio)
                 Sleep 500
             }
@@ -6240,16 +6240,19 @@ EventLarge() {
 ;tag 签到
 EventLargeSign() {
     AddLog("开始任务：大活动·签到", "Fuchsia")
-    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.335 * NikkeW . " ", NikkeY + 0.750 * NikkeH . " ", NikkeX + 0.335 * NikkeW + 0.340 * NikkeW . " ", NikkeY + 0.750 * NikkeH + 0.128 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·签到印章"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.335 * NikkeW . " ", NikkeY + 0.750 * NikkeH . " ", NikkeX + 0.335 * NikkeW + 0.340 * NikkeW . " ", NikkeY + 0.750 * NikkeH + 0.128 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("大活动·签到印章"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试进入对应活动页")
         FindText().Click(X - 50 * TrueRatio, Y, "L")
         Sleep 1000
     }
-    if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.511 * NikkeW . " ", NikkeY + 0.903 * NikkeH . " ", NikkeX + 0.511 * NikkeW + 0.117 * NikkeW . " ", NikkeY + 0.903 * NikkeH + 0.050 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("大活动·全部领取的图标"), , , , , , , TrueRatio, TrueRatio)) {
+    if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.440 * NikkeW . " ", NikkeY + 0.773 * NikkeH . " ", NikkeX + 0.440 * NikkeW + 0.121 * NikkeW . " ", NikkeY + 0.773 * NikkeH + 0.075 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("大活动·全部领取的图标"), , , , , , , TrueRatio, TrueRatio)) {
         FindText().Click(X + 50 * TrueRatio, Y, "L")
         AddLog("点击全部领取")
         Sleep 3000
         Confirm
+    }
+    else {
+        AddLog("没有可领取的签到奖励," "MAROON")
     }
     while !(ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.003 * NikkeW . " ", NikkeY + 0.007 * NikkeH . " ", NikkeX + 0.003 * NikkeW + 0.089 * NikkeW . " ", NikkeY + 0.007 * NikkeH + 0.054 * NikkeH . " ", 0.29 * PicTolerance, 0.29 * PicTolerance, FindText().PicLib("活动地区的地区"), , 0, , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试返回活动主页面")
@@ -6265,7 +6268,7 @@ EventLargeSign() {
 ;tag 挑战
 EventLargeChallenge() {
     AddLog("开始任务：大活动·挑战", "Fuchsia")
-    while (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.335 * NikkeW . " ", NikkeY + 0.750 * NikkeH . " ", NikkeX + 0.335 * NikkeW + 0.340 * NikkeW . " ", NikkeY + 0.750 * NikkeH + 0.128 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·挑战"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.335 * NikkeW . " ", NikkeY + 0.750 * NikkeH . " ", NikkeX + 0.335 * NikkeW + 0.340 * NikkeW . " ", NikkeY + 0.750 * NikkeH + 0.128 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("大活动·挑战"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试进入对应活动页")
         FindText().Click(X, Y, "L")
         Sleep 500
@@ -6281,13 +6284,13 @@ EventLargeChallenge() {
 EventLargeStory() {
     Sleep 1000
     AddLog("开始任务：大活动·剧情活动", "Fuchsia")
-    ; 先story2
-    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.341 * NikkeW . " ", NikkeY + 0.796 * NikkeH . " ", NikkeX + 0.341 * NikkeW + 0.100 * NikkeW . " ", NikkeY + 0.796 * NikkeH + 0.039 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·STORY"), , , , , , , TrueRatio, TrueRatio)) {
+    ; 先story2，再story1，好处是可以只识别一个图标
+    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.349 * NikkeW . " ", NikkeY + 0.798 * NikkeH . " ", NikkeX + 0.349 * NikkeW + 0.092 * NikkeW . " ", NikkeY + 0.798 * NikkeH + 0.050 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·STORY"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试进入对应活动页")
         FindText().Click(X - 50 * TrueRatio, Y, "L")
         Sleep 500
     }
-    while (ok := FindText(&X, &Y, NikkeX + 0.335 * NikkeW . " ", NikkeY + 0.750 * NikkeH . " ", NikkeX + 0.335 * NikkeW + 0.340 * NikkeW . " ", NikkeY + 0.750 * NikkeH + 0.128 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·STORY"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X, &Y, NikkeX + 0.369 * NikkeW . " ", NikkeY + 0.759 * NikkeH . " ", NikkeX + 0.369 * NikkeW + 0.067 * NikkeW . " ", NikkeY + 0.759 * NikkeH + 0.031 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·STORY"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试进入对应活动页")
         FindText().Click(X - 50 * TrueRatio, Y, "L")
         Sleep 500
@@ -6296,14 +6299,14 @@ EventLargeStory() {
         Confirm
         Sleep 500
     }
-    while (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.496 * NikkeW . " ", NikkeY + 0.607 * NikkeH . " ", NikkeX + 0.496 * NikkeW + 0.063 * NikkeW . " ", NikkeY + 0.607 * NikkeH + 0.032 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·剩余时间"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.539 * NikkeW . " ", NikkeY + 0.718 * NikkeH . " ", NikkeX + 0.539 * NikkeW + 0.040 * NikkeW . " ", NikkeY + 0.718 * NikkeH + 0.030 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·剩余时间"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("进入剧情活动页面")
         Sleep 500
         FindText().Click(X, Y + 100 * TrueRatio, "L")
         Sleep 1000
     }
     AdvanceMode("大活动·关卡图标", "大活动·关卡图标2")
-    while !(ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.003 * NikkeW . " ", NikkeY + 0.007 * NikkeH . " ", NikkeX + 0.003 * NikkeW + 0.089 * NikkeW . " ", NikkeY + 0.007 * NikkeH + 0.054 * NikkeH . " ", 0.25 * PicTolerance, 0.25 * PicTolerance, FindText().PicLib("活动地区的地区"), , 0, , , , , TrueRatio, TrueRatio)) {
+    while !(ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.003 * NikkeW . " ", NikkeY + 0.007 * NikkeH . " ", NikkeX + 0.003 * NikkeW + 0.089 * NikkeW . " ", NikkeY + 0.007 * NikkeH + 0.054 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("活动地区的地区"), , 0, , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试返回活动主页面")
         Confirm
         GoBack
@@ -6313,7 +6316,7 @@ EventLargeStory() {
 ;tag 协同作战
 EventLargeCooperate() {
     AddLog("开始任务：大活动·协同作战", "Fuchsia")
-    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.438 * NikkeW . " ", NikkeY + 0.866 * NikkeH . " ", NikkeX + 0.438 * NikkeW + 0.134 * NikkeW . " ", NikkeY + 0.866 * NikkeH + 0.046 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·协同作战"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.335 * NikkeW . " ", NikkeY + 0.750 * NikkeH . " ", NikkeX + 0.335 * NikkeW + 0.340 * NikkeW . " ", NikkeY + 0.750 * NikkeH + 0.128 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·协同作战"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试进入对应活动页")
         FindText().Click(X - 50 * TrueRatio, Y, "L")
         Sleep 500
@@ -6331,64 +6334,51 @@ EventLargeCooperate() {
         AddLog("尝试返回活动主页面")
         GoBack
     }
+    Sleep 1000
+    ; 点左上角防止卡死
+    UserClick(56, 132, TrueRatio)
+    Sleep 1000
     AddLog("已返回活动主页面")
 }
 ;tag 小游戏
 EventLargeMinigame() {
     AddLog("开始任务：大活动·小游戏", "Fuchsia")
-    if !DirExist("C:\Users\12042\Desktop\Mini-game") {
-        AddLog("不支持小游戏")
-        return
-    }
-    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.335 * NikkeW . " ", NikkeY + 0.750 * NikkeH . " ", NikkeX + 0.335 * NikkeW + 0.340 * NikkeW . " ", NikkeY + 0.750 * NikkeH + 0.128 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("大活动·小游戏"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.335 * NikkeW . " ", NikkeY + 0.750 * NikkeH . " ", NikkeX + 0.335 * NikkeW + 0.340 * NikkeW . " ", NikkeY + 0.750 * NikkeH + 0.128 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("大活动·小游戏"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试进入对应活动页")
         FindText().Click(X, Y, "L")
-        Send "{]}"
         Sleep 500
     }
-    loop 3 {
-        Send "{]}"
-        Confirm
-        Sleep 1000
-    }
-    AddLog("已进入对应活动页")
-    UserClick(1908, 1458, TrueRatio)
+    AddLog("点start")
+    UserClick(1916, 1694, TrueRatio)
+    Sleep 2000
+    AddLog("点enter")
+    UserClick(3442, 1970, TrueRatio)
+    Sleep 5000
+    AddLog("按esc")
+    Send "{Esc}"
     Sleep 1000
-    UserClick(1898, 1666, TrueRatio)
+    AddLog("点离开")
+    UserClick(1132, 1506, TrueRatio)
+    Sleep 2000
+    AddLog("随便点个地方结算")
+    Confirm
     Sleep 1000
-    try {
-        Run "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Anaconda (anaconda3)\Anaconda Prompt.lnk"
-    } catch as e {
-        MsgBox "无法找到 Anaconda 快捷方式，请检查路径是否正确。`n错误详情: " e.Message
-        ExitApp
-    }
-    SetTitleMatchMode 2
-    ; 等待窗口出现，超时时间设置为 10 秒
-    if WinWait("Anaconda Prompt", , 10) {
-        WinActivate ; 激活该窗口，确保命令输入在终端里
-        ; *** 关键点 ***
-        ; Anaconda 启动后需要时间加载 (base) 环境。
-        ; 如果你的电脑启动较慢，可以适当增加下面的数值 (单位: 毫秒)
-        Sleep 3000
-        ; 发送 cd 命令
-        ; 使用 /d 参数是为了确保如果跨盘符（例如从 C 盘到 D 盘）也能成功跳转
-        Send 'cd /d "' "C:\Users\12042\Desktop\Mini-game" '" {Enter}'
-        Sleep 500 ; 短暂等待
-        ; 发送 conda 激活命令
-        Send "conda activate minigame{Enter}"
-        ; 等待环境激活完成 (取决于环境大小，可能需要更长时间)
+    AddLog("按esc")
+    Send "{Esc}"
+    Sleep 1000
+    AddLog("点领取")
+    UserClick(3612, 2016, TrueRatio)
+    Sleep 2000
+    loop {
+        AddLog("点左上角，尝试退出")
+        UserClick(228, 216, TrueRatio)
         Sleep 2000
-        ; 发送运行 Python 命令
-        Send "python Main.py{Enter}"
-        Sleep 10000
-        Send "{Esc}"
-        Sleep 1000
-        UserClick(1728, 1316, TrueRatio)
-        Sleep 3000
-        UserClick(1704, 1990, TrueRatio)
-        Sleep 3000
-    } else {
-        MsgBox "超时：未检测到 Anaconda Prompt 窗口启动。"
+        if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.505 * NikkeW . " ", NikkeY + 0.593 * NikkeH . " ", NikkeX + 0.505 * NikkeW + 0.123 * NikkeW . " ", NikkeY + 0.593 * NikkeH + 0.064 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("带圈白勾"), , , , , , , TrueRatio, TrueRatio)) {
+            FindText().Click(X, Y, "L")
+            Sleep 1000
+            AddLog("确认退出")
+            break
+        }
     }
     while !(ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.003 * NikkeW . " ", NikkeY + 0.007 * NikkeH . " ", NikkeX + 0.003 * NikkeW + 0.089 * NikkeW . " ", NikkeY + 0.007 * NikkeH + 0.054 * NikkeH . " ", 0.29 * PicTolerance, 0.29 * PicTolerance, FindText().PicLib("活动地区的地区"), , 0, , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试返回活动主页面")
@@ -6402,7 +6392,7 @@ EventLargeMinigame() {
 ;tag 领取奖励
 EventLargeDaily() {
     AddLog("开始任务：大活动·领取奖励", "Fuchsia")
-    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.957 * NikkeW . " ", NikkeY + 0.174 * NikkeH . " ", NikkeX + 0.957 * NikkeW + 0.040 * NikkeW . " ", NikkeY + 0.174 * NikkeH + 0.093 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("红点"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.977 * NikkeW . " ", NikkeY + 0.181 * NikkeH . " ", NikkeX + 0.977 * NikkeW + 0.015 * NikkeW . " ", NikkeY + 0.181 * NikkeH + 0.029 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("红点"), , , , , , , TrueRatio, TrueRatio)) {
         FindText().Click(X, Y, "L")
         Sleep 1000
         loop 3 {

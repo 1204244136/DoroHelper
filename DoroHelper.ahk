@@ -641,7 +641,7 @@ SetAwardPass := AddCheckboxSetting(doroGui, "AwardPass", "通行证收取", "R1.
 doroGui.Tips.SetTip(SetAwardPass, "Collect rewards in the pass")
 g_settingPages["Award"].Push(SetAwardPass)
 SetAwardCooperate := AddCheckboxSetting(doroGui, "AwardCooperate", "协同作战", "R1.2")
-doroGui.Tips.SetTip(SetAwardCooperate, "参与每日三次的普通难度协同作战|也可参与大活动的协同作战`nCooperate:Participate in the three daily normal difficulty cooperative battles | You can also participate in the cooperative battles of events")
+doroGui.Tips.SetTip(SetAwardCooperate, "参与每日三次的普通难度协同作战|是会员的情况下也可参与大活动的协同作战`nCooperate:Participate in the three daily normal difficulty cooperative battles | if you are gold doro , can also participate in the cooperative battles of events")
 g_settingPages["Award"].Push(SetAwardCooperate)
 SetAwardSoloRaid := AddCheckboxSetting(doroGui, "AwardSoloRaid", "单人突击日常", "R1.2")
 doroGui.Tips.SetTip(SetAwardSoloRaid, "参与单人突击，自动对最新的关卡进行战斗或快速战斗`nSolo Raid:Participate in Solo Raid, automatically fight or quick fight the latest level")

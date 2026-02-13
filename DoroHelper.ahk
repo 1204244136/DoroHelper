@@ -5857,6 +5857,10 @@ AwardDaily() {
 AwardPass() {
     AddLog("开始任务：通行证", "Fuchsia")
     t := 0
+    if (ok := FindText(&X, &Y, NikkeX + 0.968 * NikkeW . " ", NikkeY + 0.121 * NikkeH . " ", NikkeX + 0.968 * NikkeW + 0.030 * NikkeW . " ", NikkeY + 0.121 * NikkeH + 0.048 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("节日特殊活动的图标"), , , , , , , TrueRatio, TrueRatio)) {
+        AddLog("检测到节日特殊活动，跳过通行证任务", "MAROON")
+        return
+    }
     while true {
         if (ok := FindText(&X, &Y, NikkeX + 0.879 * NikkeW . " ", NikkeY + 0.150 * NikkeH . " ", NikkeX + 0.879 * NikkeW + 0.019 * NikkeW . " ", NikkeY + 0.150 * NikkeH + 0.037 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("通行证·3+"), , , , , , , TrueRatio, TrueRatio)) {
             AddLog("3+通行证模式")

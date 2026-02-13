@@ -5899,7 +5899,7 @@ AwardPass() {
             break
         }
         ; 任务数量异常退出
-        if t > 3 {
+        if A_Index > 3 {
             AddLog("通行证任务已执行超过3次，可能出现异常，结束通行证任务", "MAROON")
             break
         }

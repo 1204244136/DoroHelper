@@ -6320,7 +6320,7 @@ EventLargeCooperate() {
             break
         }
     }
-    if (ok := FindText(&X, &Y, NikkeX + 0.357 * NikkeW . " ", NikkeY + 0.575 * NikkeH . " ", NikkeX + 0.357 * NikkeW + 0.287 * NikkeW . " ", NikkeY + 0.575 * NikkeH + 0.019 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("红点"), , , , , , , TrueRatio, TrueRatio)) {
+    if (ok := FindText(&X, &Y, NikkeX + 0.355 * NikkeW . " ", NikkeY + 0.521 * NikkeH . " ", NikkeX + 0.355 * NikkeW + 0.300 * NikkeW . " ", NikkeY + 0.521 * NikkeH + 0.383 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("协同作战·捍卫者"), , , , , , 1, TrueRatio, TrueRatio)) {
         FindText().Click(X, Y, "L")
         Sleep 1000
     }

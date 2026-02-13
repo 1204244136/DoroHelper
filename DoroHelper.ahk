@@ -6404,7 +6404,6 @@ EventLargeDaily() {
     }
     else AddLog("奖励已领取")
 }
-;tag 通行证
 ;endregion 大活动
 ;region 小活动·额外
 ;tag 入口

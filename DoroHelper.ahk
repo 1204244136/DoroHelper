@@ -6391,6 +6391,7 @@ EventLargeDaily() {
         FindText().Click(X, Y, "L")
         Sleep 1000
         loop 3 {
+            AddLog("领取奖励")
             UserClick(2412, 1905, TrueRatio)
             Sleep 1000
         }

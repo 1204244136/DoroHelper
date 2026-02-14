@@ -6877,7 +6877,7 @@ ClearRedWallpaper() {
                 AddLog("点击立绘/活动/技能动画/珍藏品")
                 FindText().Click(X, Y, "L")
                 Sleep 1000
-                if (ok := FindText(&X, &Y, NikkeX + 0.605 * NikkeW . " ", NikkeY + 0.422 * NikkeH . " ", NikkeX + 0.605 * NikkeW + 0.019 * NikkeW . " ", NikkeY + 0.422 * NikkeH + 0.031 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("红底的N图标"), , , , , , , TrueRatio, TrueRatio)) {
+                if (ok := FindText(&X, &Y, NikkeX + 0.605 * NikkeW . " ", NikkeY + 0.422 * NikkeH . " ", NikkeX + 0.605 * NikkeW + 0.019 * NikkeW . " ", NikkeY + 0.422 * NikkeH + 0.031 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("红底的N图标"), , , , , , , TrueRatio, TrueRatio)) {
                     AddLog("点击背景")
                     FindText().Click(X, Y, "L")
                     Sleep 500

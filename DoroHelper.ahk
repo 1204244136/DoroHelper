@@ -6251,7 +6251,7 @@ EventLargeSign() {
         Confirm
     }
     else {
-        AddLog("没有可领取的签到奖励," "MAROON")
+        AddLog("没有可领取的签到奖励", "MAROON")
     }
     while !(ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.003 * NikkeW . " ", NikkeY + 0.007 * NikkeH . " ", NikkeX + 0.003 * NikkeW + 0.089 * NikkeW . " ", NikkeY + 0.007 * NikkeH + 0.054 * NikkeH . " ", 0.29 * PicTolerance, 0.29 * PicTolerance, FindText().PicLib("活动地区的地区"), , 0, , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试返回活动主页面")

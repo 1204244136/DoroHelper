@@ -5824,8 +5824,10 @@ AwardRanking() {
     if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.909 * NikkeW . " ", NikkeY + 0.915 * NikkeH . " ", NikkeX + 0.909 * NikkeW + 0.084 * NikkeW . " ", NikkeY + 0.915 * NikkeH + 0.056 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("获得奖励的图标"), , , , , , , TrueRatio * 0.8, TrueRatio * 0.8)) {
         Sleep 1000
         AddLog("点击全部领取")
-        FindText().Click(X, Y - 30 * TrueRatio, "L")
-        Sleep 1000
+        loop 3 {
+            FindText().Click(X, Y - 20 * TrueRatio, "L")
+            Sleep 500
+        }
     }
     BackToHall
 }

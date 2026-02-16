@@ -3617,7 +3617,9 @@ CheckAccountLimit(currentWinID) {
     if !DirExist(hiddenDir)
         DirCreate(hiddenDir)
     cacheFile := hiddenDir "\session_v2.dat"
-    todayDate := FormatTime(, "yyyyMMdd")
+    ; 获取当前时间，并减去 4 小时
+    adjustedTime := DateAdd(A_Now, -4, "Hours")
+    todayDate := FormatTime(adjustedTime, "yyyyMMdd")
     ; 读取缓存中的日期
     savedDate := IniRead(cacheFile, "System", "LastRunDate", "0")
     ; 如果日期变更，重置记录

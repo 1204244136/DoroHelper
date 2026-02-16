@@ -6266,6 +6266,7 @@ EventLargeSign() {
             FindText().Click(X, Y, "L")
             Sleep 500
         }
+        Confirm
     }
     AddLog("已返回活动主页面")
 }

@@ -153,6 +153,7 @@ global g_settings := Map(
     "AutoDeleteOldFile", 0,             ; 自动删除旧版本
     "DoroClosing", 0,                   ; 完成后自动关闭Doro
     "LoopMode", 0,                      ; 完成后自动关闭游戏
+    "CloseLauncher", 0,                 ; 关闭启动器
     "CheckEvent", 0,                    ; 活动结束提醒
     "CheckUnderGround", 0,              ; 地面活动提醒
     "OpenBlablalink", 0,                ; 完成后打开Blablalink
@@ -459,6 +460,9 @@ g_settingPages["Login"].Push(StartupTimeEdit)
 cbLoopMode := AddCheckboxSetting(doroGui, "LoopMode", "自律模式", "xs+20 R1 +0x0100")
 doroGui.Tips.SetTip(cbLoopMode, "勾选后，当 DoroHelper 完成所有已选任务后，NIKKE将自动退出，同时会自动重启Doro，以便再次定时启动`nLoopMode:If checked, when DoroHelper completes all selected tasks, NIKKE will automatically exit, and Doro will automatically restart to facilitate timed restarts.")
 g_settingPages["Login"].Push(cbLoopMode)
+cbCloseLauncher := AddCheckboxSetting(doroGui, "CloseLauncher", "关闭启动器", "xs+20 R1")
+doroGui.Tips.SetTip(cbCloseLauncher, "勾选后，完成任务时，脚本会尝试关闭NIKKE启动器`nClose Launcher: If checked, when tasks are completed, the script will try to close the NIKKE launcher.")
+g_settingPages["Login"].Push(cbCloseLauncher)
 SetAutostart := AddCheckboxSetting(doroGui, "Autostart", "自动运行🎁", "xs R1")
 doroGui.Tips.SetTip(SetAutostart, "勾选后，脚本会在启动后经过10秒延迟后自动视为点击DORO！`nThe script will be automatically regarded as a click on DORO after a 10-second delay after startup.")
 g_settingPages["Login"].Push(SetAutostart)
@@ -1123,6 +1127,8 @@ ClickOnDoro(*) {
             FindText().Click(X, Y, "L")
             Sleep 500
         }
+        if g_settings["CloseLauncher"]
+            CloseNikkeLauncher()
         SaveAndRestart
     }
     if g_settings["CheckEvent"] {
@@ -1230,6 +1236,63 @@ AutoStartNikke() {
             sleep 5000
         }
     }
+}
+;tag 脚本关闭NIKKE启动器
+CloseNikkeLauncher() {
+    launcherExes := []
+    launcherPath := g_numeric_settings["StartupPath"]
+
+    if (launcherPath != "") {
+        launcherFileName := ""
+        SplitPath launcherPath, &launcherFileName
+        if (launcherFileName != "")
+            launcherExes.Push(launcherFileName)
+    }
+
+    if (launcherExes.Length = 0) {
+        launcherExes.Push("nikke_launcher.exe")
+        launcherExes.Push("nikke_launcher_hmt.exe")
+    }
+
+    detectedAny := false
+    failedExes := []
+
+    for launcherExe in launcherExes {
+        hadProcess := ProcessExist(launcherExe)
+        if hadProcess
+            detectedAny := true
+
+        launcherWindows := WinGetList("ahk_exe " . launcherExe)
+        for hwnd in launcherWindows {
+            try WinClose(hwnd)
+        }
+        if (launcherWindows.Length > 0)
+            Sleep 1000
+
+        loop 5 {
+            pid := ProcessExist(launcherExe)
+            if !pid
+                break
+            try ProcessClose(pid)
+            Sleep 500
+        }
+
+        if (hadProcess && ProcessExist(launcherExe))
+            failedExes.Push(launcherExe)
+    }
+
+    if !detectedAny {
+        AddLog("未检测到正在运行的NIKKE启动器")
+        return false
+    }
+
+    if (failedExes.Length > 0) {
+        AddLog("NIKKE启动器关闭失败", "Red")
+        return false
+    }
+
+    AddLog("已关闭NIKKE启动器")
+    return true
 }
 ;tag 初始化
 Initialization() {

@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD033 MD041 -->
+
 <div align="center">
 
 <img alt="LOGO" src="./img/logo.png" width="256" height="256" />
@@ -20,7 +22,7 @@ A PC tool for clearing daily tasks. One-click cleaning of multiple daily chores.
 
 </div>
 
-## We Unite!
+## We Unite
 
 - **Dr. N**'s similar [mobile script](https://github.com/Zebartin/autoxjs-scripts)
 
@@ -61,47 +63,39 @@ There may be instances where operations are incompatible. It is best to supervis
 Doro just wants you to suffer less from the damn loading screens, flashbangs, and repetitive labor. One-click cleaning of multiple daily chores (executed sequentially and all optional), including:
 
 - **Cash Shop**
-
   - Claim Free Jewels
   - Claim Free Packs
 
 - **Normal Shop**
-
   - Claim 2 daily free items
   - Purchase Core Dust boxes with Credit Points
   - Purchase Profile Border/Icon Packs
 
 - **Arena Shop**
-
   - Purchase specified Skill Books
   - Purchase Code Manual Box
   - Purchase Profile Border/Icon Packs
   - Purchase Company Weapon Mold
 
 - **Simulation Room**
-
   - Normal Simulation Room (requires Quick Sim unlock)
   - Overclock Simulation Room
 
 - **Arena**
-
   - Claim Arena rewards
   - Rookie Arena
   - Special Arena
   - Champion Arena
 
 - **Infinite Tower**
-
   - Climb Manufacturer Tower
   - Climb General Tower
 
 - **Interception**
-
-  - Normal Interception (Not currently supported)
+  - Normal Interception
   - Special Interception
 
 - **Regular Reward Claims**
-
   - Outpost Dispatch
     - Perform Dispatch missions
   - Affinity Consult
@@ -114,11 +108,9 @@ Doro just wants you to suffer less from the damn loading screens, flashbangs, an
   - Solo Raid Daily
 
 - **Limited-Time Reward Claims**
-
   - Daily free recruit during events
 
 - **Nifty Tools**
-
   - Story Mode (Automates viewing the story, automatically selects options)
   - Debug Mode (Directly run a specified function)
   - Instant Burst Mode (Activates Burst instantly, faster than auto, frees up your hands)

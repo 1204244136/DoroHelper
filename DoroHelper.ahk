@@ -6306,10 +6306,10 @@ EventLargeStory() {
         Confirm
         Sleep 500
     }
-    while (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.539 * NikkeW . " ", NikkeY + 0.718 * NikkeH . " ", NikkeX + 0.539 * NikkeW + 0.040 * NikkeW . " ", NikkeY + 0.718 * NikkeH + 0.030 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·剩余时间"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.459 * NikkeW . " ", NikkeY + 0.485 * NikkeH . " ", NikkeX + 0.459 * NikkeW + 0.043 * NikkeW . " ", NikkeY + 0.485 * NikkeH + 0.054 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·剩余时间"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("进入剧情活动页面")
         Sleep 500
-        FindText().Click(X, Y + 100 * TrueRatio, "L")
+        FindText().Click(X, Y - 100 * TrueRatio, "L")
         Sleep 1000
     }
     AdvanceMode("大活动·关卡图标", "大活动·关卡图标2")

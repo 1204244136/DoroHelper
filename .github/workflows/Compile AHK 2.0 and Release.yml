@@ -161,7 +161,7 @@ jobs:
           out: ./DoroHelper_${{ steps.get_version.outputs.VERSION_TAG }}.exe
           icon: ./doro.ico
           target: x64
-          ahk-tag: v2.0.19
+          ahk-tag: v2.0.21
           # 关闭压缩以避免杀毒软件误报（等效于 Ahk2Exe 的 "/compress 0"）
           compression: none
           github-token: ${{ secrets.GITHUB_TOKEN }}

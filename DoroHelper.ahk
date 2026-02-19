@@ -5875,8 +5875,8 @@ AwardPass() {
             FindText().Click(X, Y, "L")
             Sleep 1000
             ; 检查内部垂直排布的红点
-            if (ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.985 * NikkeW, NikkeY + (0.124 + Y_Offset) * NikkeH, NikkeX + 0.985 * NikkeW + 0.015 * NikkeW, NikkeY + (0.124 + Y_Offset) * NikkeH + 0.261 * NikkeH, 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("红点"), , , , , , , TrueRatio, TrueRatio)) {
-                FindText().Click(X - 50 * TrueRatio, Y + 50 * TrueRatio, "L")
+            if (ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.985 * NikkeW, NikkeY + (0.124 + Y_Offset) * NikkeH, NikkeX + 0.985 * NikkeW + 0.015 * NikkeW, NikkeY + (0.124 + Y_Offset) * NikkeH + 0.261 * NikkeH, 0.2 * PicTolerance, 0.2 * PicTolerance, FindText().PicLib("红点"), , , , , , 3, TrueRatio, TrueRatio)) {
+                FindText().Click(X - 20 * TrueRatio, Y + 20 * TrueRatio, "L")
                 t += 1
                 AddLog("执行第" t "个通行证")
                 OneAwardPass

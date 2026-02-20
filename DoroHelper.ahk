@@ -254,8 +254,9 @@ SetWorkingDir A_ScriptDir
 ;tag 变量名修改提示
 try {
     LoadSettings()
-    if InStr(currentVersion, "v1.7.7") and g_numeric_settings["Version"] != currentVersion {
+    if InStr(currentVersion, "v1.12.15") and g_numeric_settings["Version"] != currentVersion {
         MsgBox("该版本部分选项被重置了，请按需勾选")
+        g_settings["CloseHelp"] := 0
         g_numeric_settings["Version"] := currentVersion
     }
 }
@@ -3511,8 +3512,42 @@ ClickOnHelp(*) {
     MyHelp.Add("Text", "w600", "- 鼠标悬浮在控件上会有对应的提示和详细信息，请勾选或点击前仔细阅读！")
     MyHelp.Add("Text", "w600", "- ctrl+1关闭程序、ctrl+2暂停程序、ctrl+3~7调整游戏大小")
     MyHelp.Add("Text", "w600", "- 如果遇到启动了但毫无反应的情况，请检查杀毒软件(如360、火绒等)或游戏监测软件（如ACE等反作弊软件）是否拦截了DoroHelper的运行，请将其添加信任或关闭相关软件")
-    AddCheckboxSetting(MyHelp, "CloseHelp", "我已认真阅读以上内容，并保证出现问题反馈前会再次检查，现在我想让这个弹窗不再主动显示", "")
+    displayText := "我已认真阅读以上内容，并保证出现问题反馈前会再次检查，现在我想让这个弹窗不再主动显示"
+    initialState := IsCheckedToString(g_settings["CloseHelp"])
+    cbCloseHelp := MyHelp.Add("Checkbox", initialState, displayText)
+    cbCloseHelp.OnEvent("Click", (guiCtrl, eventInfo) => OnCloseHelpClick(guiCtrl))
     MyHelp.Show()
+}
+;tag Ctrl+1教程框
+ShowCtrlPlusTutorial(checkboxCtrl) {
+    TutorialGui := Gui(, "新手任务")
+    TutorialGui.Opt("-MaximizeBox -MinimizeBox -SysMenu +AlwaysOnTop")
+    ; 阻止通过关闭按钮关闭窗口
+    TutorialGui.OnEvent("Close", (GuiObj) => 0)
+    TutorialGui.SetFont('s11', 'Microsoft YaHei UI')
+    TutorialGui.Add("Text", "w400 h120", "您准备启用「不再显示帮助」选项前，必须学会使用快捷键来关闭程序，这是使用本程序的基本操作`n`n现在请尝试使用本软件自带的快捷键关闭dorohelper`n`n不知道就罚你重看，使用其他的方法会导致软件异常！")
+    TutorialGui.Add("Button", "w140 h40", "唏，可以和解吗？").OnEvent("Click", (GuiCtrlObj, Info) => ReturnToHelp(TutorialGui, checkboxCtrl))
+    TutorialGui.Show()
+}
+ReturnToHelp(TutorialGui, checkboxCtrl) {
+    ; 取消勾选
+    checkboxCtrl.Value := 0
+    g_settings["CloseHelp"] := 0
+    WriteSettings()
+    TutorialGui.Destroy()
+}
+;tag 处理CloseHelp复选框的Click事件
+OnCloseHelpClick(guiCtrl) {
+    global g_settings
+    ; 勾选时显示教程框
+    if (guiCtrl.Value == 1) {
+        g_settings["CloseHelp"] := 1
+        ShowCtrlPlusTutorial(guiCtrl)
+    } else {
+        ; 取消勾选时正常保存
+        g_settings["CloseHelp"] := 0
+        WriteSettings()
+    }
 }
 ;tag 广告
 Advertisement(*) {

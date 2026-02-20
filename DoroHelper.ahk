@@ -1241,34 +1241,28 @@ AutoStartNikke() {
 CloseNikkeLauncher() {
     launcherExes := []
     launcherPath := g_numeric_settings["StartupPath"]
-
     if (launcherPath != "") {
         launcherFileName := ""
         SplitPath launcherPath, &launcherFileName
         if (launcherFileName != "")
             launcherExes.Push(launcherFileName)
     }
-
     if (launcherExes.Length = 0) {
         launcherExes.Push("nikke_launcher.exe")
         launcherExes.Push("nikke_launcher_hmt.exe")
     }
-
     detectedAny := false
     failedExes := []
-
     for launcherExe in launcherExes {
         hadProcess := ProcessExist(launcherExe)
         if hadProcess
             detectedAny := true
-
         launcherWindows := WinGetList("ahk_exe " . launcherExe)
         for hwnd in launcherWindows {
             try WinClose(hwnd)
         }
         if (launcherWindows.Length > 0)
             Sleep 1000
-
         loop 5 {
             pid := ProcessExist(launcherExe)
             if !pid
@@ -1276,21 +1270,17 @@ CloseNikkeLauncher() {
             try ProcessClose(pid)
             Sleep 500
         }
-
         if (hadProcess && ProcessExist(launcherExe))
             failedExes.Push(launcherExe)
     }
-
     if !detectedAny {
         AddLog("未检测到正在运行的NIKKE启动器")
         return false
     }
-
     if (failedExes.Length > 0) {
         AddLog("NIKKE启动器关闭失败", "Red")
         return false
     }
-
     AddLog("已关闭NIKKE启动器")
     return true
 }

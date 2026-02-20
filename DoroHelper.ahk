@@ -6352,7 +6352,7 @@ EventLargeStory() {
     Sleep 1000
     AddLog("开始任务：大活动·剧情活动", "Fuchsia")
     ; 先story2，再story1，好处是可以只识别一个图标
-    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.349 * NikkeW . " ", NikkeY + 0.798 * NikkeH . " ", NikkeX + 0.349 * NikkeW + 0.092 * NikkeW . " ", NikkeY + 0.798 * NikkeH + 0.050 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·STORY"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.349 * NikkeW . " ", NikkeY + 0.798 * NikkeH . " ", NikkeX + 0.349 * NikkeW + 0.092 * NikkeW . " ", NikkeY + 0.798 * NikkeH + 0.050 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("大活动·STORY"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试进入对应活动页")
         FindText().Click(X - 50 * TrueRatio, Y, "L")
         Sleep 500

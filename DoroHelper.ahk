@@ -6105,7 +6105,7 @@ AwardSoloRaid(stage7 := True) {
     if stage7 {
         AddLog("开始任务：单人突击", "Fuchsia")
     }
-    if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.003 * NikkeW . " ", NikkeY + 0.172 * NikkeH . " ", NikkeX + 0.003 * NikkeW + 0.093 * NikkeW . " ", NikkeY + 0.172 * NikkeH + 0.350 * NikkeH . " ", 0.2 * PicTolerance, 0.2 * PicTolerance, FindText().PicLib("RAID"), , , , , , , TrueRatio, TrueRatio)) {
+    if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.003 * NikkeW . " ", NikkeY + 0.172 * NikkeH . " ", NikkeX + 0.003 * NikkeW + 0.093 * NikkeW . " ", NikkeY + 0.172 * NikkeH + 0.350 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("RAID"), , , , , , , TrueRatio, TrueRatio)) {
         FindText().Click(X, Y, "L")
     } else {
         AddLog("不在单人突击活动时间", "MAROON")

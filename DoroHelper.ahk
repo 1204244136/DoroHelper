@@ -18,7 +18,7 @@ CoordMode "Pixel", "Client"
 CoordMode "Mouse", "Client"
 ;region 设置常量
 try TraySetIcon "doro.ico"
-currentVersion := "v1.12.11"
+currentVersion := "v1.12.13"
 ; 判断拓展名
 SplitPath A_ScriptFullPath, , , &scriptExtension
 scriptExtension := StrLower(scriptExtension)
@@ -5938,8 +5938,8 @@ AwardPass() {
             FindText().Click(X, Y, "L")
             Sleep 1000
             ; 检查内部垂直排布的红点
-            if (ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.985 * NikkeW, NikkeY + (0.124 + Y_Offset) * NikkeH, NikkeX + 0.985 * NikkeW + 0.015 * NikkeW, NikkeY + (0.124 + Y_Offset) * NikkeH + 0.261 * NikkeH, 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("红点"), , , , , , , TrueRatio, TrueRatio)) {
-                FindText().Click(X - 50 * TrueRatio, Y + 50 * TrueRatio, "L")
+            if (ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.985 * NikkeW, NikkeY + (0.124 + Y_Offset) * NikkeH, NikkeX + 0.985 * NikkeW + 0.015 * NikkeW, NikkeY + (0.124 + Y_Offset) * NikkeH + 0.261 * NikkeH, 0.2 * PicTolerance, 0.2 * PicTolerance, FindText().PicLib("红点"), , , , , , 3, TrueRatio, TrueRatio)) {
+                FindText().Click(X - 20 * TrueRatio, Y + 20 * TrueRatio, "L")
                 t += 1
                 AddLog("执行第" t "个通行证")
                 OneAwardPass
@@ -6369,10 +6369,10 @@ EventLargeStory() {
         Confirm
         Sleep 500
     }
-    while (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.539 * NikkeW . " ", NikkeY + 0.718 * NikkeH . " ", NikkeX + 0.539 * NikkeW + 0.040 * NikkeW . " ", NikkeY + 0.718 * NikkeH + 0.030 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·剩余时间"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.459 * NikkeW . " ", NikkeY + 0.485 * NikkeH . " ", NikkeX + 0.459 * NikkeW + 0.043 * NikkeW . " ", NikkeY + 0.485 * NikkeH + 0.054 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·剩余时间"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("进入剧情活动页面")
         Sleep 500
-        FindText().Click(X, Y + 100 * TrueRatio, "L")
+        FindText().Click(X, Y - 100 * TrueRatio, "L")
         Sleep 1000
     }
     AdvanceMode("大活动·关卡图标", "大活动·关卡图标2")

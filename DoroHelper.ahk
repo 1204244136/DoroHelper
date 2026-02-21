@@ -4463,11 +4463,12 @@ AdvanceMode(Picture, Picture2?) {
                     Send "{]}"
                     Sleep 500
                 }
-                ; 区域变化的提示
-                if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.445 * NikkeW . " ", NikkeY + 0.561 * NikkeH . " ", NikkeX + 0.445 * NikkeW + 0.111 * NikkeW . " ", NikkeY + 0.561 * NikkeH + 0.056 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("前往区域的图标"), , , , , , , TrueRatio, TrueRatio)) {
-                    FindText().Click(X, Y + 400 * TrueRatio, "L")
-                    Sleep 500
-                }
+            }
+            ; 区域变化的提示
+            if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.445 * NikkeW . " ", NikkeY + 0.561 * NikkeH . " ", NikkeX + 0.445 * NikkeW + 0.111 * NikkeW . " ", NikkeY + 0.561 * NikkeH + 0.056 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("前往区域的图标"), , , , , , , TrueRatio, TrueRatio)) {
+                FindText().Click(X, Y + 400 * TrueRatio, "L")
+                AddLog("区域有变化")
+                Sleep 500
             }
             ; 非扫荡关卡未能打满（即第11、12关）
             if (LastVictoryCount != 5 && BattleActive = 1 && QuickBattle != 1) {

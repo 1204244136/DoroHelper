@@ -22,15 +22,6 @@ currentVersion := "v1.12.14"
 ; 判断拓展名
 SplitPath A_ScriptFullPath, , , &scriptExtension
 scriptExtension := StrLower(scriptExtension)
-; 检查是否为 AHK 脚本
-if (scriptExtension = "ahk") {
-    if RegExMatch(currentVersion, "\.(\d+)$", &match) {
-        patchNumber := match.1
-        newPatchNumber := patchNumber + 1
-        currentVersion := RegExReplace(currentVersion, "\.(\d+)$", "." . newPatchNumber)
-    }
-    currentVersion := currentVersion . "-beta"
-}
 usr := "1204244136"
 repo := "DoroHelper"
 ;endregion 设置常量
@@ -270,6 +261,15 @@ try {
 }
 catch {
     WriteSettings()
+}
+; 检查是否为 AHK 脚本
+if (scriptExtension = "ahk") {
+    if RegExMatch(currentVersion, "\.(\d+)$", &match) {
+        patchNumber := match.1
+        newPatchNumber := patchNumber + 1
+        currentVersion := RegExReplace(currentVersion, "\.(\d+)$", "." . newPatchNumber)
+    }
+    currentVersion := currentVersion . "-beta"
 }
 ;endregion 读取设置
 ;region 创建GUI

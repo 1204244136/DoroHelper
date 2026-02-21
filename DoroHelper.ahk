@@ -5955,6 +5955,7 @@ AwardPass() {
         }
         if t > 3 {
             AddLog("通行证任务异常跳出", "MAROON")
+            Confirm
             break
         }
         ; --- 检查主界面通行证入口红点 ---

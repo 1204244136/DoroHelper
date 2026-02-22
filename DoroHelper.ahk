@@ -7285,108 +7285,105 @@ TestMode(BtnTestMode, Info) {
 }
 ;tag 爆裂模式
 BurstMode(*) {
-    Initialization() ; 调用初始化函数
+    Initialization()
     if g_numeric_settings["UserLevel"] < 3 {
         MsgBox("当前用户组不支持任务(" A_ThisFunc ")，请点击赞助按钮升级会员组")
         return
     }
-    ; --- 1. 获取并校验输入 ---
     g_numeric_settings["BurstModeValue"] := BurstModeEditControl.Value
     inputStr := BurstModeEditControl.Value
-    ; 无内容即常规模式
     if (inputStr = "") {
         while true {
-            if (ok := FindText(&X, &Y, NikkeX + 0.920 * NikkeW . " ", NikkeY + 0.458 * NikkeH . " ", NikkeX + 0.920 * NikkeW + 0.016 * NikkeW . " ", NikkeY + 0.458 * NikkeH + 0.031 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("爆裂·A"), , , , , , , TrueRatio, TrueRatio)) {
-                Send "{a}"
+            if !WinActive(nikkeID) {
+                MsgBox "窗口失去焦点，脚本终止"
+                return
             }
-            if (ok := FindText(&X, &Y, NikkeX + 0.918 * NikkeW . " ", NikkeY + 0.551 * NikkeH . " ", NikkeX + 0.918 * NikkeW + 0.017 * NikkeW . " ", NikkeY + 0.551 * NikkeH + 0.028 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("爆裂·S"), , , , , , , TrueRatio, TrueRatio)) {
+            if FindText(&X, &Y, NikkeX + 0.920 * NikkeW . " ", NikkeY + 0.458 * NikkeH . " ", NikkeX + 0.920 * NikkeW + 0.016 * NikkeW . " ", NikkeY + 0.458 * NikkeH + 0.031 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("爆裂·A"), , , , , , , TrueRatio, TrueRatio) {
+                Send "{a}"
+            } else if FindText(&X, &Y, NikkeX + 0.918 * NikkeW . " ", NikkeY + 0.551 * NikkeH . " ", NikkeX + 0.918 * NikkeW + 0.017 * NikkeW . " ", NikkeY + 0.551 * NikkeH + 0.028 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("爆裂·S"), , , , , , , TrueRatio, TrueRatio) {
                 Send "{s}"
             }
-            if !WinActive(nikkeID) {
-                MsgBox "窗口失去焦点，脚本终止"
-                return
-            }
+            Sleep 50
         }
     }
-    ; 将输入字符串分割为轮次数组 (例如 "AAA|AAS" -> ["AAA", "AAS"])
     roundKeys := StrSplit(inputStr, "|")
-    ; --- 2. 定义搜索参数配置 (坐标与图库名称) ---
-    ; 存储实际的屏幕绝对坐标 [x1, y1, x2, y2, ImageName]
     keyConfigs := Map()
-    ; 爆裂·A (左侧) - 这是我们用来触发整个序列的图标
     keyConfigs["A"] := [NikkeX + 0.917 * NikkeW, NikkeY + 0.456 * NikkeH, NikkeX + 0.917 * NikkeW + 0.020 * NikkeW, NikkeY + 0.456 * NikkeH + 0.034 * NikkeH, "爆裂·A"]
-    ; 爆裂·S (右侧，假设是爆裂 II/III 的备用/替换位置)
     keyConfigs["S"] := [NikkeX + 0.918 * NikkeW, NikkeY + 0.551 * NikkeH, NikkeX + 0.918 * NikkeW + 0.017 * NikkeW, NikkeY + 0.551 * NikkeH + 0.028 * NikkeH, "爆裂·S"]
+    appearTimeoutMs := 15000  ; 等待按键出现的超时时间（毫秒）
+    keyReleaseCheckMs := 500  ; 检查按键释放的超时时间（毫秒）
+    keyIntervalMs := 300      ; 按键之间的延迟（毫秒）
+    roundIntervalMs := 1500   ; 轮次之间的延迟（毫秒）
+    cycleIntervalMs := 800    ; 完整序列循环的延迟（毫秒）
     AddLog("爆裂脚本已启动，当前序列: " inputStr)
-    ; 定义按键之间的延迟
-    BurstKeyDelay := 100   ; 序列内单个按键之间的延迟 (毫秒)
-    ; BurstRoundDelay 变量在此逻辑下不再需要，因为轮次间的延迟由等待爆裂A的时间决定。
-    ; --- 3. 主循环结构 ---
-    ; 外层 Loop：无限循环，不断尝试执行整个爆裂序列
     loop {
-        ; 遍历每一轮的按键字符串 (例如 "AAA", "AAS")
         for index, roundStr in roundKeys {
-            ; 检查窗口焦点
             if !WinActive(nikkeID) {
                 MsgBox "窗口失去焦点，脚本终止"
                 return
             }
-            ; === 阶段一：等待爆裂·A图标出现 (Wait for Appearance of Burst A) ===
-            ; 在执行每一轮爆裂序列之前，都等待 "爆裂·A" 图标出现
-            burstACfg := keyConfigs["A"]
-            x1_A := burstACfg[1], y1_A := burstACfg[2], x2_A := burstACfg[3], y2_A := burstACfg[4], imgName_A := burstACfg[5]
-            AddLog("等待爆裂·A 图标出现，准备执行第 " index " 轮爆裂序列: " roundStr)
-            appearTimeout := A_TickCount + 15000 ; 设置15秒超时等待 "爆裂·A"
-            foundBurstA := false
+            firstKey := StrUpper(Trim(SubStr(roundStr, 1, 1)))
+            if !keyConfigs.Has(firstKey) {
+                AddLog("⚠ 序列首字符无效: " firstKey)
+                continue
+            }
+            cfg := keyConfigs[firstKey]
+            x1 := cfg[1], y1 := cfg[2], x2 := cfg[3], y2 := cfg[4], imgName := cfg[5]
+            AddLog("➤ 第 " index " 轮: 等待 " firstKey " 出现")
+            appearTimeout := A_TickCount + appearTimeoutMs
+            found := false
             loop {
                 if !WinActive(nikkeID) {
                     MsgBox "窗口失去焦点，脚本终止"
                     return
                 }
-                ; 查找 "爆裂·A" 图标
-                if FindText(&X, &Y, x1_A, y1_A, x2_A, y2_A, 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(imgName_A), , , , , , , TrueRatio, TrueRatio) {
-                    AddLog("爆裂·A 图标已出现，开始执行第 " index " 轮爆裂序列。")
-                    Sleep 100 ; 确保日志被记录，并稍微等待
-                    foundBurstA := true
-                    break ; "爆裂·A" 出现，跳出等待循环
+                if FindText(&X, &Y, x1, y1, x2, y2, 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(imgName), , , , , , , TrueRatio, TrueRatio) {
+                    found := true
+                    break
                 }
-                ; 检查超时
                 if (A_TickCount > appearTimeout) {
-                    AddLog("爆裂·A 等待超时，未检测到图标出现，跳过第 " index " 轮。")
-                    break ; 超时，跳出等待循环
+                    AddLog("⚠ 等待超时，跳过此轮")
+                    break
                 }
-                Sleep 50 ; 稍微等待，避免CPU占用过高
+                Sleep 50
             }
-            ; 如果 "爆裂·A" 未出现（超时），则跳过当前轮次，继续尝试下一轮
-            if (!foundBurstA) {
-                continue ; 跳到 for 循环的下一个 roundStr
-            }
-            ; === 阶段二：爆裂·A出现后，立即执行当前轮次序列，不再进行图标识别 ===
-            keyInRoundIndex := 0 ; 重置当前轮次内的按键序号
-            loop parse, roundStr { ; 将轮次字符串拆解为单个按键字符 (例如 "AAA" -> A, A, A)
-                keyInRoundIndex++ ; 增加按键序号
-                targetKey := StrUpper(Trim(A_LoopField)) ; 获取并规范化单个字符
-                ; 检查按键是否在配置中 (A或S)
+            if !found
+                continue
+            AddLog("✓ 开始执行序列: " roundStr)
+            Sleep 50
+            loop parse, roundStr {
+                targetKey := StrUpper(Trim(A_LoopField))
                 if !keyConfigs.Has(targetKey) {
-                    AddLog("配置中未定义或无法识别字符: " targetKey "，跳过此按键。")
+                    AddLog("⚠ 未识别的字符: " targetKey)
                     continue
                 }
                 if !WinActive(nikkeID) {
                     MsgBox "窗口失去焦点，脚本终止"
                     return
                 }
-                ; 发送按键 (改为小写)
                 Send "{" StrLower(targetKey) "}"
-                AddLog("发送按键: " targetKey " (序列内第 " keyInRoundIndex " 个)")
-                Sleep BurstKeyDelay ; 序列内单个按键之间的固定延迟
-            } ; 结束对单个字符串 (如 "AAA") 的解析
-            ; 当前轮次执行完毕后，不需要额外的 BurstRoundDelay，
-            ; 因为下一轮将再次从等待爆裂A开始，其等待时间即为间隔。
-        } ; 结束对整个序列 (如 ["AAA", "AAS"]) 的遍历
-        ; 所有爆裂轮次都尝试执行完毕后，重新开始整个序列 (从第一轮开始再次等待爆裂A)
-        AddLog("所有爆裂轮次已尝试一遍，将重新开始序列。")
-        Sleep 1000 ; 整个序列循环之间的短暂延迟
-    } ; 重新开始无限循环，从第一轮开始等待 "爆裂·A"
+                AddLog("  [" A_Index "] " targetKey)
+                if A_Index < StrLen(roundStr) {
+                    btnCfg := keyConfigs[targetKey]
+                    x1_btn := btnCfg[1], y1_btn := btnCfg[2], x2_btn := btnCfg[3], y2_btn := btnCfg[4], imgName_btn := btnCfg[5]
+                    waitStart := A_TickCount
+                    loop {
+                        if !FindText(&X, &Y, x1_btn, y1_btn, x2_btn, y2_btn, 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(imgName_btn), , , , , , , TrueRatio, TrueRatio)
+                            break
+                        if (A_TickCount - waitStart > keyReleaseCheckMs)
+                            break
+                        Sleep 20
+                    }
+                    Sleep keyIntervalMs
+                }
+            }
+            AddLog("✓ 序列执行完成")
+            if index < roundKeys.Length
+                Sleep roundIntervalMs
+        }
+        AddLog("━ 完成一圈，继续...")
+        Sleep cycleIntervalMs
+    }
 }
 ;tag 自动推图
 AutoAdvance(*) {

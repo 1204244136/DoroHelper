@@ -5073,7 +5073,7 @@ SimulationOverClock(mode := "") {
             }
         }
         if A_Index > 10 {
-            MsgBox("循环次数异常！请勾选「禁止无关人员进入」和「好战型战术」")
+            MsgBox("循环次数异常！请在游戏的模拟室选项内勾选「禁止无关人员进入」和「好战型战术」")
             ExitApp
         }
     }

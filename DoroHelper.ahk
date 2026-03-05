@@ -6471,7 +6471,7 @@ EventLargeMinigame() {
     Sleep 1000
     AddLog("点领取")
     UserClick(3612, 2016, TrueRatio)
-    Sleep 2000
+    Sleep 3000
     loop {
         AddLog("点左上角，尝试退出")
         UserClick(228, 216, TrueRatio)

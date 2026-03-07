@@ -4252,6 +4252,10 @@ BattleSettlement(currentVictory := 0, modes*) {
         if (ok := FindText(&X, &Y, NikkeX + 0.490 * NikkeW . " ", NikkeY + 0.426 * NikkeH . " ", NikkeX + 0.490 * NikkeW + 0.016 * NikkeW . " ", NikkeY + 0.426 * NikkeH + 0.029 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("蓝色的右箭头"), , , , , , , TrueRatio, TrueRatio)) {
             Confirm
         }
+        ; 指挥官等级提升的页面
+        if (ok := FindText(&X, &Y, NikkeX + 0.510 * NikkeW . " ", NikkeY + 0.394 * NikkeH . " ", NikkeX + 0.510 * NikkeW + 0.029 * NikkeW . " ", NikkeY + 0.394 * NikkeH + 0.039 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("蓝色的UP"), , , , , , , TrueRatio, TrueRatio)) {
+            Confirm
+        }
         ;间隔500ms
         Sleep 500
     }

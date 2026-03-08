@@ -4897,7 +4897,7 @@ ShopRecycling() {
         "好感券", { Text: FindText().PicLib("黄色的礼物图标"), Setting: g_settings["ShopRecyclingVoucher"], Tolerance: 0.3 * PicTolerance },
         "养成资源", { Text: FindText().PicLib("资源的图标"), Setting: g_settings["ShopRecyclingResources"], Tolerance: 0.2 * PicTolerance },
         "信用点", { Text: FindText().PicLib("黄色的信用点图标"), Setting: g_settings["ShopRecyclingResources"], Tolerance: 0.3 * PicTolerance },
-        "团队合作宝箱", { Text: FindText().PicLib("团队合作宝箱图标"), Setting: g_settings["ShopRecyclingTeamworkBox"], Tolerance: 0.25 * PicTolerance },
+        "团队合作宝箱", { Text: FindText().PicLib("团队合作宝箱图标"), Setting: g_settings["ShopRecyclingTeamworkBox"], Tolerance: 0.2 * PicTolerance },
         "保养工具箱", { Text: FindText().PicLib("保养工具箱图标"), Setting: g_settings["ShopRecyclingKitBox"], Tolerance: 0.3 * PicTolerance },
         "企业精选武装", { Text: FindText().PicLib("企业精选武装图标"), Setting: g_settings["ShopRecyclingArms"], Tolerance: 0.3 * PicTolerance }
     )

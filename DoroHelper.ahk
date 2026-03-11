@@ -5960,12 +5960,15 @@ AwardPass() {
     t := 0
     Y_Offset := 0  ; 默认偏移量为 0
     ; 1. 检测节日特殊活动图标
-    ; 如果检测到图标，说明 UI 发生了整体下移
     if (ok := FindText(&X, &Y, NikkeX + 0.968 * NikkeW, NikkeY + 0.121 * NikkeH, NikkeX + 0.968 * NikkeW + 0.030 * NikkeW, NikkeY + 0.121 * NikkeH + 0.048 * NikkeH, 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("节日特殊活动的图标"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("检测到节日特殊活动，启用坐标偏移模式", "MAROON")
         Y_Offset := 0.043  ; 根据预估值推算的纵坐标偏移比例
     }
     while true {
+        if (t > 3) {
+            AddLog("通行证任务异常跳出：尝试次数过多", "MAROON")
+            break
+        }
         ; --- 通行证 3+ 模式检测 ---
         if (ok := FindText(&X, &Y, NikkeX + 0.879 * NikkeW, NikkeY + (0.150 + Y_Offset) * NikkeH, NikkeX + 0.879 * NikkeW + 0.019 * NikkeW, NikkeY + (0.150 + Y_Offset) * NikkeH + 0.037 * NikkeH, 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("通行证·3+"), , , , , , , TrueRatio, TrueRatio)) {
             AddLog("3+通行证模式")
@@ -5976,7 +5979,7 @@ AwardPass() {
                 FindText().Click(X - 20 * TrueRatio, Y + 20 * TrueRatio, "L")
                 t += 1
                 AddLog("执行第" t "个通行证")
-                OneAwardPass
+                OneAwardPass()
                 BackToHall()
                 continue
             }
@@ -5990,16 +5993,12 @@ AwardPass() {
         else {
             AddLog("1通行证模式")
         }
-        if t > 3 {
-            AddLog("通行证任务异常跳出", "MAROON")
-            break
-        }
         ; --- 检查主界面通行证入口红点 ---
         if (ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.983 * NikkeW, NikkeY + (0.131 + Y_Offset) * NikkeH, NikkeX + 0.983 * NikkeW + 0.017 * NikkeW, NikkeY + (0.131 + Y_Offset) * NikkeH + 0.029 * NikkeH, 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("红点"), , , , , , , TrueRatio, TrueRatio)) {
             FindText().Click(X - 50 * TrueRatio, Y + 50 * TrueRatio, "L")
             t += 1
             AddLog("执行第" t "个通行证")
-            OneAwardPass
+            OneAwardPass()
             BackToHall()
             continue
         }
@@ -6013,7 +6012,7 @@ AwardPass() {
         }
     }
     loop 3 {
-        Confirm
+        Confirm()
     }
 }
 ;tag 执行一次通行证

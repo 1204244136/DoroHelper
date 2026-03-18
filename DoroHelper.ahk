@@ -6863,6 +6863,10 @@ ClearRedLimit() {
                     Confirm()
                     Sleep 1000
                 }
+                if A_Index > 10 {
+                    AddLog("循环过多，可能出现问题，已跳出循环", "Red")
+                    break
+                }
                 GoBack()
             }
             UserClick(1898, 2006, TrueRatio)

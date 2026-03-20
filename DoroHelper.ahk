@@ -4225,6 +4225,7 @@ BattleSettlement(currentVictory := 0, modes*) {
                 Sleep 1000
                 Send "{1}"
                 Sleep 500
+                Send "{2}"
             }
             if (ok := FindText(&X, &Y, NikkeX + 0.447 * NikkeW . " ", NikkeY + 0.592 * NikkeH . " ", NikkeX + 0.447 * NikkeW + 0.108 * NikkeW . " ", NikkeY + 0.592 * NikkeH + 0.060 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("GalGame的确认"), , , , , , , TrueRatio, TrueRatio)) {
                 FindText().Click(X, Y, "L")

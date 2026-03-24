@@ -4164,7 +4164,7 @@ BattleSettlement(currentVictory := 0, modes*) {
         if Exit7 {
             if (ok := FindText(&X, &Y, NikkeX + 0.512 * NikkeW . " ", NikkeY + 0.072 * NikkeH . " ", NikkeX + 0.512 * NikkeW + 0.020 * NikkeW . " ", NikkeY + 0.072 * NikkeH + 0.035 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("拦截战·红色框的7"), , , , , , , TrueRatio, TrueRatio)) {
                 Send "{Esc}"
-                if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.382 * NikkeW . " ", NikkeY + 0.890 * NikkeH . " ", NikkeX + 0.382 * NikkeW + 0.113 * NikkeW . " ", NikkeY + 0.890 * NikkeH + 0.067 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("放弃战斗的图标"), , , , , , , TrueRatio, TrueRatio)) {
+                if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.351 * NikkeW . " ", NikkeY + 0.891 * NikkeH . " ", NikkeX + 0.351 * NikkeW + 0.095 * NikkeW . " ", NikkeY + 0.891 * NikkeH + 0.060 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("放弃战斗的图标"), , , , , , , TrueRatio, TrueRatio)) {
                     Sleep 500
                     FindText().Click(X, Y, "L")
                     if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.518 * NikkeW . " ", NikkeY + 0.609 * NikkeH . " ", NikkeX + 0.518 * NikkeW + 0.022 * NikkeW . " ", NikkeY + 0.609 * NikkeH + 0.033 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("带圈白勾"), , , , , , , TrueRatio, TrueRatio)) {

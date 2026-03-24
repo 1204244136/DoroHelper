@@ -7364,7 +7364,7 @@ BurstMode(*) {
     keyConfigs["S"] := [NikkeX + 0.918 * NikkeW, NikkeY + 0.551 * NikkeH, NikkeX + 0.918 * NikkeW + 0.017 * NikkeW, NikkeY + 0.551 * NikkeH + 0.028 * NikkeH, "爆裂·S"]
     appearTimeoutMs := 15000  ; 等待按键出现的超时时间（毫秒）
     keyReleaseCheckMs := 500  ; 检查按键释放的超时时间（毫秒）
-    keyIntervalMs := 300      ; 按键之间的延迟（毫秒）
+    keyIntervalMs := 350      ; 按键之间的延迟（毫秒）
     roundIntervalMs := 1500   ; 轮次之间的延迟（毫秒）
     cycleIntervalMs := 800    ; 完整序列循环的延迟（毫秒）
     AddLog("爆裂脚本已启动，当前序列: " inputStr)

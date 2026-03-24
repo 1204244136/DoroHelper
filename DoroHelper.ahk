@@ -3478,7 +3478,7 @@ ShowSetting(pageName) {
 ;tag 活动结束提醒
 CheckEvent(*) {
     MyFileShortHash := SubStr(A_Now, 1, 8)
-    if MyFileShortHash = "20260114" {
+    if MyFileShortHash = "20260326" {
         MsgBox "单人突击将在今天结束！"
     }
     if MyFileShortHash = "20251126" {

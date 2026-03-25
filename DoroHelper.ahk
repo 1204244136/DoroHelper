@@ -7047,6 +7047,8 @@ ClearRedWallpaper() {
                 }
                 UserClick(1434, 856, TrueRatio)
                 Sleep 1000
+                UserClick(1626, 968, TrueRatio)
+                Sleep 1000
             }
             GoBack()
         }

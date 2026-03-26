@@ -7367,9 +7367,9 @@ BurstMode(*) {
                 MsgBox "窗口失去焦点，脚本终止"
                 return
             }
-            if FindText(&X, &Y, NikkeX + 0.920 * NikkeW . " ", NikkeY + 0.458 * NikkeH . " ", NikkeX + 0.920 * NikkeW + 0.016 * NikkeW . " ", NikkeY + 0.458 * NikkeH + 0.031 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("爆裂·A"), , , , , , , TrueRatio, TrueRatio) {
+            if FindText(&X, &Y, NikkeX + 0.920 * NikkeW . " ", NikkeY + 0.458 * NikkeH . " ", NikkeX + 0.920 * NikkeW + 0.016 * NikkeW . " ", NikkeY + 0.458 * NikkeH + 0.031 * NikkeH . " ", 0.2 * PicTolerance, 0.2 * PicTolerance, FindText().PicLib("爆裂·A"), , , , , , , TrueRatio, TrueRatio) {
                 Send "{a}"
-            } else if FindText(&X, &Y, NikkeX + 0.918 * NikkeW . " ", NikkeY + 0.551 * NikkeH . " ", NikkeX + 0.918 * NikkeW + 0.017 * NikkeW . " ", NikkeY + 0.551 * NikkeH + 0.028 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("爆裂·S"), , , , , , , TrueRatio, TrueRatio) {
+            } else if FindText(&X, &Y, NikkeX + 0.918 * NikkeW . " ", NikkeY + 0.551 * NikkeH . " ", NikkeX + 0.918 * NikkeW + 0.017 * NikkeW . " ", NikkeY + 0.551 * NikkeH + 0.028 * NikkeH . " ", 0.2 * PicTolerance, 0.2 * PicTolerance, FindText().PicLib("爆裂·S"), , , , , , , TrueRatio, TrueRatio) {
                 Send "{s}"
             }
             Sleep 50
@@ -7406,7 +7406,7 @@ BurstMode(*) {
                     MsgBox "窗口失去焦点，脚本终止"
                     return
                 }
-                if FindText(&X, &Y, x1, y1, x2, y2, 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib(imgName), , , , , , , TrueRatio, TrueRatio) {
+                if FindText(&X, &Y, x1, y1, x2, y2, 0.2 * PicTolerance, 0.2 * PicTolerance, FindText().PicLib(imgName), , , , , , , TrueRatio, TrueRatio) {
                     found := true
                     break
                 }

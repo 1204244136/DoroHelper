@@ -835,9 +835,6 @@ BtnBurstMode := doroGui.Add("Button", " x+5 yp-3 w25 h25", "▶️").OnEvent("Cl
 TextAutoAdvance := doroGui.Add("Text", "xp R1 xs+10 +0x0100", "推图模式🎁")
 doroGui.Tips.SetTip(TextAutoAdvance, "[beta3]半自动推图。视野调到最大。在地图中靠近怪的地方启动，有时需要手动找怪和找机关`nMap Advancement:Semi-automatic map advancement. Set the view to the maximum. Start near the monster in the map, sometimes you need to manually find monsters and mechanisms")
 BtnAutoAdvance := doroGui.Add("Button", " x+5 yp-3 w25 h25", "▶️").OnEvent("Click", AutoAdvance)
-TextMiniGame := doroGui.Add("Text", "xp R1 xs+10 +0x0100", "小游戏刷印章🎁")
-doroGui.Tips.SetTip(TextMiniGame, "选中NORMAL-2，点右边的运行，脚本会自动帮你按enter")
-BtnMiniGame := doroGui.Add("Button", " x+5 yp-3 w25 h25", "▶️").OnEvent("Click", EventLargeMinigameX)
 ;tag 日志
 doroGui.AddGroupBox("x600 y260 w400 h390 Section", "日志")
 btnCopyLog := doroGui.Add("Button", "xp+320 yp-5 w80 h30", "导出日志")
@@ -2873,7 +2870,6 @@ DownloadUrlContent(url) {
         }
     }
 }
-
 _DownloadWithMethod(methodName, url) {
     httpObj := ""
     if (methodName = "WinHttp.WinHttpRequest.5.1") {
@@ -3111,18 +3107,15 @@ GetDiskSerialsForValidation() {
 ; 成功返回 Map 对象，失败抛出 Error
 FetchAndParseGroupData() {
     global g_numeric_settings, cbGroupDataSource
-
     ; 定义所有可用的镜像站点
     local mirrors := Map(
         "Gitee", "https://gitee.com/con_sul/DoroHelper/raw/main/group/GroupArrayV4.json",
         "GitHub", "https://raw.githubusercontent.com/1204244136/DoroHelper/refs/heads/main/group/GroupArrayV4.json",
         "RawGit", "https://rawcdn.githack.com/1204244136/DoroHelper/refs/heads/main/group/GroupArrayV4.json"
     )
-
     ; 获取用户选择的源或使用默认值
     local preferredSource := g_numeric_settings.Has("GroupDataSource") ? g_numeric_settings["GroupDataSource"] : "Gitee"
     local sourceOrder := []
-
     ; 构建镜像访问顺序：优先使用用户选择的源，然后尝试其他源
     sourceOrder.Push(preferredSource)
     for sourceName in mirrors {
@@ -3130,21 +3123,17 @@ FetchAndParseGroupData() {
             sourceOrder.Push(sourceName)
         }
     }
-
     ; --- 依次尝试所有镜像源 ---
     for _, sourceName in sourceOrder {
         if !mirrors.Has(sourceName) {
             continue
         }
-
         local url := mirrors[sourceName]
         local isPreferred := (sourceName == preferredSource)
         local logPrefix := isPreferred ? "正在尝试从 " : "备用源尝试从 "
-
         try {
             AddLog(logPrefix . sourceName . " 获取用户组数据……", "Blue")
             local jsonContent := DownloadUrlContent(url)
-
             if (jsonContent != "") {
                 ; 尝试解析 JSON
                 local groupData := Json.Load(&jsonContent)
@@ -3171,7 +3160,6 @@ FetchAndParseGroupData() {
             AddLog(sourceName . " 连接或解析失败 (" . e.Message . ")，尝试下一个源……", "Maroon")
         }
     }
-
     ; --- 全部失败 ---
     AddLog("获取用户组数据失败: 所有镜像源均无法访问或解析。", "Red")
     throw Error("无法获取用户组信息", -1, "所有可用的镜像源均无法使用")
@@ -3429,7 +3417,6 @@ CheckUserGroupByHash(inputHash) {
         local resultMessage := "查询哈希值: " . inputHash . "`n"
         resultMessage .= "数据源: " . currentSource . "`n"
         resultMessage .= "━━━━━━━━━━━━━━━━━━`n"
-
         if (memberInfo["UserLevel"] > 0 && memberInfo["RemainingValue"] > 0.001) { ; 检查是否有有效会员和剩余额度
             local formattedExpiryDate := SubStr(memberInfo["VirtualExpiryDate"], 1, 4) . "-" . SubStr(memberInfo["VirtualExpiryDate"], 5, 2) . "-" . SubStr(memberInfo["VirtualExpiryDate"], 7, 2)
             ; 获取当前区域的单价和货币名称
@@ -4320,7 +4307,6 @@ BattleSettlement(currentVictory := 0, modes*) {
         if (ok := FindText(&X, &Y, NikkeX + 0.510 * NikkeW . " ", NikkeY + 0.394 * NikkeH . " ", NikkeX + 0.510 * NikkeW + 0.029 * NikkeW . " ", NikkeY + 0.394 * NikkeH + 0.039 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("蓝色的UP"), , , , , , , TrueRatio, TrueRatio)) {
             Confirm
         }
-
         ;间隔500ms
         Sleep 500
     }

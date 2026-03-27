@@ -2,3 +2,4 @@
 *.ini
 .vscode
 /Screenshots/
+.roo/mcp.json

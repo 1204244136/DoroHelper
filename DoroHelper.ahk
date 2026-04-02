@@ -7152,7 +7152,8 @@ ClearRedProfile() {
 ;tag 清除bla红点
 ClearRedBla() {
     AddLog("清除bla红点", "Fuchsia")
-    while (ok := FindText(&X, &Y, NikkeX + 0.034 * NikkeW . " ", NikkeY + 0.169 * NikkeH . " ", NikkeX + 0.034 * NikkeW + 0.015 * NikkeW . " ", NikkeY + 0.169 * NikkeH + 0.028 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("红底的N图标"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X, &Y, NikkeX + 0.034 * NikkeW . " ", NikkeY + 0.169 * NikkeH . " ", NikkeX + 0.034 * NikkeW + 0.015 * NikkeW . " ", NikkeY + 0.169 * NikkeH + 0.028 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("红底的N图标"), , , , , , , TrueRatio, TrueRatio))
+    || (ok := FindText(&X, &Y, NikkeX + 0.034 * NikkeW . " ", NikkeY + 0.169 * NikkeH . " ", NikkeX + 0.034 * NikkeW + 0.015 * NikkeW . " ", NikkeY + 0.169 * NikkeH + 0.028 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("红点"), , , , , , , TrueRatio, TrueRatio)) {
         FindText().Click(X, Y, "L")
         Sleep 3000
         if g_settings["ClearRedBlaAwards"] {

@@ -178,7 +178,7 @@ global g_numeric_settings := Map(
     "Version", currentVersion,          ; 版本号
     "UpdateChannels", "正式版",         ; 更新渠道
     "DownloadSource", "GitHub",         ; 下载源
-    "GroupDataSource", "Gitee",         ; 用户组数据源 (Gitee/GitHub/RawGit)
+    "GroupDataSource", "Gitee",         ; 用户组数据源 (Gitee/GitHub/jsDelivr)
     "PreferredHttpRequest", "WinHttp.WinHttpRequest.5.1", ; HTTP 请求优先级
     "UserGroup", "普通用户",             ; 用户组
     "UserLevel", 0                      ; 用户级别
@@ -444,9 +444,9 @@ cbSkipGroupCheck := AddCheckboxSetting(doroGui, "SkipUserGroupCheckForFreeUser",
 doroGui.Tips.SetTip(cbSkipGroupCheck, "勾选后，非会员用户启动时将跳过用户组检查以节省时间`nSkip user group check for free users to save startup time")
 g_settingPages["Settings"].Push(cbSkipGroupCheck)
 TextGroupDataSource := doroGui.Add("Text", "R1 +0x0100", "用户组数据源")
-doroGui.Tips.SetTip(TextGroupDataSource, "用户组数据源镜像`nGitee:国内源(推荐)|GitHub:官方源|RawGit:CDN加速`nUser Group Data Source Mirror`nGitee: Domestic (Recommended) | GitHub: Official | RawGit: CDN Accelerated")
+doroGui.Tips.SetTip(TextGroupDataSource, "用户组数据源镜像`nGitee:国内源(推荐)|GitHub:官方源|jsDelivr:CDN加速`nUser Group Data Source Mirror`nGitee: Domestic (Recommended) | GitHub: Official | jsDelivr: CDN Accelerated")
 g_settingPages["Settings"].Push(TextGroupDataSource)
-cbGroupDataSource := doroGui.AddDropDownList("x+20 w100", ["Gitee", "GitHub", "RawGit"])
+cbGroupDataSource := doroGui.AddDropDownList("x+20 w100", ["Gitee", "GitHub", "jsDelivr"])
 cbGroupDataSource.Text := g_numeric_settings["GroupDataSource"]
 cbGroupDataSource.OnEvent("Change", (Ctrl, Info) => g_numeric_settings["GroupDataSource"] := Ctrl.Text)
 g_settingPages["Settings"].Push(cbGroupDataSource)
@@ -3111,7 +3111,7 @@ FetchAndParseGroupData() {
     local mirrors := Map(
         "Gitee", "https://gitee.com/con_sul/DoroHelper/raw/main/group/GroupArrayV4.json",
         "GitHub", "https://raw.githubusercontent.com/1204244136/DoroHelper/refs/heads/main/group/GroupArrayV4.json",
-        "RawGit", "https://rawcdn.githack.com/1204244136/DoroHelper/refs/heads/main/group/GroupArrayV4.json"
+        "jsDelivr", "https://cdn.jsdelivr.net/gh/1204244136/DoroHelper@main/group/GroupArrayV4.json"
     )
     ; 获取用户选择的源或使用默认值
     local preferredSource := g_numeric_settings.Has("GroupDataSource") ? g_numeric_settings["GroupDataSource"] : "Gitee"

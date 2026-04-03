@@ -3781,7 +3781,7 @@ CheckAccountLimit(currentWinID) {
     }
     if (currentCount >= maxInstances) {
         userType := (userLevel >= 4) ? "金Doro企业版" : "普通/个人会员"
-        MsgBox("今日运行账号/游戏实例已达上限！`n`n当前用户组: " userType "`n今日限制: " maxInstances " 个`n已运行: " currentCount " 个`n`n注意：重启游戏客户端会生成新的ID并消耗次数。", "运行限制", "IconX")
+        MsgBox("今日本设备运行的游戏实例已达上限！`n`n当前用户组: " userType "`n今日限制: " maxInstances " 个`n已运行: " currentCount " 个`n`n赞助可以增加这个上限", "运行限制", "IconX")
         return false
     }
     ; 记录新的winID

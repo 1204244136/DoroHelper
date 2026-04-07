@@ -4669,6 +4669,11 @@ Login() {
             FindText().Click(X, Y, "L")
             Sleep 1000
         }
+        if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.538 * NikkeW . " ", NikkeY + 0.860 * NikkeH . " ", NikkeX + 0.538 * NikkeW + 0.052 * NikkeW . " ", NikkeY + 0.860 * NikkeH + 0.033 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("节日签到"), , , , , , , TrueRatio, TrueRatio)) {
+            AddLog("领取节日签到奖励")
+            FindText().Click(X, Y, "L")
+            Sleep 1000
+        }
         while (ok := FindText(&X, &Y, NikkeX + 0.485 * NikkeW . " ", NikkeY + 0.740 * NikkeH . " ", NikkeX + 0.485 * NikkeW + 0.032 * NikkeW . " ", NikkeY + 0.740 * NikkeH + 0.029 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("登录·扭蛋"), , , , , , , TrueRatio, TrueRatio)) {
             AddLog("领取扭蛋" A_Index "次")
             FindText().Click(X, Y, "L")

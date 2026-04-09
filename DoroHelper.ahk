@@ -4664,7 +4664,7 @@ Login() {
             continue
         }
         else check := 0
-        if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.520 * NikkeW . " ", NikkeY + 0.844 * NikkeH . " ", NikkeX + 0.520 * NikkeW + 0.110 * NikkeW . " ", NikkeY + 0.844 * NikkeH + 0.069 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("签到·全部领取"), , , , , , , TrueRatio, TrueRatio)) {
+        if (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.536 * NikkeW . " ", NikkeY + 0.913 * NikkeH . " ", NikkeX + 0.536 * NikkeW + 0.108 * NikkeW . " ", NikkeY + 0.913 * NikkeH + 0.047 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("签到·全部领取"), , , , , , , TrueRatio, TrueRatio)) {
             AddLog("领取签到奖励")
             FindText().Click(X, Y, "L")
             Sleep 1000

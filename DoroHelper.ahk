@@ -6339,7 +6339,7 @@ EventSmall() {
 ;tag 挑战
 EventSmallChallenge() {
     AddLog("开始任务：小活动·挑战", "Fuchsia")
-    if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.356 * NikkeW . " ", NikkeY + 0.718 * NikkeH . " ", NikkeX + 0.356 * NikkeW + 0.121 * NikkeW . " ", NikkeY + 0.718 * NikkeH + 0.056 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("小活动·挑战"), , , , , , , TrueRatio, TrueRatio)) {
+    if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.393 * NikkeW . " ", NikkeY + 0.611 * NikkeH . " ", NikkeX + 0.393 * NikkeW + 0.078 * NikkeW . " ", NikkeY + 0.611 * NikkeH + 0.039 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("小活动·挑战"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试进入对应活动页")
         FindText().Click(X, Y, "L")
         Sleep 500
@@ -6355,7 +6355,7 @@ EventSmallChallenge() {
 ;tag 剧情活动
 EventSmallStory() {
     AddLog("开始任务：小活动·剧情活动", "Fuchsia")
-    if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.557 * NikkeW . " ", NikkeY + 0.856 * NikkeH . " ", NikkeX + 0.557 * NikkeW + 0.021 * NikkeW . " ", NikkeY + 0.856 * NikkeH + 0.031 * NikkeH . " ", 0.3 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("小活动·放大镜的图标"), , , , , , , TrueRatio, TrueRatio)) {
+    if (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.547 * NikkeW . " ", NikkeY + 0.853 * NikkeH . " ", NikkeX + 0.547 * NikkeW + 0.017 * NikkeW . " ", NikkeY + 0.853 * NikkeH + 0.028 * NikkeH . " ", 0.3 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("小活动·放大镜的图标"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试进入对应活动页")
         FindText().Click(X, Y - 100 * TrueRatio, "L")
         Sleep 500
@@ -6367,7 +6367,7 @@ EventSmallStory() {
 ;tag 任务
 EventSmallMission() {
     AddLog("开始任务：小活动·任务领取", "Fuchsia")
-    if (ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.475 * NikkeW . " ", NikkeY + 0.770 * NikkeH . " ", NikkeX + 0.475 * NikkeW + 0.020 * NikkeW . " ", NikkeY + 0.770 * NikkeH + 0.042 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("红点"), , , , , , , TrueRatio, TrueRatio)) {
+    if (ok := FindText(&X := "wait", &Y := 2, NikkeX + 0.489 * NikkeW . " ", NikkeY + 0.658 * NikkeH . " ", NikkeX + 0.489 * NikkeW + 0.021 * NikkeW . " ", NikkeY + 0.658 * NikkeH + 0.034 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("红点"), , , , , , , TrueRatio, TrueRatio)) {
         FindText().Click(X, Y, "L")
         Sleep 1000
         AddLog("已进入任务界面")

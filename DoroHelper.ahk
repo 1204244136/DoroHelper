@@ -332,7 +332,7 @@ cbDownloadSource.Text := g_numeric_settings["DownloadSource"]
 cbDownloadSource.OnEvent("Change", (Ctrl, Info) => ShowMirror(Ctrl, Info))
 ;tag Mirror酱
 MirrorText := doroGui.Add("Text", "xs R1 +0x0100", "Mirror酱CDK❔️")
-doroGui.Tips.SetTip(MirrorText, "Mirror酱是一个第三方应用分发平台，让你能在普通网络环境下更新应用`n网址：https://mirrorchyan.com/zh/（付费使用）`nMirror酱和Doro会员并无任何联系")
+doroGui.Tips.SetTip(MirrorText, "Mirror酱是一个第三方应用分发平台，让你能在普通网络环境下更新应用`n网址：https://mirrorchyan.com/zh/get-start?source=doro-github-release（付费使用）`nMirror酱和Doro会员并无任何联系")
 MirrorEditControl := doroGui.Add("Edit", "x140 yp+1 w100 h20")
 MirrorEditControl.Value := g_numeric_settings["MirrorCDK"]
 MirrorEditControl.OnEvent("Change", (Ctrl, Info) => g_numeric_settings["MirrorCDK"] := Ctrl.Value)
@@ -3587,7 +3587,7 @@ Advertisement(*) {
     MyAd.Add("Link", , '<a href="https://pan.baidu.com/s/1pAq-o6fKqUPkRcgj_xVcdA?pwd=2d1q">ahk版和exe版的网盘下载链接</a>')
     MyAd.Add("Link", , '<a href="https://nikke.hayasa.link/">====Nikke CDK Tool====</a>')
     MyAd.Add("Text", "w500", "一个用于管理《胜利女神：NIKKE》CDK 的现代化工具网站，支持支持国际服、国服、港澳台服多服务器、多账号的CDK一键兑换")
-    MyAd.Add("Link", , '<a href="https://mirrorchyan.com/">===Mirror酱===</a>')
+    MyAd.Add("Link", , '<a href="https://mirrorchyan.com/zh/get-start?source=doro-github-release">===Mirror酱===</a>')
     MyAd.Add("Text", "w500", "Mirror酱是一个第三方应用分发平台，可以让你更方便地下载和更新应用现已支持 DoroHelper 的自动更新下载，和DoroHelper本身的会员功能无关")
     MyAd.Show()
     Sleep 500

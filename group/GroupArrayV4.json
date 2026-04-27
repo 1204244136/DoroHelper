@@ -1,5 +1,89 @@
 [
   {
+    "hash": "b1d193d0084da170904da97794460294238b2e46bde6cb6adf899134c5a91a94",
+    "tier": "金Doro会员",
+    "account_value": "5.00",
+    "registration_date": "20260428"
+  },
+  {
+    "hash": "72bbe9e6723b80e85f8dfe355c5d9d6767d904d62532b35c4b6074dba54c454c",
+    "tier": "金Doro会员",
+    "account_value": "5.00",
+    "registration_date": "20260428"
+  },
+  {
+    "hash": "8a0e2cc906eeccff54c44128718a2271582eb06b525282a78f854ae78bcb7b84",
+    "tier": "金Doro会员",
+    "account_value": "1.00",
+    "registration_date": "20260428"
+  },
+  {
+    "hash": "4fd635c7bc893b5973b9952540cd5622e760d6eefb8e51451d192154e5b97fc6",
+    "tier": "金Doro会员",
+    "account_value": "1.00",
+    "registration_date": "20260428"
+  },
+  {
+    "hash": "3e92087876bb5665537067f3d8947add84600e7ae12c86d51ae709faaa8942f6",
+    "tier": "金Doro会员",
+    "account_value": "6.00",
+    "registration_date": "20260425"
+  },
+  {
+    "hash": "d33c1a76b1f72a909ebb7f0fee34cf1f404d614521cdc104652237eb5658afe3",
+    "tier": "金Doro会员",
+    "account_value": "15.00",
+    "registration_date": "20260428"
+  },
+  {
+    "hash": "36de063c6ebbf0c71772788089b7a30a51f277df86e561c7bea977375801e736",
+    "tier": "金Doro会员",
+    "account_value": "1.00",
+    "registration_date": "20260428"
+  },
+  {
+    "hash": "48364e1027c312a98fe81379a4722677361373ca0b4854467240aecfa28828fd",
+    "tier": "金Doro会员",
+    "account_value": "5.00",
+    "registration_date": "20260428"
+  },
+  {
+    "hash": "bf7ea221d5f011bb96c81ad47d1521a6ac193de0875b341e335561dcfd1b1555",
+    "tier": "金Doro会员",
+    "account_value": "1.00",
+    "registration_date": "20260428"
+  },
+  {
+    "hash": "7adee8c9b4197788022a3a45961c41fad9e8efef7050947730e59c0453c97c64",
+    "tier": "金Doro会员",
+    "account_value": "43.00",
+    "registration_date": "20251120"
+  },
+  {
+    "hash": "1f6005b8ee060194bbf14d212e79dcb7aeecd9e3d54bdef90f59305df5efc5ac",
+    "tier": "金Doro会员",
+    "account_value": "71.00",
+    "registration_date": "20260130"
+  },
+  {
+    "hash": "feb2a0aa23892f9e684b5ced7fd486cb1d86ae91c5467dbb418f6a82a6199b22",
+    "tier": "金Doro会员",
+    "account_value": "5.00",
+    "registration_date": "20260427"
+  },
+  {
+    "hash": "1d3dc4c89d0d7b0c1564efee42b63ae6904456873fb946b5c5a7aa4bb090ee5f",
+    "tier": "金Doro会员",
+    "account_value": "5.00",
+    "registration_date": "20260427"
+  },
+  {
+    "hash": "8c20a9fd434062893ef0881c202546488839e19974d5b9f1c88e4f7a34178630",
+    "tier": "金Doro会员",
+    "account_value": "5.00",
+    "registration_date": "20260427"
+  },
+  {
     "hash": "d6d2e06d675d659bcc8f90069cc8094e8ad224528ed9bfcca583a797f0cf0b78",
     "tier": "金Doro会员",
     "account_value": "5.00",
@@ -398,7 +482,7 @@
   {
     "hash": "96a1b8103f9c33fa3e6e018392c3f27c63d88ea89598f7bf9a8a8f989b9689d7",
     "tier": "金Doro会员",
-    "account_value": "25",
+    "account_value": "26",
     "registration_date": "20251226"
   },
   {
@@ -911,12 +995,7 @@
     "account_value": "6",
     "registration_date": "20251127"
   },
-  {
-    "hash": "7adee8c9b4197788022a3a45961c41fad9e8efef7050947730e59c0453c97c64",
-    "tier": "金Doro会员",
-    "account_value": "27",
-    "registration_date": "20251120"
-  },
+
   {
     "hash": "64fcfa359ba29148cb2c85ef8a05355a49f1e7088d857280f73d218de1a3cf7b",
     "tier": "金Doro会员",

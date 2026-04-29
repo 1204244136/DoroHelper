@@ -79,4 +79,4 @@ ignore_tags = "rc"
 sort_commits = "oldest"
 
 [git.github]
-commits = true
+commits = false

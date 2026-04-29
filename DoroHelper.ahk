@@ -2812,9 +2812,9 @@ CalculateSponsorInfo(thisGuiButton, info) {
     ; 格式化生效日期 (解决问题2)
     finalRegistrationDateFormatted := SubStr(finalLastActiveDate, 1, 4) . "-" . SubStr(finalLastActiveDate, 5, 2) . "-" . SubStr(finalLastActiveDate, 7, 2)
     ; 生成 JSON
-    jsonString := UserStatus " (V5用户码)`n"
+    jsonString := UserStatus " (用户码)`n"
     jsonString .= "(请将这段文字替换成您的付款截图，邮件的图片请以附件形式发送)`n"
-    jsonString .= "第五代用`n"
+    jsonString .= "第四代用`n"
     jsonString .= "  {" . "`n"
     jsonString .= "`"hash`": `"" Hashed "`"," . "`n"
     jsonString .= "`"tier`": `"" finalTier "`"," . "`n"
@@ -2825,7 +2825,7 @@ CalculateSponsorInfo(thisGuiButton, info) {
     ; 修正 msgStr 中的额度和日期格式 (解决问题1和问题2)
     msgStr := "赞助信息已生成并复制到剪贴板，请在对应页面按ctrl+v粘贴，然后连同付款记录发给我`n"
         . "状态: " . UserStatus . "`n"
-        . "用户码版本: V5`n"
+        . "用户码版本: V4`n"
         . "您将获得的会员类型: " . finalTier . "`n"
         . "新会员总额度: " . Format("{:0.2f}", displayRemainingValue) . " ORANGE`n" ; 使用实际剩余额度
     if (finalTier != "普通用户") {
@@ -3077,8 +3077,11 @@ GetMainBoardSerial() {
 }
 ;tag 生成设备码
 GenerateDeviceCode() {
-    ; 主板序列号通常比 CPU、硬盘序列号更不容易因更换硬件或系统环境变化而改变。
-    return HashSHA256(GetMainBoardSerial())
+    ; 使用主板+CPU+硬盘组合生成设备码，提高唯一性
+    local mainBoardSerial := GetMainBoardSerial()
+    local cpuSerial := GetCpuSerial()
+    local diskSerial := GetDiskSerial()
+    return HashSHA256(mainBoardSerial . cpuSerial . diskSerial)
 }
 ;tag 获取CPU序列号的函数
 GetCpuSerial() {
@@ -3121,7 +3124,7 @@ GenerateLegacyDeviceCodes() {
 }
 ;tag 获取并解析用户组数据
 ; 成功返回 Map 对象，失败抛出 Error
-FetchAndParseGroupData(version := 5) {
+FetchAndParseGroupData(version := 4) {
     global g_numeric_settings, cbGroupDataSource
     local groupFileName := "GroupArrayV" . version . ".json"
     ; 定义所有可用的镜像站点
@@ -3320,12 +3323,17 @@ CheckUserGroup(forceUpdate := false) {
         }
     }
     AddLog(!forceUpdate ? "首次运行或强制更新，正在检查用户组信息……" : "强制检查用户组信息……", "Blue")
-    local groupDataV5, groupDataV4
+    ; 1. 获取用户组数据 (V4格式)
+    local groupDataV4
     try {
-        groupDataV5 := FetchAndParseGroupData(5)
+        groupDataV4 := FetchAndParseGroupData(4)
     } catch as e {
-        AddLog("V5用户组检查失败: " . e.Message, "Maroon")
-        groupDataV5 := false
+        AddLog("用户组数据获取失败: " . e.Message, "Red")
+        cachedUserGroupInfo := defaultUserGroupInfo
+        cacheTimestamp := A_TickCount
+        g_numeric_settings["UserGroup"] := cachedUserGroupInfo["MembershipType"]
+        g_numeric_settings["UserLevel"] := cachedUserGroupInfo["UserLevel"]
+        return cachedUserGroupInfo
     }
     ; 2. 获取设备码
     local Hashed
@@ -3341,27 +3349,7 @@ CheckUserGroup(forceUpdate := false) {
     }
     ; 3. 校验用户组成员资格并计算最高会员信息
     local highestMembership := defaultUserGroupInfo
-    local matchedByLegacyDeviceCode := false
-    local currentHashInfo := IsObject(groupDataV5) ? GetMembershipInfoForHash(Hashed, groupDataV5) : GetMembershipInfoForHash("", []) ; 此处返回的是原始数据
-    if !(currentHashInfo["UserLevel"] > 0 || currentHashInfo["RemainingValue"] > 0) {
-        try {
-            groupDataV4 := FetchAndParseGroupData(4)
-            local legacyHashes := GenerateLegacyDeviceCodes()
-            if (legacyHashes.Length = 0) {
-                AddLog("警告: 未检测到任何硬盘序列号，可能影响旧版用户组验证。", "MAROON")
-            }
-            for legacyHash in legacyHashes {
-                local legacyHashInfo := GetMembershipInfoForHash(legacyHash, groupDataV4)
-                if (legacyHashInfo["UserLevel"] > 0 || legacyHashInfo["RemainingValue"] > 0) {
-                    currentHashInfo := legacyHashInfo
-                    matchedByLegacyDeviceCode := true
-                    break
-                }
-            }
-        } catch as e {
-            AddLog("V4兼容用户组检查失败: " . e.Message, "Maroon")
-        }
-    }
+    local currentHashInfo := GetMembershipInfoForHash(Hashed, groupDataV4)
     ; 如果找到了会员信息，则进行计算
     ; 只要有会员等级或剩余价值就计算，即使是普通用户也可能因补偿有剩余价值
     if (currentHashInfo["UserLevel"] > 0 || currentHashInfo["RemainingValue"] > 0) {
@@ -3374,26 +3362,6 @@ CheckUserGroup(forceUpdate := false) {
         if (calculatedInfo["UserLevel"] > highestMembership["UserLevel"]) {
             highestMembership := calculatedInfo
         }
-    }
-    if (matchedByLegacyDeviceCode && highestMembership["UserLevel"] > 0 && !legacyUpdatePromptShown) {
-        local migrationText := "第四代用`n"
-        migrationText .= "{`n"
-        migrationText .= "    `"hash`": `"" . currentHashInfo["Hash"] . "`",`n"
-        migrationText .= "    `"tier`": `"" . currentHashInfo["MembershipType"] . "`",`n"
-        migrationText .= "    `"account_value`": `"" . Format("{:.2f}", currentHashInfo["RemainingValue"]) . "`",`n"
-        migrationText .= "    `"registration_date`": `"" . currentHashInfo["LastActiveDate"] . "`"`n"
-        migrationText .= "  },`n"
-        migrationText .= "第五代用`n"
-        migrationText .= "{`n"
-        migrationText .= "    `"hash`": `"" . Hashed . "`",`n"
-        migrationText .= "    `"tier`": `"" . currentHashInfo["MembershipType"] . "`",`n"
-        migrationText .= "    `"account_value`": `"" . Format("{:.2f}", currentHashInfo["RemainingValue"]) . "`",`n"
-        migrationText .= "    `"registration_date`": `"" . currentHashInfo["LastActiveDate"] . "`"`n"
-        migrationText .= "  },"
-        A_Clipboard := migrationText
-        MsgBox("检测到您仍在使用旧版用户码验证会员。`n`n迁移用文本已复制到剪贴板，请将其发给管理员更新会员记录。`n`n" . migrationText, "请更新用户码", "IconI")
-        AddLog("检测到旧版用户码会员，已提示用户更新为V5用户码。", "Blue")
-        legacyUpdatePromptShown := true
     }
     ; 更新全局设置和GUI显示
     g_numeric_settings["UserGroup"] := highestMembership["MembershipType"]

@@ -6502,7 +6502,7 @@ EventLargeStory() {
     Sleep 1000
     AddLog("开始任务：大活动·剧情活动", "Fuchsia")
     ; 先story2，再story1，好处是可以只识别一个图标
-    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.343 * NikkeW . " ", NikkeY + 0.731 * NikkeH . " ", NikkeX + 0.343 * NikkeW + 0.102 * NikkeW . " ", NikkeY + 0.731 * NikkeH + 0.049 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("大活动·STORY"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X := "wait", &Y := 1, NikkeX + 0.342 * NikkeW . " ", NikkeY + 0.776 * NikkeH . " ", NikkeX + 0.342 * NikkeW + 0.102 * NikkeW . " ", NikkeY + 0.776 * NikkeH + 0.040 * NikkeH . " ", 0.3 * PicTolerance, 0.3 * PicTolerance, FindText().PicLib("大活动·STORY"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("尝试进入对应活动页")
         FindText().Click(X - 50 * TrueRatio, Y, "L")
         Sleep 500
@@ -6516,7 +6516,7 @@ EventLargeStory() {
         Confirm
         Sleep 500
     }
-    while (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.531 * NikkeW . " ", NikkeY + 0.844 * NikkeH . " ", NikkeX + 0.531 * NikkeW + 0.054 * NikkeW . " ", NikkeY + 0.844 * NikkeH + 0.050 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·剩余时间"), , , , , , , TrueRatio, TrueRatio)) {
+    while (ok := FindText(&X := "wait", &Y := 3, NikkeX + 0.435 * NikkeW . " ", NikkeY + 0.769 * NikkeH . " ", NikkeX + 0.435 * NikkeW + 0.132 * NikkeW . " ", NikkeY + 0.769 * NikkeH + 0.045 * NikkeH . " ", 0.4 * PicTolerance, 0.4 * PicTolerance, FindText().PicLib("大活动·剩余时间"), , , , , , , TrueRatio, TrueRatio)) {
         AddLog("进入剧情活动页面")
         Sleep 500
         FindText().Click(X, Y - 100 * TrueRatio, "L")

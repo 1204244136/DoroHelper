@@ -3637,8 +3637,10 @@ CopyLog(*) {
 ;tag 生成设备信息并复制
 Devicecode(*) {
     mainBoardSerial := GetMainBoardSerial()
+    cpuSerial := GetCpuSerial()
+    diskSerial := GetDiskSerial()
     Hashed := GenerateDeviceCode()
-    informatinon := "主板序列号: " mainBoardSerial "`n设备码: " Hashed
+    informatinon := "主板序列号: " mainBoardSerial "`nCPU序列号: " cpuSerial "`n硬盘序列号: " diskSerial "`n设备码: " Hashed
     A_Clipboard := informatinon
     MsgBox informatinon
     MsgBox("设备信息已复制到剪贴板")

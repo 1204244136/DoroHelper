@@ -4567,7 +4567,7 @@ AdvanceMode(Picture, Picture2?) {
         if (ok && currentPic) {
             ; 3.1 点击图标进入关卡详情页
             try {
-                FindText().Click(X, Y, "L")
+                FindText().Click(X + 100 * TrueRatio, Y, "L")
                 Sleep 1000
             }
             ; 只有 Picture 有自动填充逻辑

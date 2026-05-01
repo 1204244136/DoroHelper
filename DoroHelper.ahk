@@ -2539,7 +2539,7 @@ MsgSponsor(*) {
     btn2.OnEvent("Click", CalculateSponsorInfoUnified.Bind(sponsorUserIDEdit, sponsorOrderIDEdit))
     btnOnlineSponsor.OnEvent("Click", OpenOnlineSponsor.Bind(sponsorOrderIDEdit, edtAmount, guiTier))
     btnUpgradeV6.OnEvent("Click", UpgradeV6Online)
-    btnQueryOnline.OnEvent("Click", (*) => Run("https://doropay.1204244136.workers.dev/?tab=query"))
+    btnQueryOnline.OnEvent("Click", (*) => Run("https://doropay.top/?tab=query"))
     btnRedeemCode.OnEvent("Click", OpenRedeemPage)
     ; 初始化状态
     ToggleInputMode(radDuration, "")
@@ -2549,7 +2549,7 @@ MsgSponsor(*) {
 OpenOnlineSponsor(orderEdit, amountEdit, tierEdit, *) {
     global g_numeric_settings, g_lastCalculatedTotalPay, g_lastCalculatedOrangeValue
     ; 构建URL，自动填入设备码参数
-    baseURL := "https://doropay.1204244136.workers.dev"
+    baseURL := "https://doropay.top"
     params := ""
     ; 用户ID
     userID := g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : ""
@@ -2606,7 +2606,7 @@ UpgradeV6Online(*) {
         return
     }
     ; 构建URL
-    baseURL := "https://doropay.1204244136.workers.dev"
+    baseURL := "https://doropay.top"
     params := ""
     ; 强制V6
     params .= "&method=V6"
@@ -2655,7 +2655,7 @@ UpgradeV6Online(*) {
 ;tag 兑换福利码（打开兑换页面，隐性传入设备码）
 OpenRedeemPage(*) {
     global g_numeric_settings
-    baseURL := "https://doropay.1204244136.workers.dev"
+    baseURL := "https://doropay.top"
     params := "&tab=redeem"
     ; 用户ID
     userID := g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : ""
@@ -3654,7 +3654,7 @@ FetchAndParseGroupData(version := 4) {
     local groupFileName := "GroupArrayV" . version . ".json"
     ; 定义所有可用的镜像站点
     local mirrors := Map(
-        "API", "https://doropay.1204244136.workers.dev/api/members/v" . version,
+        "API", "https://doropay.top/api/members/v" . version,
         "Gitee", "https://gitee.com/con_sul/DoroHelper/raw/main/group/" . groupFileName,
         "GitHub", "https://raw.githubusercontent.com/1204244136/DoroHelper/refs/heads/main/group/" . groupFileName,
         "jsDelivr", "https://cdn.jsdelivr.net/gh/1204244136/DoroHelper@main/group/" . groupFileName

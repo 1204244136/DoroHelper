@@ -18,7 +18,7 @@ CoordMode "Pixel", "Client"
 CoordMode "Mouse", "Client"
 ;region 设置常量
 try TraySetIcon "doro.ico"
-currentVersion := "v1.14.11"
+currentVersion := "v1.15.0"
 ; 判断拓展名
 SplitPath A_ScriptFullPath, , , &scriptExtension
 scriptExtension := StrLower(scriptExtension)
@@ -446,9 +446,9 @@ cbSkipGroupCheck := AddCheckboxSetting(doroGui, "SkipUserGroupCheckForFreeUser",
 doroGui.Tips.SetTip(cbSkipGroupCheck, "勾选后，非会员用户启动时将跳过用户组检查以节省时间`nSkip user group check for free users to save startup time")
 g_settingPages["Settings"].Push(cbSkipGroupCheck)
 TextGroupDataSource := doroGui.Add("Text", "R1 +0x0100", "用户组数据源")
-    doroGui.Tips.SetTip(TextGroupDataSource, "用户组数据源镜像`nAPI:在线API(推荐)|Gitee:国内源|GitHub:官方源|jsDelivr:CDN加速`nUser Group Data Source Mirror`nAPI: Online (Recommended) | Gitee: Domestic | GitHub: Official | jsDelivr: CDN Accelerated")
-    g_settingPages["Settings"].Push(TextGroupDataSource)
-    cbGroupDataSource := doroGui.AddDropDownList("x+20 w100", ["API", "Gitee", "GitHub", "jsDelivr"])
+doroGui.Tips.SetTip(TextGroupDataSource, "用户组数据源镜像`nAPI:在线API(推荐)|Gitee:国内源|GitHub:官方源|jsDelivr:CDN加速`nUser Group Data Source Mirror`nAPI: Online (Recommended) | Gitee: Domestic | GitHub: Official | jsDelivr: CDN Accelerated")
+g_settingPages["Settings"].Push(TextGroupDataSource)
+cbGroupDataSource := doroGui.AddDropDownList("x+20 w100", ["API", "Gitee", "GitHub", "jsDelivr"])
 cbGroupDataSource.Text := g_numeric_settings["GroupDataSource"]
 cbGroupDataSource.OnEvent("Change", (Ctrl, Info) => g_numeric_settings["GroupDataSource"] := Ctrl.Text)
 g_settingPages["Settings"].Push(cbGroupDataSource)
@@ -2666,7 +2666,7 @@ OpenRedeemPage(*) {
     Run(fullURL)
 }
 SetEditPlaceholder(editCtrl, placeholderText) {
-    Static EM_SETCUEBANNER := 0x1501
+    static EM_SETCUEBANNER := 0x1501
     DllCall("SendMessage", "Ptr", editCtrl.Hwnd, "UInt", EM_SETCUEBANNER, "Ptr", 0, "WStr", placeholderText, "Ptr")
 }
 ;tag 获取实时汇率

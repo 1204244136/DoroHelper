@@ -1,0 +1,26 @@
+[
+  {
+    "user_id": "zhi11",
+    "cpu_hash": "1561b5a4fc04bb159ca2da9d5f2dec4b8b3a5ea03d1ec31c441156698acbd6bb",
+    "uuid_hash": "f31b1eac0049b9ba4ea44dce09ce31c8987b21d2ca2e30a53d6cc0abddd45a37",
+    "bios_hash": "237f23730628f9cdbf7e414f2e2098da90a1301f62f538920ac403ca3f3dd590",
+    "board_hash": "2d5e82331f6f9e485c15da816c15fc9c745548e88fde35e0b9ae092bd89bc76e",
+    "disk_hash": "53a013f79f8e8cc0f4f96ecf2ce660ee5dd53c13eca7eb005cba5d9f556070cf",
+    "guid_hash": "25a63f5fe7d9c0ebb0fef90d2225d598c18ef8e124981bd1f16036e83ebaa4e6",
+    "tier": "金Doro会员",
+    "account_value": "5.00",
+    "registration_date": "20260501"
+  },
+  {
+    "user_id": "example_user",
+    "cpu_hash": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2",
+    "uuid_hash": "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2a3",
+    "bios_hash": "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2a3b4",
+    "board_hash": "d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2a3b4c5",
+    "disk_hash": "e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2a3b4c5d6",
+    "guid_hash": "f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2a3b4c5d6e7",
+    "tier": "金Doro会员",
+    "account_value": "5.00",
+    "registration_date": "20260501"
+  }
+]

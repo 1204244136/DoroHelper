@@ -2613,8 +2613,19 @@ UpgradeV6Online(*) {
     ; 用户ID
     userID := g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : ""
     if (userID = "") {
-        MsgBox("请先在设置中填写用户ID。", "缺少用户ID", "Icon!")
-        return
+        ; 用户ID为空，弹出输入框让用户当场填写
+        result := InputBox("请输入你的用户ID（字母开头，3-20位字母数字）：`n`n填写后将自动保存，下次无需重复输入。", "用户ID", "w400", "")
+        if (result.Result != "OK" || result.Value = "") {
+            return
+        }
+        validation := ValidateUserID(result.Value)
+        if (!validation.valid) {
+            MsgBox(validation.reason, "用户ID格式错误", "Icon!")
+            return
+        }
+        userID := result.Value
+        g_numeric_settings["UserID"] := userID
+        WriteSettings()
     }
     params .= "&uid=" . userID
     ; 升级订单号：UPGRADE_用户ID（无需真实订单号）

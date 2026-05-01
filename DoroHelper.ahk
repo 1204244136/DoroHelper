@@ -180,6 +180,8 @@ global g_numeric_settings := Map(
     "DownloadSource", "GitHub",         ; 下载源
     "GroupDataSource", "Gitee",         ; 用户组数据源 (Gitee/GitHub/jsDelivr)
     "PreferredHttpRequest", "WinHttp.WinHttpRequest.5.1", ; HTTP 请求优先级
+    "VerificationMethod", "V6",         ; 验证方式 (V6/V4)
+    "UserID", "",                        ; 用户ID
     "UserGroup", "普通用户",             ; 用户组
     "UserLevel", 0                      ; 用户级别
 )
@@ -457,6 +459,13 @@ cbPreferredHttp := doroGui.AddDropDownList("x+20 w100", ["WinHttp.WinHttpRequest
 cbPreferredHttp.Text := g_numeric_settings["PreferredHttpRequest"]
 cbPreferredHttp.OnEvent("Change", (Ctrl, Info) => g_numeric_settings["PreferredHttpRequest"] := Ctrl.Text)
 g_settingPages["Settings"].Push(cbPreferredHttp)
+TextVerificationMethod := doroGui.Add("Text", "xs R1 +0x0100", "验证方式")
+doroGui.Tips.SetTip(TextVerificationMethod, "选择会员验证方式`nV6: 新版验证，支持硬盘更换(推荐)`nV4: 旧版验证，单设备码`nVerification method for membership")
+g_settingPages["Settings"].Push(TextVerificationMethod)
+cbVerificationMethod := doroGui.AddDropDownList("x+20 w80", ["V6", "V4"])
+cbVerificationMethod.Text := g_numeric_settings["VerificationMethod"]
+cbVerificationMethod.OnEvent("Change", (Ctrl, Info) => g_numeric_settings["VerificationMethod"] := Ctrl.Text)
+g_settingPages["Settings"].Push(cbVerificationMethod)
 ;tag 二级登录Login
 SetLogin := doroGui.Add("Text", "x290 y40 R1 +0x0100 Section", "====登录====")
 g_settingPages["Login"].Push(SetLogin)
@@ -2417,7 +2426,7 @@ GetUserLocaleName() {
 MsgSponsor(*) {
     global guiTier, guiDuration, guiSponsor
     global guiStatusText, guiPreviewText
-    global radDuration, radAmount, edtAmount ; 新增全局变量
+    global radDuration, radAmount, edtAmount
     global g_PriceMap, g_DefaultRegionPriceData, g_MembershipLevels, LocaleName, g_numeric_settings
     if g_numeric_settings["UserGroup"] = "普通用户" {
         MsgBox("我已知晓：`n1、会员功能与设备绑定，更换设备后需要重新赞助。`n2、赞助并不构成实际上的商业行为，如果遇到不可抗力因素，作者有权随时停止维护，最终解释权归作者所有`n3、赞助完后需要点击底部的「生成信息」然后按ctrl+v发送给作者登记。发送的将会是一段代码和赞助截图，而不是接下来的文本`n4、只需要在一个渠道发送录入后的文本，不要每个渠道都发一遍。`n5、录入会在24小时内完成，届时会在对应渠道发送「已录入」的信息，根据网络延迟，会员资格会在收到信息后的5分钟内生效。因此在规定时间内，请不要催促作者，谢谢。", "赞助说明", "iconi")
@@ -2426,18 +2435,15 @@ MsgSponsor(*) {
     guiSponsor.Opt("+DPIScale")
     guiSponsor.Tips := GuiCtrlTips(guiSponsor)
     guiSponsor.SetFont('s10', 'Microsoft YaHei UI')
-    Text1 := guiSponsor.Add("Text", "w400 +0x0100 Wrap", "现在 DoroHelper 的绝大部分维护和新功能的添加都是我在做，这耗费了我大量时间和精力，希望有条件的小伙伴们能支持一下")
     ; 获取当前用户会员信息
     userGroupInfo := CheckUserGroup()
-    ; 表格说明
-    LVZH := guiSponsor.Add("ListView", "xm w400 h140", ["功能", "普通", "金Doro"])
-    LVZH.ModifyCol(1, 90)
-    LVZH.ModifyCol(2, 60)
-    LVZH.Add(, "基础功能", "✅️", "✅️")
-    LVZH.Add(, "去广告", "", "✅️")
-    LVZH.Add(, "轮换活动", "", "✅️")
-    LVZH.Add(, "自动推图", "", "✅️")
-    ; 支付二维码逻辑 (保持不变)
+    isCheckedUser := (userGroupInfo["UserLevel"] > 0)
+    ; 创建标签页
+    tabControl := guiSponsor.Add("Tab3", "w420 h700", ["赞助", "查询", "V4升级"])
+    ; ========== 赞助标签页（统一入口） ==========
+    tabControl.UseTab("赞助")
+    Text1 := guiSponsor.Add("Text", "w400 +0x0100 Wrap", "现在 DoroHelper 的绝大部分维护和新功能的添加都是我在做，这耗费了我大量时间和精力，希望有条件的小伙伴们能支持一下")
+    ; 支付二维码逻辑
     if (scriptExtension = "ahk") {
         picUrl1 := "img\weixin.png"
         picUrl2 := "img\alipay.png"
@@ -2456,39 +2462,90 @@ MsgSponsor(*) {
         }
     }
     try {
-        guiSponsor.Add("Picture", "x10 w190 h190", tempFile1)
-        guiSponsor.Add("Picture", "x+10 yp w190 h190", tempFile2)
+        pic_ctr_1 := guiSponsor.Add("Picture", "w190 h190 Section", tempFile1)
+        pic_ctr_2 := guiSponsor.Add("Picture", "x+10 yp w190 h190", tempFile2)
     } catch {
         guiSponsor.Add("Text", "w400 h200 Center", "无法加载赞助图片。")
     }
-    btn1 := guiSponsor.Add("Button", "xm+120 w160", "无法使用以上支付方式?")
+    btn1 := guiSponsor.Add("Button", "xs+100 w200", "无法使用以上支付方式?")
     btn1.OnEvent("Click", (*) => Run("https://github.com/1204244136/DoroHelper?tab=readme-ov-file#%E6%94%AF%E6%8C%81%E5%92%8C%E9%BC%93%E5%8A%B1"))
+    ; 表格说明
+    LVZH := guiSponsor.Add("ListView", "xs w400 h100 Section", ["功能", "普通用户", "金Doro"])
+    LVZH.ModifyCol(1, 100)
+    LVZH.ModifyCol(2, 80)
+    LVZH.ModifyCol(3, 80)
+    LVZH.Add(, "基础功能", "✅️", "✅️")
+    LVZH.Add(, "去广告", "", "✅️")
+    LVZH.Add(, "轮换活动", "", "✅️")
+    LVZH.Add(, "定时/路径启动", "", "✅️")
+    LVZH.Add(, "其他最新功能", "", "✅️")
+    ; === UserID + 订单号 同行 ===
+    guiSponsor.Add("Text", "xs", "用户ID:")
+    savedUserID := g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : ""
+    sponsorUserIDEdit := guiSponsor.Add("Edit", "x+5 yp-3 w120", savedUserID != "" ? savedUserID : "")
+    if (savedUserID = "") {
+        SetEditPlaceholder(sponsorUserIDEdit, "字母开头3-20位")
+    }
+    guiSponsor.Add("Text", "x+10 yp+3", "订单号:")
+    sponsorOrderIDEdit := guiSponsor.Add("Edit", "x+5 yp-3 w135", "")
+    SetEditPlaceholder(sponsorOrderIDEdit, "28-32位订单号")
     ; === 选择区域 ===
     availableTiers := ["金Doro会员", "金Doro企业版"]
-    ; 1. 赞助类型 (最左边)
-    guiSponsor.Add("Text", "xm y+15", "类型:")
+    guiSponsor.Add("Text", "xs y+10", "类型:")
     guiTier := guiSponsor.Add("DropDownList", "x+5 yp-3 w95 Choose1", availableTiers)
-    ; 2. 按时长 Radio (手动互斥)
     radDuration := guiSponsor.Add("Radio", "x+10 yp+3 Checked", "按时长")
     guiDuration := guiSponsor.Add("DropDownList", "x+2 yp-3 w65 Choose1", ["1个月", "3个月", "6个月", "12个月"])
-    ; 3. 按金额 Radio (手动互斥)
-    radAmount := guiSponsor.Add("Radio", "x+10 yp+3", "按金额")
+    radAmount := guiSponsor.Add("Radio", "x+10 yp", "按金额")
     edtAmount := guiSponsor.Add("Edit", "x+5 yp-3 w40 Number", "10")
     ; === 左右分栏显示状态和预览 ===
-    guiSponsor.Add("GroupBox", "xm y+10 w195 h135", "当前状态")
+    guiSponsor.Add("GroupBox", "xs y+15 w195 h135", "当前状态")
     guiStatusText := guiSponsor.Add("Text", "xp+10 yp+20 w175 h110", "读取中...")
     guiSponsor.Add("GroupBox", "x+10 yp-20 w195 h135", "订单预览")
     guiPreviewText := guiSponsor.Add("Text", "xp+10 yp+20 w175 h110", "计算中...")
-    btn2 := guiSponsor.Add("Button", "xm w400 h40", "我已付款，复制赞助信息 (Ctrl+V 发送)")
+    ; 底部按钮：统一入口，新用户/续费用户共用
+    btn2 := guiSponsor.Add("Button", "xs y+15 w400 h40", "我已付款，复制赞助信息 (Ctrl+V 发送)")
     btn2.SetFont("bold s11")
-    ; === 控件交互逻辑 (v2.0.19 兼容写法) ===
+    ; ========== 查询标签页 ==========
+    tabControl.UseTab("查询")
+    guiSponsor.Add("Text", "w400 +0x0100 Wrap", "查询会员信息，请输入用户ID：")
+    guiSponsor.Add("Text", "y+15", "用户ID：")
+    queryUserIDEdit := guiSponsor.Add("Edit", "y+5 w400", g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : "")
+    guiSponsor.Add("Text", "y+15 cBlue", "点击下方按钮查询会员信息。")
+    queryBtn := guiSponsor.Add("Button", "y+10 w400 h40", "查询会员信息")
+    queryBtn.SetFont("bold s11")
+    queryResultText := guiSponsor.Add("Text", "y+10 w400 h150", "")
+    ; ========== V4升级标签页 ==========
+    tabControl.UseTab("V4升级")
+    guiSponsor.Add("Text", "w400 +0x0100 Wrap Section", "V4用户升级入口。如果您是V4老用户，请在此提交V6设备信息以完成升级。新用户无需操作。")
+    guiSponsor.Add("Text", "xs y+15", "验证方式：")
+    cbVerificationMethod := guiSponsor.Add("DropDownList", "x+5 yp-3 w80", ["V6", "V4"])
+    cbVerificationMethod.Text := g_numeric_settings.Has("VerificationMethod") ? g_numeric_settings["VerificationMethod"] : "V6"
+    cbVerificationMethod.OnEvent("Change", (Ctrl, Info) => g_numeric_settings["VerificationMethod"] := Ctrl.Text)
+    guiSponsor.Add("Text", "xs y+15", "用户ID：")
+    manageUserIDEdit := guiSponsor.Add("Edit", "xs w400", g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : "")
+    guiSponsor.Add("Text", "xs y+15", "V6设备信息：")
+    ; 生成V6设备码并显示预览
+    deviceCodeV6 := { cpu_hash: "ERROR", uuid_hash: "ERROR", bios_hash: "ERROR", board_hash: "ERROR", disk_hash: "ERROR", guid_hash: "ERROR" }
+    try {
+        deviceCodeV6 := GenerateDeviceCodeV6()
+    } catch as e {
+        AddLog("生成V6设备码失败: " . e.Message, "Red")
+    }
+    guiSponsor.Add("Text", "xs y+5", "CPU哈希: " . SubStr(deviceCodeV6.cpu_hash, 1, 20) . "...")
+    guiSponsor.Add("Text", "xs y+5", "UUID哈希: " . SubStr(deviceCodeV6.uuid_hash, 1, 20) . "...")
+    guiSponsor.Add("Text", "xs y+5", "BIOS哈希: " . SubStr(deviceCodeV6.bios_hash, 1, 20) . "...")
+    guiSponsor.Add("Text", "xs y+5", "主板哈希: " . SubStr(deviceCodeV6.board_hash, 1, 20) . "...")
+    guiSponsor.Add("Text", "xs y+5", "硬盘哈希: " . SubStr(deviceCodeV6.disk_hash, 1, 20) . "...")
+    guiSponsor.Add("Text", "xs y+5", "GUID哈希: " . SubStr(deviceCodeV6.guid_hash, 1, 20) . "...")
+    upgradeBtn := guiSponsor.Add("Button", "xs y+15 w400 h40", "复制V6设备信息(JSON格式)")
+    upgradeBtn.SetFont("bold s11")
+    ; 结束标签页
+    tabControl.UseTab()
+    ; === 控件交互逻辑 ===
     ToggleInputMode(GuiCtrlObj, Info) {
-        ; 手动实现 Radio 互斥逻辑
-        ; 如果点击了“按时长”，取消选中“按金额”
         if (GuiCtrlObj.Hwnd == radDuration.Hwnd) {
             radAmount.Value := 0
         }
-        ; 如果点击了“按金额”，取消选中“按时长”
         else if (GuiCtrlObj.Hwnd == radAmount.Hwnd) {
             if g_numeric_settings["UserLevel"] < 3 {
                 MsgBox("非金会员无法使用按金额赞助，请选择按时长赞助方式以修改会员。")
@@ -2498,27 +2555,28 @@ MsgSponsor(*) {
             MsgBox("你实际应该支付的金额应为下方「订单预览」中的金额")
             radDuration.Value := 0
         }
-        ; 获取当前是否为“按时长”模式
         isDurationMode := radDuration.Value
-        ; 切换控件可用状态
-        ; “按金额”时禁用类型和时长下拉框，启用金额输入框
         guiTier.Enabled := isDurationMode
         guiDuration.Enabled := isDurationMode
         edtAmount.Enabled := !isDurationMode
-        ; 立即更新价格预览
         UpdateSponsorPrice(userGroupInfo)
     }
-    ; 绑定 Radio 点击事件
     radDuration.OnEvent("Click", ToggleInputMode)
     radAmount.OnEvent("Click", ToggleInputMode)
-    ; 绑定其他控件变更事件
     guiTier.OnEvent("Change", (Ctrl, Info) => UpdateSponsorPrice(userGroupInfo))
     guiDuration.OnEvent("Change", (Ctrl, Info) => UpdateSponsorPrice(userGroupInfo))
     edtAmount.OnEvent("Change", (Ctrl, Info) => UpdateSponsorPrice(userGroupInfo))
-    btn2.OnEvent("Click", CalculateSponsorInfo)
-    ; 初始化状态 (模拟触发一次逻辑，确保界面状态正确)
+    btn2.OnEvent("Click", CalculateSponsorInfoUnified.Bind(sponsorUserIDEdit, sponsorOrderIDEdit))
+    queryBtn.OnEvent("Click", QueryMembershipWithValidation.Bind(queryUserIDEdit, queryResultText))
+    upgradeBtn.OnEvent("Click", CopyV6WithValidationForSponsor.Bind(manageUserIDEdit, deviceCodeV6))
+    ; 初始化状态
     ToggleInputMode(radDuration, "")
     guiSponsor.Show("AutoSize Center")
+}
+;tag 设置Edit控件placeholder提示文字
+SetEditPlaceholder(editCtrl, placeholderText) {
+    Static EM_SETCUEBANNER := 0x1501
+    DllCall("SendMessage", "Ptr", editCtrl.Hwnd, "UInt", EM_SETCUEBANNER, "Ptr", 0, "WStr", placeholderText, "Ptr")
 }
 ;tag 获取实时汇率
 GetExchangeRate(fromCurrency, toCurrency) {
@@ -2700,13 +2758,128 @@ UpdateSponsorPrice(userGroupInfo_param := unset) {
     }
     guiPreviewText.Text := previewStr
 }
-; 计算并生成赞助信息
-CalculateSponsorInfo(thisGuiButton, info) {
+;tag 统一赞助信息生成（新用户/老用户共用入口）
+CalculateSponsorInfoUnified(userIDEdit, orderIDEdit, thisGuiButton, info) {
     global guiTier, guiDuration, guiSponsor
     global radDuration, edtAmount
     global g_MembershipLevels, g_PriceMap, LocaleName
+    global g_numeric_settings
+    ; === 订单号验证（所有用户必填）===
+    orderID := orderIDEdit.Value
+    if (orderID = "") {
+        MsgBox("请填写支付订单号。`n`n微信：我→钱包→账单→复制订单号`n支付宝：我的→账单→复制订单号", "信息不完整", "Icon!")
+        return
+    }
+    ; 后门：DORO跳过格式验证（测试用）
+    isTestMode := (orderID = "DORO")
+    if (!isTestMode && !RegExMatch(orderID, "^[0-9]{28,32}$")) {
+        MsgBox("订单号格式不正确！`n`n微信订单号：28位数字`n支付宝订单号：28-32位数字", "验证失败", "Icon!")
+        return
+    }
+    ; === UserID 验证 ===
+    userID := userIDEdit.Value
+    if (userID != "") {
+        validation := ValidateUserID(userID)
+        if (!validation.valid) {
+            MsgBox(validation.reason, "用户ID格式错误", "Icon!")
+            return
+        }
+        g_numeric_settings["UserID"] := userID
+        WriteSettings()
+    }
+    ; 获取当前状态
+    currentUserInfo := CheckUserGroup(true)
+    currentLevel := currentUserInfo["UserLevel"]
+    isCheckedUser := (currentLevel > 0 && currentUserInfo["RemainingValue"] > 0.001)
+    ; --- 老用户：走原有 CalculateSponsorInfo 逻辑 ---
+    if (isCheckedUser) {
+        CalculateSponsorInfo(thisGuiButton, info, orderID)
+        return
+    }
+    ; --- 新用户/未录入用户：需要额外验证 UserID ---
+    if (userID = "") {
+        MsgBox("新用户请填写用户ID（3-20位，字母开头）。", "信息不完整", "Icon!")
+        return
+    }
+    ; 获取选择的会员类型和时长
+    tierSelected := guiTier.Text
+    durationSelected := guiDuration.Text
+    targetMonths := 0
+    newPurchaseValue := 0.0
+    if (radDuration.Value) {
+        targetMonthsText := StrReplace(durationSelected, "个月")
+        if (!IsNumber(targetMonthsText)) {
+            MsgBox("请选择有效的赞助时长。", "赞助信息错误", "iconx")
+            return
+        }
+        targetMonths := Integer(targetMonthsText)
+        targetLevelInfo := g_MembershipLevels.Get(tierSelected)
+        if (!IsObject(targetLevelInfo)) {
+            MsgBox("错误：无效的会员类型数据。", "赞助信息错误", "iconx")
+            return
+        }
+        newPurchaseValue := targetLevelInfo.monthlyCost * targetMonths
+    } else {
+        rawAmount := edtAmount.Value
+        if (!IsNumber(rawAmount) || Float(rawAmount) <= 0) {
+            MsgBox("请输入有效的赞助金额 (大于0)。", "赞助信息错误", "iconx")
+            return
+        }
+        newPurchaseValue := Float(rawAmount)
+    }
+    ; 生成V6设备码
+    deviceCodeV6 := { cpu_hash: "ERROR", uuid_hash: "ERROR", bios_hash: "ERROR", board_hash: "ERROR", disk_hash: "ERROR", guid_hash: "ERROR" }
+    try {
+        deviceCodeV6 := GenerateDeviceCodeV6()
+    } catch as e {
+        AddLog("生成V6设备码失败: " . e.Message, "Red")
+    }
+    ; 生成JSON格式设备信息
+    json := "  {`n"
+    json .= "    `"user_id`": `"" . userID . "`",`n"
+    json .= "    `"cpu_hash`": `"" . deviceCodeV6.cpu_hash . "`",`n"
+    json .= "    `"uuid_hash`": `"" . deviceCodeV6.uuid_hash . "`",`n"
+    json .= "    `"bios_hash`": `"" . deviceCodeV6.bios_hash . "`",`n"
+    json .= "    `"board_hash`": `"" . deviceCodeV6.board_hash . "`",`n"
+    json .= "    `"disk_hash`": `"" . deviceCodeV6.disk_hash . "`",`n"
+    json .= "    `"guid_hash`": `"" . deviceCodeV6.guid_hash . "`",`n"
+    json .= "    `"tier`": `"" . tierSelected . "`",`n"
+    json .= "    `"account_value`": `"" . Format("{:0.2f}", newPurchaseValue) . "`",`n"
+    json .= "    `"registration_date`": `"" . FormatTime(A_Now, "yyyyMMdd") . "`"`n"
+    json .= "  },"
+    ; 生成完整申请信息
+    priceData := g_PriceMap.Get(LocaleName, g_DefaultRegionPriceData)
+    unitPrice := priceData.Unitprice
+    currencyName := priceData.Currency
+    totalPay := newPurchaseValue * unitPrice
+    applyInfo := "=== DoroHelper 新用户赞助 ===`n`n"
+    applyInfo .= "用户ID: " . userID . "`n"
+    applyInfo .= "会员等级: " . tierSelected . "`n"
+    if (targetMonths > 0) {
+        applyInfo .= "时长: " . targetMonths . "个月`n"
+    }
+    applyInfo .= "金额: " . Format("{:0.1f}", totalPay) . " " . currencyName . "`n"
+    applyInfo .= "订单号: " . orderID . "`n`n"
+    applyInfo .= "=== 设备信息（JSON格式）===`n`n"
+    applyInfo .= json
+    A_Clipboard := applyInfo
+    MsgBox("赞助信息已生成并复制到剪贴板，请在对应页面按ctrl+v粘贴，然后连同付款截图发给我`n`n状态: 新用户申请`n会员类型: " . tierSelected . "`n需付: " . Format("{:0.1f}", totalPay) . " " . currencyName . "`n`n注意这里的文本不是你应该复制的内容，剪贴板的才是`n`nQQ群: 584275905`nQQ邮箱: 1204244136@qq.com`n海外邮箱: zhi.11@foxmail.com", "赞助信息已复制！", "iconi")
+    guiSponsor.Destroy()
+}
+; 计算并生成赞助信息
+CalculateSponsorInfo(thisGuiButton, info, orderID := "") {
+    global guiTier, guiDuration, guiSponsor
+    global radDuration, edtAmount
+    global g_MembershipLevels, g_PriceMap, LocaleName
+    global g_numeric_settings
     today := A_YYYY A_MM A_DD
-    Hashed := GenerateDeviceCode()
+    ; 统一使用V6设备码
+    deviceCodeV6 := { cpu_hash: "ERROR", uuid_hash: "ERROR", bios_hash: "ERROR", board_hash: "ERROR", disk_hash: "ERROR", guid_hash: "ERROR" }
+    try {
+        deviceCodeV6 := GenerateDeviceCodeV6()
+    } catch as e {
+        AddLog("生成V6设备码失败: " . e.Message, "Red")
+    }
     ; 获取用户当前信息
     currentUserInfo := CheckUserGroup(true)
     currentLevel := currentUserInfo["UserLevel"]
@@ -2811,21 +2984,34 @@ CalculateSponsorInfo(thisGuiButton, info) {
     newExpiryDateFormatted := SubStr(tempVirtualExpiryDate, 1, 4) . "-" . SubStr(tempVirtualExpiryDate, 5, 2) . "-" . SubStr(tempVirtualExpiryDate, 7, 2)
     ; 格式化生效日期 (解决问题2)
     finalRegistrationDateFormatted := SubStr(finalLastActiveDate, 1, 4) . "-" . SubStr(finalLastActiveDate, 5, 2) . "-" . SubStr(finalLastActiveDate, 7, 2)
-    ; 生成 JSON
-    jsonString := UserStatus " (用户码)`n"
-    jsonString .= "(请将这段文字替换成您的付款截图，邮件的图片请以附件形式发送)`n"
-    jsonString .= "第四代用`n"
-    jsonString .= "  {" . "`n"
-    jsonString .= "`"hash`": `"" Hashed "`"," . "`n"
-    jsonString .= "`"tier`": `"" finalTier "`"," . "`n"
-    jsonString .= "`"account_value`": `"" Format("{:0.2f}", finalAccountValue) "`"," . "`n" ; JSON仍使用Historical Value
-    jsonString .= "`"registration_date`": `"" finalLastActiveDate "`"" . "`n"
-    jsonString .= "},"
-    A_Clipboard := jsonString
+    ; 生成 V6 格式 JSON
+    jsonLines := []
+    jsonLines.Push("  {")
+    jsonLines.Push("    `"cpu_hash`": `"" . deviceCodeV6.cpu_hash . "`",")
+    jsonLines.Push("    `"uuid_hash`": `"" . deviceCodeV6.uuid_hash . "`",")
+    jsonLines.Push("    `"bios_hash`": `"" . deviceCodeV6.bios_hash . "`",")
+    jsonLines.Push("    `"board_hash`": `"" . deviceCodeV6.board_hash . "`",")
+    jsonLines.Push("    `"disk_hash`": `"" . deviceCodeV6.disk_hash . "`",")
+    jsonLines.Push("    `"guid_hash`": `"" . deviceCodeV6.guid_hash . "`",")
+    jsonLines.Push("    `"tier`": `"" . finalTier . "`",")
+    jsonLines.Push("    `"account_value`": `"" . Format("{:0.2f}", finalAccountValue) . "`",")
+    jsonLines.Push("    `"registration_date`": `"" . finalLastActiveDate . "`"")
+    jsonLines.Push("  },")
+    ; 生成完整赞助信息
+    sponsorInfo := UserStatus . " (设备信息)`n"
+    sponsorInfo .= "(请将这段文字替换成您的付款截图，邮件的图片请以附件形式发送)`n"
+    if (orderID != "") {
+        sponsorInfo .= "订单号: " . orderID . "`n"
+    }
+    sponsorInfo .= "V6设备码`n"
+    for line in jsonLines {
+        sponsorInfo .= line . "`n"
+    }
+    A_Clipboard := sponsorInfo
     ; 修正 msgStr 中的额度和日期格式 (解决问题1和问题2)
     msgStr := "赞助信息已生成并复制到剪贴板，请在对应页面按ctrl+v粘贴，然后连同付款记录发给我`n"
         . "状态: " . UserStatus . "`n"
-        . "用户码版本: V4`n"
+        . "用户码版本: V6`n"
         . "您将获得的会员类型: " . finalTier . "`n"
         . "新会员总额度: " . Format("{:0.2f}", displayRemainingValue) . " ORANGE`n" ; 使用实际剩余额度
     if (finalTier != "普通用户") {
@@ -3122,6 +3308,233 @@ GenerateLegacyDeviceCodes() {
     }
     return hashes
 }
+;tag 获取系统UUID
+GetSystemUUID() {
+    wmi := ComObjGet("winmgmts:\\.\root\cimv2")
+    query := "SELECT UUID FROM Win32_ComputerSystemProduct"
+    for item in wmi.ExecQuery(query) {
+        return item.UUID
+    }
+    return "UNKNOWN"
+}
+;tag 获取BIOS序列号
+GetBIOSSerialNumber() {
+    wmi := ComObjGet("winmgmts:\\.\root\cimv2")
+    query := "SELECT SerialNumber FROM Win32_BIOS"
+    for bios in wmi.ExecQuery(query) {
+        serial := bios.SerialNumber
+        if (serial != "" && serial != "To Be Filled By O.E.M." && serial != "Default String")
+            return serial
+    }
+    return "UNKNOWN"
+}
+;tag 获取主板序列号（V6版本）
+GetBaseBoardSerialNumberV6() {
+    wmi := ComObjGet("winmgmts:\\.\root\cimv2")
+    query := "SELECT SerialNumber FROM Win32_BaseBoard"
+    for board in wmi.ExecQuery(query) {
+        serial := board.SerialNumber
+        if (serial != "" && serial != "To Be Filled By O.E.M." && serial != "Default String")
+            return serial
+    }
+    return "UNKNOWN"
+}
+;tag 获取第一块固定硬盘序列号（V6版本）
+GetDiskSerialNumberV6() {
+    wmi := ComObjGet("winmgmts:\\.\root\cimv2")
+    query := "SELECT SerialNumber FROM Win32_DiskDrive WHERE MediaType='Fixed hard disk media'"
+    for disk in wmi.ExecQuery(query) {
+        return disk.SerialNumber
+    }
+    return "UNKNOWN"
+}
+;tag 获取Windows MachineGuid
+GetMachineGuid() {
+    try {
+        return RegRead("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography", "MachineGuid")
+    }
+    return "UNKNOWN"
+}
+;tag 生成V6设备码（多硬件哈希）
+GenerateDeviceCodeV6() {
+    ; 获取各硬件信息
+    local cpuID := GetCpuSerial()
+    local uuid := GetSystemUUID()
+    local biosSN := GetBIOSSerialNumber()
+    local boardSN := GetBaseBoardSerialNumberV6()
+    local diskSN := GetDiskSerialNumberV6()
+    local machineGuid := GetMachineGuid()
+    ; 生成各硬件的独立哈希
+    return {
+        cpu_hash: HashSHA256(cpuID),
+        uuid_hash: HashSHA256(uuid),
+        bios_hash: HashSHA256(biosSN),
+        board_hash: HashSHA256(boardSN),
+        disk_hash: HashSHA256(diskSN),
+        guid_hash: HashSHA256(machineGuid)
+    }
+}
+;tag V6权重匹配验证
+MatchDeviceCodeV6(currentCode, savedData) {
+    local matchCount := 0
+    local matchDetails := Map()
+    ; CPU匹配 (权重25)
+    if (savedData.Has("cpu_hash") && currentCode.cpu_hash == savedData["cpu_hash"]) {
+        matchCount += 25
+        matchDetails["CPU"] := true
+    } else {
+        matchDetails["CPU"] := false
+    }
+    ; UUID匹配 (权重35)
+    if (savedData.Has("uuid_hash") && currentCode.uuid_hash == savedData["uuid_hash"]) {
+        matchCount += 35
+        matchDetails["UUID"] := true
+    } else {
+        matchDetails["UUID"] := false
+    }
+    ; BIOS匹配 (权重15)
+    if (savedData.Has("bios_hash") && currentCode.bios_hash == savedData["bios_hash"]) {
+        matchCount += 15
+        matchDetails["BIOS"] := true
+    } else {
+        matchDetails["BIOS"] := false
+    }
+    ; 主板匹配 (权重10)
+    if (savedData.Has("board_hash") && currentCode.board_hash == savedData["board_hash"]) {
+        matchCount += 10
+        matchDetails["Board"] := true
+    } else {
+        matchDetails["Board"] := false
+    }
+    ; 硬盘匹配 (权重10)
+    if (savedData.Has("disk_hash") && currentCode.disk_hash == savedData["disk_hash"]) {
+        matchCount += 10
+        matchDetails["Disk"] := true
+    } else {
+        matchDetails["Disk"] := false
+    }
+    ; MachineGuid匹配 (权重5)
+    if (savedData.Has("guid_hash") && currentCode.guid_hash == savedData["guid_hash"]) {
+        matchCount += 5
+        matchDetails["GUID"] := true
+    } else {
+        matchDetails["GUID"] := false
+    }
+    ; 判断是否通过
+    local passed := (matchCount >= 80)
+    ; 检查是否需要静默更新硬盘（其他都匹配，只有硬盘不匹配）
+    local needUpdateDisk := false
+    if (passed && !matchDetails["Disk"] && matchCount >= 90) {
+        ; 其他硬件都匹配，硬盘变了，静默更新
+        needUpdateDisk := true
+    }
+    return {
+        passed: passed,
+        score: matchCount,
+        details: matchDetails,
+        needUpdateDisk: needUpdateDisk
+    }
+}
+;tag 根据V6设备码获取会员信息
+GetMembershipInfoForDeviceV6(deviceCode, groupData) {
+    local result := Map(
+        "MembershipType", "普通用户",
+        "UserLevel", 0,
+        "RemainingValue", 0.0,
+        "LastActiveDate", "19991231",
+        "MatchScore", 0,
+        "NeedUpdateDisk", false,
+        "UserID", ""
+    )
+    for _, memberInfo in groupData {
+        if !IsObject(memberInfo)
+            continue
+        ; 检查是否是V6格式（有cpu_hash字段）
+        if !memberInfo.Has("cpu_hash")
+            continue
+        ; 执行权重匹配
+        local matchResult := MatchDeviceCodeV6(deviceCode, memberInfo)
+        if (matchResult.passed) {
+            local memberTier := memberInfo["tier"]
+            local memberAccountValue := Float(memberInfo["account_value"])
+            local memberLastActiveDate := memberInfo["registration_date"]
+            local memberUserID := memberInfo.Has("user_id") ? memberInfo["user_id"] : ""
+            local level := 0
+            if g_MembershipLevels.Has(memberTier) {
+                level := g_MembershipLevels.Get(memberTier).userLevel
+            }
+            result["MembershipType"] := memberTier
+            result["UserLevel"] := level
+            result["RemainingValue"] := memberAccountValue
+            result["LastActiveDate"] := memberLastActiveDate
+            result["MatchScore"] := matchResult.score
+            result["NeedUpdateDisk"] := matchResult.needUpdateDisk
+            result["UserID"] := memberUserID
+            return result
+        }
+    }
+    return result
+}
+;tag 验证用户ID格式
+ValidateUserID(userID) {
+    ; 检查长度
+    if (StrLen(userID) < 3 || StrLen(userID) > 20)
+        return { valid: false, reason: "ID长度必须在3-20个字符之间" }
+    ; 检查字符（只允许字母、数字、下划线、短横线）
+    if (!RegExMatch(userID, "^[a-zA-Z0-9_-]+$"))
+        return { valid: false, reason: "ID只能包含字母、数字、下划线和短横线" }
+    ; 检查是否以字母开头
+    if (!RegExMatch(userID, "^[a-zA-Z]"))
+        return { valid: false, reason: "ID必须以字母开头" }
+    return { valid: true, reason: "" }
+}
+;tag 根据验证方式生成设备码（V6优先，V4回退）
+GenerateDeviceCodeSmart() {
+    global g_numeric_settings
+    local verificationMethod := g_numeric_settings.Has("VerificationMethod") ? g_numeric_settings["VerificationMethod"] : "V6"
+    if (verificationMethod = "V6") {
+        try {
+            return { method: "V6", code: GenerateDeviceCodeV6() }
+        } catch as e {
+            AddLog("V6设备码生成失败，回退到V4: " . e.Message, "Yellow")
+        }
+    }
+    ; V4回退
+    return { method: "V4", code: GenerateDeviceCode() }
+}
+;tag 根据验证方式获取会员信息
+GetMembershipInfoSmart(deviceCode, groupDataV4, groupDataV6 := "") {
+    global g_numeric_settings
+    local verificationMethod := g_numeric_settings.Has("VerificationMethod") ? g_numeric_settings["VerificationMethod"] : "V6"
+    ; 优先尝试V6
+    if (verificationMethod = "V6" && deviceCode.method = "V6" && IsObject(groupDataV6)) {
+        local v6Result := GetMembershipInfoForDeviceV6(deviceCode.code, groupDataV6)
+        if (v6Result["UserLevel"] > 0 || v6Result["RemainingValue"] > 0) {
+            return { method: "V6", info: v6Result }
+        }
+    }
+    ; V4回退
+    if (deviceCode.method = "V4") {
+        local v4Result := GetMembershipInfoForHash(deviceCode.code, groupDataV4)
+        return { method: "V4", info: v4Result }
+    }
+    ; V6模式但V6未匹配，尝试V4
+    if (deviceCode.method = "V6") {
+        local v4Hash := GenerateDeviceCode()
+        local v4Result := GetMembershipInfoForHash(v4Hash, groupDataV4)
+        if (v4Result["UserLevel"] > 0 || v4Result["RemainingValue"] > 0) {
+            return { method: "V4", info: v4Result }
+        }
+    }
+    ; 都没匹配
+    return { method: deviceCode.method, info: Map(
+        "MembershipType", "普通用户",
+        "UserLevel", 0,
+        "RemainingValue", 0.0,
+        "LastActiveDate", "19991231",
+        "UserID", ""
+    ) }
+}
 ;tag 获取并解析用户组数据
 ; 成功返回 Map 对象，失败抛出 Error
 FetchAndParseGroupData(version := 4) {
@@ -3295,12 +3708,11 @@ CheckUserGroup(forceUpdate := false) {
         "RemainingValue", 0.0,
         "VirtualExpiryDate", "19991231",
         "LastActiveDate", "19991231",
-        "HistoricalAccountValue", 0.0
+        "HistoricalAccountValue", 0.0,
+        "VerificationMethod", "V6",
+        "UserID", ""
     )
     ; 检查缓存是否有效 (例如，缓存1分钟，或者在forceUpdate时刷新)
-    ; 缓存判断逻辑需要更新，因为现在有 RemainingValue 和 VirtualExpiryDate
-    ; 简单起见，如果缓存存在且未过期，就使用缓存
-    ; 这里的过期判断应该基于 VirtualExpiryDate
     if (!forceUpdate && A_TickCount - cacheTimestamp < 60 * 1000 && IsObject(cachedUserGroupInfo)) {
         local cachedVirtualExpiryTimestamp := cachedUserGroupInfo["VirtualExpiryDate"] . "235959"
         if (A_Now < cachedVirtualExpiryTimestamp) {
@@ -3313,54 +3725,82 @@ CheckUserGroup(forceUpdate := false) {
             ; 检查缓存中的到期日是否为明天
             local tomorrowDate := SubStr(DateAdd(A_Now, 1, "Days"), 1, 8) ; 获取明天的日期 (YYYYMMDD)
             if (cachedUserGroupInfo["UserLevel"] > 0 && cachedUserGroupInfo["VirtualExpiryDate"] == tomorrowDate) {
-                if (!reminderShown) { ; 修改：增加判断
+                if (!reminderShown) {
                     MsgBox("您的 " . cachedUserGroupInfo["MembershipType"] . " 会员将于明天到期，请及时续费！", "会员续费提醒", "IconI")
                     AddLog("会员续费提醒：您的会员将于明天到期。", "Blue")
-                    reminderShown := true ; 修改：设置标志
+                    reminderShown := true
                 }
             }
             return cachedUserGroupInfo
         }
     }
     AddLog(!forceUpdate ? "首次运行或强制更新，正在检查用户组信息……" : "强制检查用户组信息……", "Blue")
-    ; 1. 获取用户组数据 (V4格式)
-    local groupDataV4
-    try {
-        groupDataV4 := FetchAndParseGroupData(4)
-    } catch as e {
-        AddLog("用户组数据获取失败: " . e.Message, "Red")
-        cachedUserGroupInfo := defaultUserGroupInfo
-        cacheTimestamp := A_TickCount
-        g_numeric_settings["UserGroup"] := cachedUserGroupInfo["MembershipType"]
-        g_numeric_settings["UserLevel"] := cachedUserGroupInfo["UserLevel"]
-        return cachedUserGroupInfo
-    }
-    ; 2. 获取设备码
-    local Hashed
-    try {
-        Hashed := GenerateDeviceCode()
-    } catch as e {
-        AddLog("生成设备码失败: " . e.Message, "Red")
-        cachedUserGroupInfo := defaultUserGroupInfo
-        cacheTimestamp := A_TickCount
-        g_numeric_settings["UserGroup"] := cachedUserGroupInfo["MembershipType"]
-        g_numeric_settings["UserLevel"] := cachedUserGroupInfo["UserLevel"]
-        return cachedUserGroupInfo
-    }
-    ; 3. 校验用户组成员资格并计算最高会员信息
+    ; 获取验证方式设置
+    local verificationMethod := g_numeric_settings.Has("VerificationMethod") ? g_numeric_settings["VerificationMethod"] : "V6"
+    ; ========== V6验证流程 ==========
     local highestMembership := defaultUserGroupInfo
-    local currentHashInfo := GetMembershipInfoForHash(Hashed, groupDataV4)
-    ; 如果找到了会员信息，则进行计算
-    ; 只要有会员等级或剩余价值就计算，即使是普通用户也可能因补偿有剩余价值
-    if (currentHashInfo["UserLevel"] > 0 || currentHashInfo["RemainingValue"] > 0) {
-        local calculatedInfo := CalculateCurrentMembershipStatus(
-            currentHashInfo["MembershipType"],
-            currentHashInfo["RemainingValue"],
-            currentHashInfo["LastActiveDate"]
-        )
-        ; 比较用户等级，取最高等级的会员信息
-        if (calculatedInfo["UserLevel"] > highestMembership["UserLevel"]) {
-            highestMembership := calculatedInfo
+    local v6Success := false
+    if (verificationMethod = "V6") {
+        try {
+            ; 获取V6数据
+            local groupDataV6 := FetchAndParseGroupData(6)
+            ; 生成V6设备码
+            local deviceCodeV6 := GenerateDeviceCodeV6()
+            ; V6权重匹配
+            local v6MatchResult := GetMembershipInfoForDeviceV6(deviceCodeV6, groupDataV6)
+            if (v6MatchResult["UserLevel"] > 0 || v6MatchResult["RemainingValue"] > 0) {
+                local calculatedInfo := CalculateCurrentMembershipStatus(
+                    v6MatchResult["MembershipType"],
+                    v6MatchResult["RemainingValue"],
+                    v6MatchResult["LastActiveDate"]
+                )
+                calculatedInfo["VerificationMethod"] := "V6"
+                calculatedInfo["UserID"] := v6MatchResult["UserID"]
+                calculatedInfo["HistoricalAccountValue"] := v6MatchResult["RemainingValue"]
+                highestMembership := calculatedInfo
+                v6Success := true
+                AddLog("✓ V6验证成功，匹配分数: " . v6MatchResult["MatchScore"] . "/100", "Green")
+                ; 如果需要静默更新硬盘信息
+                if (v6MatchResult["NeedUpdateDisk"]) {
+                    AddLog("检测到硬盘变更，正在静默更新……", "Blue")
+                    ; TODO: 实现静默更新硬盘哈希的逻辑
+                }
+            } else {
+                AddLog("V6验证未通过，匹配分数: " . v6MatchResult["MatchScore"] . "/100 (阈值80)", "Yellow")
+            }
+        } catch as e {
+            AddLog("V6验证失败: " . e.Message . "，将尝试V4验证", "Yellow")
+        }
+    }
+    ; ========== V4验证流程（V6失败或选择V4时的回退） ==========
+    if (!v6Success) {
+        try {
+            ; 获取V4数据
+            local groupDataV4 := FetchAndParseGroupData(4)
+            ; 生成V4设备码
+            local Hashed := GenerateDeviceCode()
+            ; V4匹配
+            local currentHashInfo := GetMembershipInfoForHash(Hashed, groupDataV4)
+            if (currentHashInfo["UserLevel"] > 0 || currentHashInfo["RemainingValue"] > 0) {
+                local calculatedInfo := CalculateCurrentMembershipStatus(
+                    currentHashInfo["MembershipType"],
+                    currentHashInfo["RemainingValue"],
+                    currentHashInfo["LastActiveDate"]
+                )
+                calculatedInfo["VerificationMethod"] := "V4"
+                calculatedInfo["UserID"] := ""
+                calculatedInfo["HistoricalAccountValue"] := currentHashInfo["RemainingValue"]
+                highestMembership := calculatedInfo
+                v6Success := true
+                AddLog("✓ V4验证成功", "Green")
+                ; V4通过且用户设置为V6，提示升级
+                if (verificationMethod = "V6" && !legacyUpdatePromptShown) {
+                    PromptUpgradeToV6()
+                    legacyUpdatePromptShown := true
+                }
+            }
+        } catch as e {
+            AddLog("V4验证也失败: " . e.Message, "Red")
         }
     }
     ; 更新全局设置和GUI显示
@@ -3381,18 +3821,18 @@ CheckUserGroup(forceUpdate := false) {
         } else if (g_numeric_settings["UserLevel"] == 1) {
             try TraySetIcon("icon\CopperDoro.ico")
         }
-        AddLog("当前用户组：" . g_numeric_settings["UserGroup"] . " (有效期至 " . formattedExpiryDate . ")   数据源: " . currentSource, "Green")
+        AddLog("当前用户组：" . g_numeric_settings["UserGroup"] . " (有效期至 " . formattedExpiryDate . ")   验证方式: " . highestMembership["VerificationMethod"] . "   数据源: " . currentSource, "Green")
         ; 检查会员是否明天到期
         local tomorrowDate := SubStr(DateAdd(A_Now, 1, "Days"), 1, 8) ; 获取明天的日期 (YYYYMMDD)
         if (highestMembership["VirtualExpiryDate"] == tomorrowDate) {
-            if (!reminderShown) { ; 修改：增加判断
+            if (!reminderShown) {
                 MsgBox("您的 " . highestMembership["MembershipType"] . " 会员将于明天到期，请及时续费！", "会员续费提醒", "IconI")
                 AddLog("会员续费提醒：您的会员将于明天到期。", "Blue")
-                reminderShown := true ; 修改：设置标志
+                reminderShown := true
             }
         }
     } else {
-        AddLog("当前用户组：普通用户 (免费用户)   数据源: " . currentSource, "Blue")
+        AddLog("当前用户组：普通用户 (免费用户)   验证方式: " . highestMembership["VerificationMethod"] . "   数据源: " . currentSource, "Blue")
         try TraySetIcon("doro.ico")
     }
     AddLog("欢迎加入反馈qq群584275905")
@@ -3401,18 +3841,316 @@ CheckUserGroup(forceUpdate := false) {
     cacheTimestamp := A_TickCount
     return highestMembership
 }
+;tag 提示用户升级到V6
+PromptUpgradeToV6() {
+    result := MsgBox(
+        "检测到您正在使用V4验证方式。`n`n" .
+        "V6验证支持：`n" .
+        "• 更换硬盘后自动适配`n" .
+        "• 更高的安全性`n" .
+        "• 更稳定的验证体验`n`n" .
+        "请点击左上角「赞助」按钮，然后切换到「升级V6」标签页进行升级。",
+        "升级验证方式",
+        "Iconi"
+    )
+}
+;tag 复制V6信息（带验证）
+CopyV6WithValidation(userIDEdit, deviceCodeV6, *) {
+    global g_numeric_settings
+    userID := userIDEdit.Value
+    if (userID != "") {
+        validation := ValidateUserID(userID)
+        if (!validation.valid) {
+            MsgBox(validation.reason, "用户ID格式错误", "Icon!")
+            return
+        }
+        ; 保存用户ID
+        g_numeric_settings["UserID"] := userID
+        WriteSettings()
+    }
+    CopyDeviceCodeV6(deviceCodeV6, userID)
+}
+;tag 提交V6申请（带验证）
+SubmitV6WithValidation(userIDEdit, deviceCodeV6, *) {
+    global g_numeric_settings
+    userID := userIDEdit.Value
+    if (userID != "") {
+        validation := ValidateUserID(userID)
+        if (!validation.valid) {
+            MsgBox(validation.reason, "用户ID格式错误", "Icon!")
+            return
+        }
+        ; 保存用户ID
+        g_numeric_settings["UserID"] := userID
+        WriteSettings()
+    }
+    SubmitV6Upgrade(deviceCodeV6, userID)
+}
+;tag 复制V6设备信息
+CopyDeviceCodeV6(deviceCode, userID := "") {
+    ; 生成JSON格式（不带方括号，方便插入）
+    json := "  {`n"
+    if (userID != "") {
+        json .= "    `"user_id`": `"" . userID . "`",`n"
+    }
+    json .= "    `"cpu_hash`": `"" . deviceCode.cpu_hash . "`",`n"
+    json .= "    `"uuid_hash`": `"" . deviceCode.uuid_hash . "`",`n"
+    json .= "    `"bios_hash`": `"" . deviceCode.bios_hash . "`",`n"
+    json .= "    `"board_hash`": `"" . deviceCode.board_hash . "`",`n"
+    json .= "    `"disk_hash`": `"" . deviceCode.disk_hash . "`",`n"
+    json .= "    `"guid_hash`": `"" . deviceCode.guid_hash . "`",`n"
+    json .= "    `"tier`": `"金Doro会员`",`n"
+    json .= "    `"account_value`": `"5.00`",`n"
+    json .= "    `"registration_date`": `"" . FormatTime(A_Now, "yyyyMMdd") . "`"`n"
+    json .= "  },"
+    A_Clipboard := json
+    MsgBox("JSON格式的设备信息已复制到剪贴板！`n`n可直接粘贴到GroupArrayV6.json中。", "复制成功", "Iconi")
+}
+;tag 提交V6升级申请
+SubmitV6Upgrade(deviceCode, userID := "") {
+    ; 生成JSON格式（不带方括号，方便插入）
+    json := "  {`n"
+    if (userID != "") {
+        json .= "    `"user_id`": `"" . userID . "`",`n"
+    }
+    json .= "    `"cpu_hash`": `"" . deviceCode.cpu_hash . "`",`n"
+    json .= "    `"uuid_hash`": `"" . deviceCode.uuid_hash . "`",`n"
+    json .= "    `"bios_hash`": `"" . deviceCode.bios_hash . "`",`n"
+    json .= "    `"board_hash`": `"" . deviceCode.board_hash . "`",`n"
+    json .= "    `"disk_hash`": `"" . deviceCode.disk_hash . "`",`n"
+    json .= "    `"guid_hash`": `"" . deviceCode.guid_hash . "`",`n"
+    json .= "    `"tier`": `"金Doro会员`",`n"
+    json .= "    `"account_value`": `"5.00`",`n"
+    json .= "    `"registration_date`": `"" . FormatTime(A_Now, "yyyyMMdd") . "`"`n"
+    json .= "  },"
+    ; 复制到剪贴板
+    A_Clipboard := json
+    MsgBox("JSON格式的设备信息已复制到剪贴板！`n`n请将此信息发送给开发者进行会员录入。", "复制成功", "Iconi")
+}
+;tag 提交会员申请（带验证）
+SubmitMembershipWithValidation(userIDEdit, tierList, orderIDEdit, *) {
+    global g_numeric_settings
+    userID := userIDEdit.Value
+    tier := tierList.Text
+    orderID := orderIDEdit.Value
+    ; 验证用户ID
+    if (userID = "") {
+        MsgBox("请输入用户ID。", "验证失败", "Icon!")
+        return
+    }
+    validation := ValidateUserID(userID)
+    if (!validation.valid) {
+        MsgBox(validation.reason, "用户ID格式错误", "Icon!")
+        return
+    }
+    ; 验证订单号
+    if (orderID = "") {
+        MsgBox("请输入支付订单号。", "验证失败", "Icon!")
+        return
+    }
+    if (!RegExMatch(orderID, "^[0-9]{28,32}$")) {
+        MsgBox("订单号格式不正确！`n`n微信订单号：28位数字`n支付宝订单号：28-32位数字", "验证失败", "Icon!")
+        return
+    }
+    ; 生成V6设备码
+    deviceCodeV6 := GenerateDeviceCodeV6()
+    ; 生成JSON格式
+    json := "  {`n"
+    json .= "    `"user_id`": `"" . userID . "`",`n"
+    json .= "    `"cpu_hash`": `"" . deviceCodeV6.cpu_hash . "`",`n"
+    json .= "    `"uuid_hash`": `"" . deviceCodeV6.uuid_hash . "`",`n"
+    json .= "    `"bios_hash`": `"" . deviceCodeV6.bios_hash . "`",`n"
+    json .= "    `"board_hash`": `"" . deviceCodeV6.board_hash . "`",`n"
+    json .= "    `"disk_hash`": `"" . deviceCodeV6.disk_hash . "`",`n"
+    json .= "    `"guid_hash`": `"" . deviceCodeV6.guid_hash . "`",`n"
+    json .= "    `"tier`": `"" . tier . "`",`n"
+    json .= "    `"account_value`": `"5.00`",`n"
+    json .= "    `"registration_date`": `"" . FormatTime(A_Now, "yyyyMMdd") . "`"`n"
+    json .= "  },"
+    ; 生成完整申请信息
+    applyInfo := "=== DoroHelper 会员申请 ===`n`n"
+    applyInfo .= "用户ID: " . userID . "`n"
+    applyInfo .= "会员等级: " . tier . "`n"
+    applyInfo .= "订单号: " . orderID . "`n`n"
+    applyInfo .= "=== 设备信息（JSON格式）===`n`n"
+    applyInfo .= json
+    ; 保存用户ID到设置
+    g_numeric_settings["UserID"] := userID
+    WriteSettings()
+    A_Clipboard := applyInfo
+    MsgBox("申请信息已复制到剪贴板！`n`n用户ID已保存，下次申请时自动填入。`n`n请将此信息发送给开发者进行会员录入。", "申请成功", "Iconi")
+}
+;tag 复制V6信息（赞助界面专用）
+CopyV6WithValidationForSponsor(userIDEdit, deviceCodeV6, *) {
+    global g_numeric_settings
+    userID := userIDEdit.Value
+    if (userID != "") {
+        validation := ValidateUserID(userID)
+        if (!validation.valid) {
+            MsgBox(validation.reason, "用户ID格式错误", "Icon!")
+            return
+        }
+        ; 保存用户ID
+        g_numeric_settings["UserID"] := userID
+        WriteSettings()
+    }
+    CopyDeviceCodeV6(deviceCodeV6, userID)
+}
+;tag 查询会员信息（带验证）
+QueryMembershipWithValidation(userIDEdit, resultText, *) {
+    userID := userIDEdit.Value
+    if (userID = "") {
+        MsgBox("请输入用户ID。", "查询失败", "Icon!")
+        return
+    }
+    ; 保存用户ID
+    global g_numeric_settings
+    g_numeric_settings["UserID"] := userID
+    WriteSettings()
+    ; 查询会员信息
+    result := CheckUserGroupByHashForGUI(userID)
+    resultText.Value := result
+}
+;tag 查询用户组（GUI版本，返回结果字符串）
+CheckUserGroupByHashForGUI(inputHash) {
+    global g_MembershipLevels, g_PriceMap, LocaleName, g_DefaultRegionPriceData
+    if (Trim(inputHash) == "") {
+        return "请输入用户ID。"
+    }
+    try {
+        local verificationMethod := g_numeric_settings.Has("VerificationMethod") ? g_numeric_settings["VerificationMethod"] : "V6"
+        local rawHashInfo := Map(
+            "MembershipType", "普通用户",
+            "UserLevel", 0,
+            "RemainingValue", 0.0,
+            "LastActiveDate", "19991231",
+            "UserID", ""
+        )
+        local matchMethod := "V4"
+        ; 尝试V6验证
+        if (verificationMethod = "V6") {
+            try {
+                groupDataV6 := FetchAndParseGroupData(6)
+                ; 构建V6设备码对象（使用输入的哈希作为所有硬件的哈希）
+                deviceCodeV6 := {
+                    cpu_hash: inputHash,
+                    uuid_hash: inputHash,
+                    bios_hash: inputHash,
+                    board_hash: inputHash,
+                    disk_hash: inputHash,
+                    guid_hash: inputHash
+                }
+                local v6Result := GetMembershipInfoForDeviceV6(deviceCodeV6, groupDataV6)
+                if (v6Result["UserLevel"] > 0 || v6Result["RemainingValue"] > 0) {
+                    rawHashInfo := v6Result
+                    matchMethod := "V6"
+                }
+            } catch as e {
+                AddLog("V6查询失败，尝试V4: " . e.Message, "Yellow")
+            }
+        }
+        ; V4回退
+        if (matchMethod = "V4") {
+            try {
+                groupDataV4 := FetchAndParseGroupData(4)
+                rawHashInfo := GetMembershipInfoForHash(inputHash, groupDataV4)
+            } catch as e {
+                AddLog("V4查询失败: " . e.Message, "Red")
+            }
+        }
+        local memberInfo := Map(
+            "MembershipType", "普通用户",
+            "UserLevel", 0,
+            "RemainingValue", 0.0,
+            "VirtualExpiryDate", "19991231",
+            "LastActiveDate", "19991231"
+        )
+        if (rawHashInfo["UserLevel"] > 0 || rawHashInfo["RemainingValue"] > 0) {
+            memberInfo := CalculateCurrentMembershipStatus(
+                rawHashInfo["MembershipType"],
+                rawHashInfo["RemainingValue"],
+                rawHashInfo["LastActiveDate"]
+            )
+        }
+        local currentSource := g_numeric_settings.Has("GroupDataSource") ? g_numeric_settings["GroupDataSource"] : "Gitee"
+        local resultMessage := "查询用户ID: " . inputHash . "`n"
+        resultMessage .= "验证方式: " . matchMethod . "`n"
+        resultMessage .= "数据源: " . currentSource . "`n"
+        resultMessage .= "━━━━━━━━━━━━━━━━━━`n"
+        if (memberInfo["UserLevel"] > 0 && memberInfo["RemainingValue"] > 0.001) {
+            local formattedExpiryDate := SubStr(memberInfo["VirtualExpiryDate"], 1, 4) . "-" . SubStr(memberInfo["VirtualExpiryDate"], 5, 2) . "-" . SubStr(memberInfo["VirtualExpiryDate"], 7, 2)
+            priceData := g_PriceMap.Get(LocaleName, g_DefaultRegionPriceData)
+            unitPrice := priceData.Unitprice
+            currencyName := priceData.Currency
+            local usdToCnyRate := 1.0
+            if (currencyName = "USD") {
+                usdToCnyRate := GetExchangeRate("USD", "CNY")
+            }
+            resultMessage .= "用户组: " . memberInfo["MembershipType"] . "`n"
+            resultMessage .= "用户级别: " . memberInfo["UserLevel"] . "`n"
+            resultMessage .= "剩余额度: " . FormatOrangeValueWithLocalCurrency(memberInfo["RemainingValue"], unitPrice, currencyName, usdToCnyRate) . "`n"
+            resultMessage .= "有效期至: " . formattedExpiryDate
+            if (rawHashInfo.Has("UserID") && rawHashInfo["UserID"] != "") {
+                resultMessage .= "`n用户ID: " . rawHashInfo["UserID"]
+            }
+        } else {
+            resultMessage .= "未找到匹配的会员信息或额度已用尽。"
+        }
+        return resultMessage
+    } catch as e {
+        return "查询失败: " . e.Message
+    }
+}
 ;tag 查询用户组
 CheckUserGroupByHash(inputHash) {
     global g_MembershipLevels, g_PriceMap, LocaleName, g_DefaultRegionPriceData
     AddLog("开始检查输入哈希值 '" . inputHash . "' 的用户组信息……", "Blue")
     if (Trim(inputHash) == "") {
         MsgBox("请输入要查询的设备哈希值。", "输入错误", "iconx")
-        AddLog("用户未输入哈ash值。", "MAROON")
+        AddLog("用户未输入哈希值。", "MAROON")
         return
     }
     try {
-        groupData := FetchAndParseGroupData()
-        local rawHashInfo := GetMembershipInfoForHash(inputHash, groupData) ; 获取原始数据
+        local verificationMethod := g_numeric_settings.Has("VerificationMethod") ? g_numeric_settings["VerificationMethod"] : "V6"
+        local rawHashInfo := Map(
+            "MembershipType", "普通用户",
+            "UserLevel", 0,
+            "RemainingValue", 0.0,
+            "LastActiveDate", "19991231",
+            "UserID", ""
+        )
+        local matchMethod := "V4"
+        ; 尝试V6验证
+        if (verificationMethod = "V6") {
+            try {
+                groupDataV6 := FetchAndParseGroupData(6)
+                ; 构建V6设备码对象（使用输入的哈希作为所有硬件的哈希）
+                deviceCodeV6 := {
+                    cpu_hash: inputHash,
+                    uuid_hash: inputHash,
+                    bios_hash: inputHash,
+                    board_hash: inputHash,
+                    disk_hash: inputHash,
+                    guid_hash: inputHash
+                }
+                local v6Result := GetMembershipInfoForDeviceV6(deviceCodeV6, groupDataV6)
+                if (v6Result["UserLevel"] > 0 || v6Result["RemainingValue"] > 0) {
+                    rawHashInfo := v6Result
+                    matchMethod := "V6"
+                }
+            } catch as e {
+                AddLog("V6查询失败，尝试V4: " . e.Message, "Yellow")
+            }
+        }
+        ; V4回退
+        if (matchMethod = "V4") {
+            try {
+                groupDataV4 := FetchAndParseGroupData(4)
+                rawHashInfo := GetMembershipInfoForHash(inputHash, groupDataV4)
+            } catch as e {
+                AddLog("V4查询失败: " . e.Message, "Red")
+            }
+        }
         local memberInfo := Map( ; 默认值
             "MembershipType", "普通用户",
             "UserLevel", 0,
@@ -3431,6 +4169,7 @@ CheckUserGroupByHash(inputHash) {
         ; 获取当前使用的数据源
         local currentSource := g_numeric_settings.Has("GroupDataSource") ? g_numeric_settings["GroupDataSource"] : "Gitee"
         local resultMessage := "查询哈希值: " . inputHash . "`n"
+        resultMessage .= "验证方式: " . matchMethod . "`n"
         resultMessage .= "数据源: " . currentSource . "`n"
         resultMessage .= "━━━━━━━━━━━━━━━━━━`n"
         if (memberInfo["UserLevel"] > 0 && memberInfo["RemainingValue"] > 0.001) { ; 检查是否有有效会员和剩余额度
@@ -3447,12 +4186,15 @@ CheckUserGroupByHash(inputHash) {
             resultMessage .= "用户级别: " . memberInfo["UserLevel"] . "`n"
             resultMessage .= "剩余额度：" . FormatOrangeValueWithLocalCurrency(memberInfo["RemainingValue"], unitPrice, currencyName, usdToCnyRate) . "`n"
             resultMessage .= "预计有效期至: " . formattedExpiryDate
+            if (rawHashInfo.Has("UserID") && rawHashInfo["UserID"] != "") {
+                resultMessage .= "`n用户ID: " . rawHashInfo["UserID"]
+            }
             MsgBox(resultMessage, "用户组查询结果", "IconI")
-            AddLog("哈希值 '" . inputHash . "' 的用户组信息查询成功（来自" . currentSource . "）。", "Green")
+            AddLog("哈希值 '" . inputHash . "' 的用户组信息查询成功（" . matchMethod . "，来自" . currentSource . "）。", "Green")
         } else {
             resultMessage .= "未找到匹配的用户组信息或额度已用尽。"
             MsgBox(resultMessage, "用户组查询结果", "iconx")
-            AddLog("哈希值 '" . inputHash . "' 未找到匹配的用户组信息或额度已用尽（来自" . currentSource . "）。", "MAROON")
+            AddLog("哈希值 '" . inputHash . "' 未找到匹配的用户组信息或额度已用尽（" . matchMethod . "，来自" . currentSource . "）。", "MAROON")
         }
     } catch as e {
         MsgBox("检查用户组失败: " . e.Message, "错误", "IconX")
@@ -3642,14 +4384,46 @@ CopyLog(*) {
 }
 ;tag 生成设备信息并复制
 Devicecode(*) {
-    mainBoardSerial := GetMainBoardSerial()
-    cpuSerial := GetCpuSerial()
-    diskSerial := GetDiskSerial()
-    Hashed := GenerateDeviceCode()
-    informatinon := "主板序列号: " mainBoardSerial "`nCPU序列号: " cpuSerial "`n硬盘序列号: " diskSerial "`n设备码: " Hashed
-    A_Clipboard := informatinon
-    MsgBox informatinon
-    MsgBox("设备信息已复制到剪贴板")
+    global g_numeric_settings
+    local verificationMethod := g_numeric_settings.Has("VerificationMethod") ? g_numeric_settings["VerificationMethod"] : "V6"
+    if (verificationMethod = "V6") {
+        ; V6模式：显示多个硬件哈希
+        try {
+            deviceCodeV6 := GenerateDeviceCodeV6()
+            information := "=== V6 设备信息 ===`n"
+            information .= "CPU序列号: " . GetCpuSerial() . "`n"
+            information .= "CPU哈希: " . deviceCodeV6.cpu_hash . "`n"
+            information .= "UUID: " . GetSystemUUID() . "`n"
+            information .= "UUID哈希: " . deviceCodeV6.uuid_hash . "`n"
+            information .= "BIOS序列号: " . GetBIOSSerialNumber() . "`n"
+            information .= "BIOS哈希: " . deviceCodeV6.bios_hash . "`n"
+            information .= "主板序列号: " . GetBaseBoardSerialNumberV6() . "`n"
+            information .= "主板哈希: " . deviceCodeV6.board_hash . "`n"
+            information .= "硬盘序列号: " . GetDiskSerialNumberV6() . "`n"
+            information .= "硬盘哈希: " . deviceCodeV6.disk_hash . "`n"
+            information .= "MachineGuid: " . GetMachineGuid() . "`n"
+            information .= "GUID哈希: " . deviceCodeV6.guid_hash
+            A_Clipboard := information
+            MsgBox information
+            MsgBox("V6设备信息已复制到剪贴板")
+        } catch as e {
+            MsgBox("V6设备码生成失败: " . e.Message, "错误", "Icon!")
+        }
+    } else {
+        ; V4模式：显示单一设备码
+        mainBoardSerial := GetMainBoardSerial()
+        cpuSerial := GetCpuSerial()
+        diskSerial := GetDiskSerial()
+        Hashed := GenerateDeviceCode()
+        information := "=== V4 设备信息 ===`n"
+        information .= "主板序列号: " . mainBoardSerial . "`n"
+        information .= "CPU序列号: " . cpuSerial . "`n"
+        information .= "硬盘序列号: " . diskSerial . "`n"
+        information .= "设备码: " . Hashed
+        A_Clipboard := information
+        MsgBox information
+        MsgBox("V4设备信息已复制到剪贴板")
+    }
 }
 ;endregion 消息辅助函数
 ;region 数据辅助函数
@@ -7622,3 +8396,19 @@ AutoAdvance(*) {
     ; Initialization()
 }
 ;endregion 快捷键
+;tag URL编码函数
+UriEncode(str) {
+    static chars := "0123456789ABCDEF"
+    encoded := ""
+    for i, ch in StrSplit(str) {
+        code := Ord(ch)
+        if (code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122) || ch = "-" || ch = "_" || ch = "." || ch = "~" {
+            encoded .= ch
+        } else if (ch = " ") {
+            encoded .= "+"
+        } else {
+            encoded .= "%" . SubStr(chars, (code >> 4) + 1, 1) . SubStr(chars, (code & 0xF) + 1, 1)
+        }
+    }
+    return encoded
+}

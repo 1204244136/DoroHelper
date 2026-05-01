@@ -2525,12 +2525,7 @@ MsgSponsor(*) {
     manageUserIDEdit := guiSponsor.Add("Edit", "xs w400", g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : "")
     guiSponsor.Add("Text", "xs y+15", "V6设备信息：")
     ; 生成V6设备码并显示预览
-    deviceCodeV6 := { cpu_hash: "ERROR", uuid_hash: "ERROR", bios_hash: "ERROR", board_hash: "ERROR", disk_hash: "ERROR", guid_hash: "ERROR" }
-    try {
-        deviceCodeV6 := GenerateDeviceCodeV6()
-    } catch as e {
-        AddLog("生成V6设备码失败: " . e.Message, "Red")
-    }
+    deviceCodeV6 := GenerateDeviceCodeV6Safe()
     guiSponsor.Add("Text", "xs y+5", "CPU哈希: " . SubStr(deviceCodeV6.cpu_hash, 1, 20) . "...")
     guiSponsor.Add("Text", "xs y+5", "UUID哈希: " . SubStr(deviceCodeV6.uuid_hash, 1, 20) . "...")
     guiSponsor.Add("Text", "xs y+5", "BIOS哈希: " . SubStr(deviceCodeV6.bios_hash, 1, 20) . "...")
@@ -2828,25 +2823,9 @@ CalculateSponsorInfoUnified(userIDEdit, orderIDEdit, thisGuiButton, info) {
         newPurchaseValue := Float(rawAmount)
     }
     ; 生成V6设备码
-    deviceCodeV6 := { cpu_hash: "ERROR", uuid_hash: "ERROR", bios_hash: "ERROR", board_hash: "ERROR", disk_hash: "ERROR", guid_hash: "ERROR" }
-    try {
-        deviceCodeV6 := GenerateDeviceCodeV6()
-    } catch as e {
-        AddLog("生成V6设备码失败: " . e.Message, "Red")
-    }
+    deviceCodeV6 := GenerateDeviceCodeV6Safe()
     ; 生成JSON格式设备信息
-    json := "  {`n"
-    json .= "    `"user_id`": `"" . userID . "`",`n"
-    json .= "    `"cpu_hash`": `"" . deviceCodeV6.cpu_hash . "`",`n"
-    json .= "    `"uuid_hash`": `"" . deviceCodeV6.uuid_hash . "`",`n"
-    json .= "    `"bios_hash`": `"" . deviceCodeV6.bios_hash . "`",`n"
-    json .= "    `"board_hash`": `"" . deviceCodeV6.board_hash . "`",`n"
-    json .= "    `"disk_hash`": `"" . deviceCodeV6.disk_hash . "`",`n"
-    json .= "    `"guid_hash`": `"" . deviceCodeV6.guid_hash . "`",`n"
-    json .= "    `"tier`": `"" . tierSelected . "`",`n"
-    json .= "    `"account_value`": `"" . Format("{:0.2f}", newPurchaseValue) . "`",`n"
-    json .= "    `"registration_date`": `"" . FormatTime(A_Now, "yyyyMMdd") . "`"`n"
-    json .= "  },"
+    json := FormatDeviceCodeV6JSON(deviceCodeV6, tierSelected, newPurchaseValue, userID)
     ; 生成完整申请信息
     priceData := g_PriceMap.Get(LocaleName, g_DefaultRegionPriceData)
     unitPrice := priceData.Unitprice
@@ -2874,12 +2853,7 @@ CalculateSponsorInfo(thisGuiButton, info, orderID := "") {
     global g_numeric_settings
     today := A_YYYY A_MM A_DD
     ; 统一使用V6设备码
-    deviceCodeV6 := { cpu_hash: "ERROR", uuid_hash: "ERROR", bios_hash: "ERROR", board_hash: "ERROR", disk_hash: "ERROR", guid_hash: "ERROR" }
-    try {
-        deviceCodeV6 := GenerateDeviceCodeV6()
-    } catch as e {
-        AddLog("生成V6设备码失败: " . e.Message, "Red")
-    }
+    deviceCodeV6 := GenerateDeviceCodeV6Safe()
     ; 获取用户当前信息
     currentUserInfo := CheckUserGroup(true)
     currentLevel := currentUserInfo["UserLevel"]
@@ -2985,18 +2959,7 @@ CalculateSponsorInfo(thisGuiButton, info, orderID := "") {
     ; 格式化生效日期 (解决问题2)
     finalRegistrationDateFormatted := SubStr(finalLastActiveDate, 1, 4) . "-" . SubStr(finalLastActiveDate, 5, 2) . "-" . SubStr(finalLastActiveDate, 7, 2)
     ; 生成 V6 格式 JSON
-    jsonLines := []
-    jsonLines.Push("  {")
-    jsonLines.Push("    `"cpu_hash`": `"" . deviceCodeV6.cpu_hash . "`",")
-    jsonLines.Push("    `"uuid_hash`": `"" . deviceCodeV6.uuid_hash . "`",")
-    jsonLines.Push("    `"bios_hash`": `"" . deviceCodeV6.bios_hash . "`",")
-    jsonLines.Push("    `"board_hash`": `"" . deviceCodeV6.board_hash . "`",")
-    jsonLines.Push("    `"disk_hash`": `"" . deviceCodeV6.disk_hash . "`",")
-    jsonLines.Push("    `"guid_hash`": `"" . deviceCodeV6.guid_hash . "`",")
-    jsonLines.Push("    `"tier`": `"" . finalTier . "`",")
-    jsonLines.Push("    `"account_value`": `"" . Format("{:0.2f}", finalAccountValue) . "`",")
-    jsonLines.Push("    `"registration_date`": `"" . finalLastActiveDate . "`"")
-    jsonLines.Push("  },")
+    jsonStr := FormatDeviceCodeV6JSON(deviceCodeV6, finalTier, finalAccountValue, , finalLastActiveDate)
     ; 生成完整赞助信息
     sponsorInfo := UserStatus . " (设备信息)`n"
     sponsorInfo .= "(请将这段文字替换成您的付款截图，邮件的图片请以附件形式发送)`n"
@@ -3004,9 +2967,7 @@ CalculateSponsorInfo(thisGuiButton, info, orderID := "") {
         sponsorInfo .= "订单号: " . orderID . "`n"
     }
     sponsorInfo .= "V6设备码`n"
-    for line in jsonLines {
-        sponsorInfo .= line . "`n"
-    }
+    sponsorInfo .= jsonStr . "`n"
     A_Clipboard := sponsorInfo
     ; 修正 msgStr 中的额度和日期格式 (解决问题1和问题2)
     msgStr := "赞助信息已生成并复制到剪贴板，请在对应页面按ctrl+v粘贴，然后连同付款记录发给我`n"
@@ -3372,6 +3333,47 @@ GenerateDeviceCodeV6() {
         board_hash: HashSHA256(boardSN),
         disk_hash: HashSHA256(diskSN),
         guid_hash: HashSHA256(machineGuid)
+    }
+}
+;tag 生成V6设备码（带容错）
+GenerateDeviceCodeV6Safe() {
+    local deviceCode := { cpu_hash: "ERROR", uuid_hash: "ERROR", bios_hash: "ERROR", board_hash: "ERROR", disk_hash: "ERROR", guid_hash: "ERROR" }
+    try {
+        deviceCode := GenerateDeviceCodeV6()
+    } catch as e {
+        AddLog("生成V6设备码失败: " . e.Message, "Red")
+    }
+    return deviceCode
+}
+;tag 格式化V6设备码为JSON字符串
+FormatDeviceCodeV6JSON(deviceCode, tier, accountValue, userID := "", registrationDate := "") {
+    if (registrationDate == "")
+        registrationDate := FormatTime(A_Now, "yyyyMMdd")
+    json := "  {`n"
+    if (userID != "") {
+        json .= "    `"user_id`": `"" . userID . "`",`n"
+    }
+    json .= "    `"cpu_hash`": `"" . deviceCode.cpu_hash . "`",`n"
+    json .= "    `"uuid_hash`": `"" . deviceCode.uuid_hash . "`",`n"
+    json .= "    `"bios_hash`": `"" . deviceCode.bios_hash . "`",`n"
+    json .= "    `"board_hash`": `"" . deviceCode.board_hash . "`",`n"
+    json .= "    `"disk_hash`": `"" . deviceCode.disk_hash . "`",`n"
+    json .= "    `"guid_hash`": `"" . deviceCode.guid_hash . "`",`n"
+    json .= "    `"tier`": `"" . tier . "`",`n"
+    json .= "    `"account_value`": `"" . Format("{:0.2f}", accountValue) . "`",`n"
+    json .= "    `"registration_date`": `"" . registrationDate . "`"`n"
+    json .= "  },"
+    return json
+}
+;tag 用输入哈希构建V6设备码对象（用于查询）
+BuildDeviceCodeV6FromHash(inputHash) {
+    return {
+        cpu_hash: inputHash,
+        uuid_hash: inputHash,
+        bios_hash: inputHash,
+        board_hash: inputHash,
+        disk_hash: inputHash,
+        guid_hash: inputHash
     }
 }
 ;tag V6权重匹配验证
@@ -3888,21 +3890,7 @@ SubmitV6WithValidation(userIDEdit, deviceCodeV6, *) {
 }
 ;tag 复制V6设备信息
 CopyDeviceCodeV6(deviceCode, userID := "") {
-    ; 生成JSON格式（不带方括号，方便插入）
-    json := "  {`n"
-    if (userID != "") {
-        json .= "    `"user_id`": `"" . userID . "`",`n"
-    }
-    json .= "    `"cpu_hash`": `"" . deviceCode.cpu_hash . "`",`n"
-    json .= "    `"uuid_hash`": `"" . deviceCode.uuid_hash . "`",`n"
-    json .= "    `"bios_hash`": `"" . deviceCode.bios_hash . "`",`n"
-    json .= "    `"board_hash`": `"" . deviceCode.board_hash . "`",`n"
-    json .= "    `"disk_hash`": `"" . deviceCode.disk_hash . "`",`n"
-    json .= "    `"guid_hash`": `"" . deviceCode.guid_hash . "`",`n"
-    json .= "    `"tier`": `"金Doro会员`",`n"
-    json .= "    `"account_value`": `"5.00`",`n"
-    json .= "    `"registration_date`": `"" . FormatTime(A_Now, "yyyyMMdd") . "`"`n"
-    json .= "  },"
+    json := FormatDeviceCodeV6JSON(deviceCode, "金Doro会员", 5.00, userID)
     A_Clipboard := json
     MsgBox("JSON格式的设备信息已复制到剪贴板！`n`n可直接粘贴到GroupArrayV6.json中。", "复制成功", "Iconi")
 }
@@ -4032,14 +4020,7 @@ CheckUserGroupByHashForGUI(inputHash) {
             try {
                 groupDataV6 := FetchAndParseGroupData(6)
                 ; 构建V6设备码对象（使用输入的哈希作为所有硬件的哈希）
-                deviceCodeV6 := {
-                    cpu_hash: inputHash,
-                    uuid_hash: inputHash,
-                    bios_hash: inputHash,
-                    board_hash: inputHash,
-                    disk_hash: inputHash,
-                    guid_hash: inputHash
-                }
+                deviceCodeV6 := BuildDeviceCodeV6FromHash(inputHash)
                 local v6Result := GetMembershipInfoForDeviceV6(deviceCodeV6, groupDataV6)
                 if (v6Result["UserLevel"] > 0 || v6Result["RemainingValue"] > 0) {
                     rawHashInfo := v6Result
@@ -4125,14 +4106,7 @@ CheckUserGroupByHash(inputHash) {
             try {
                 groupDataV6 := FetchAndParseGroupData(6)
                 ; 构建V6设备码对象（使用输入的哈希作为所有硬件的哈希）
-                deviceCodeV6 := {
-                    cpu_hash: inputHash,
-                    uuid_hash: inputHash,
-                    bios_hash: inputHash,
-                    board_hash: inputHash,
-                    disk_hash: inputHash,
-                    guid_hash: inputHash
-                }
+                deviceCodeV6 := BuildDeviceCodeV6FromHash(inputHash)
                 local v6Result := GetMembershipInfoForDeviceV6(deviceCodeV6, groupDataV6)
                 if (v6Result["UserLevel"] > 0 || v6Result["RemainingValue"] > 0) {
                     rawHashInfo := v6Result

@@ -178,7 +178,7 @@ global g_numeric_settings := Map(
     "Version", currentVersion,          ; 版本号
     "UpdateChannels", "正式版",         ; 更新渠道
     "DownloadSource", "GitHub",         ; 下载源
-    "GroupDataSource", "Gitee",         ; 用户组数据源 (Gitee/GitHub/jsDelivr)
+    "GroupDataSource", "API",            ; 用户组数据源 (API/Gitee/GitHub/jsDelivr)
     "PreferredHttpRequest", "WinHttp.WinHttpRequest.5.1", ; HTTP 请求优先级
     "VerificationMethod", "V6",         ; 验证方式 (V6/V4)
     "UserID", "",                        ; 用户ID
@@ -446,9 +446,9 @@ cbSkipGroupCheck := AddCheckboxSetting(doroGui, "SkipUserGroupCheckForFreeUser",
 doroGui.Tips.SetTip(cbSkipGroupCheck, "勾选后，非会员用户启动时将跳过用户组检查以节省时间`nSkip user group check for free users to save startup time")
 g_settingPages["Settings"].Push(cbSkipGroupCheck)
 TextGroupDataSource := doroGui.Add("Text", "R1 +0x0100", "用户组数据源")
-doroGui.Tips.SetTip(TextGroupDataSource, "用户组数据源镜像`nGitee:国内源(推荐)|GitHub:官方源|jsDelivr:CDN加速`nUser Group Data Source Mirror`nGitee: Domestic (Recommended) | GitHub: Official | jsDelivr: CDN Accelerated")
-g_settingPages["Settings"].Push(TextGroupDataSource)
-cbGroupDataSource := doroGui.AddDropDownList("x+20 w100", ["Gitee", "GitHub", "jsDelivr"])
+    doroGui.Tips.SetTip(TextGroupDataSource, "用户组数据源镜像`nAPI:在线API(推荐)|Gitee:国内源|GitHub:官方源|jsDelivr:CDN加速`nUser Group Data Source Mirror`nAPI: Online (Recommended) | Gitee: Domestic | GitHub: Official | jsDelivr: CDN Accelerated")
+    g_settingPages["Settings"].Push(TextGroupDataSource)
+    cbGroupDataSource := doroGui.AddDropDownList("x+20 w100", ["API", "Gitee", "GitHub", "jsDelivr"])
 cbGroupDataSource.Text := g_numeric_settings["GroupDataSource"]
 cbGroupDataSource.OnEvent("Change", (Ctrl, Info) => g_numeric_settings["GroupDataSource"] := Ctrl.Text)
 g_settingPages["Settings"].Push(cbGroupDataSource)
@@ -2438,10 +2438,7 @@ MsgSponsor(*) {
     ; 获取当前用户会员信息
     userGroupInfo := CheckUserGroup()
     isCheckedUser := (userGroupInfo["UserLevel"] > 0)
-    ; 创建标签页
-    tabControl := guiSponsor.Add("Tab3", "w420 h700", ["赞助", "查询", "V4升级"])
-    ; ========== 赞助标签页（统一入口） ==========
-    tabControl.UseTab("赞助")
+    ; ========== 赞助内容（无标签页） ==========
     Text1 := guiSponsor.Add("Text", "w400 +0x0100 Wrap", "现在 DoroHelper 的绝大部分维护和新功能的添加都是我在做，这耗费了我大量时间和精力，希望有条件的小伙伴们能支持一下")
     ; 支付二维码逻辑
     if (scriptExtension = "ahk") {
@@ -2502,40 +2499,18 @@ MsgSponsor(*) {
     guiStatusText := guiSponsor.Add("Text", "xp+10 yp+20 w175 h110", "读取中...")
     guiSponsor.Add("GroupBox", "x+10 yp-20 w195 h135", "订单预览")
     guiPreviewText := guiSponsor.Add("Text", "xp+10 yp+20 w175 h110", "计算中...")
-    ; 底部按钮：统一入口，新用户/续费用户共用
-    btn2 := guiSponsor.Add("Button", "xs y+15 w400 h40", "我已付款，复制赞助信息 (Ctrl+V 发送)")
+    ; 底部按钮
+    btnOnlineSponsor := guiSponsor.Add("Button", "xs y+8 w400 h30", "自动录入（推荐）")
+    btnOnlineSponsor.SetFont("bold s11")
+    btn2 := guiSponsor.Add("Button", "xs y+8 w400 h30", "手动录入（不推荐）")
     btn2.SetFont("bold s11")
-    ; ========== 查询标签页 ==========
-    tabControl.UseTab("查询")
-    guiSponsor.Add("Text", "w400 +0x0100 Wrap", "查询会员信息，请输入用户ID：")
-    guiSponsor.Add("Text", "y+15", "用户ID：")
-    queryUserIDEdit := guiSponsor.Add("Edit", "y+5 w400", g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : "")
-    guiSponsor.Add("Text", "y+15 cBlue", "点击下方按钮查询会员信息。")
-    queryBtn := guiSponsor.Add("Button", "y+10 w400 h40", "查询会员信息")
-    queryBtn.SetFont("bold s11")
-    queryResultText := guiSponsor.Add("Text", "y+10 w400 h150", "")
-    ; ========== V4升级标签页 ==========
-    tabControl.UseTab("V4升级")
-    guiSponsor.Add("Text", "w400 +0x0100 Wrap Section", "V4用户升级入口。如果您是V4老用户，请在此提交V6设备信息以完成升级。新用户无需操作。")
-    guiSponsor.Add("Text", "xs y+15", "验证方式：")
-    cbVerificationMethod := guiSponsor.Add("DropDownList", "x+5 yp-3 w80", ["V6", "V4"])
-    cbVerificationMethod.Text := g_numeric_settings.Has("VerificationMethod") ? g_numeric_settings["VerificationMethod"] : "V6"
-    cbVerificationMethod.OnEvent("Change", (Ctrl, Info) => g_numeric_settings["VerificationMethod"] := Ctrl.Text)
-    guiSponsor.Add("Text", "xs y+15", "用户ID：")
-    manageUserIDEdit := guiSponsor.Add("Edit", "xs w400", g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : "")
-    guiSponsor.Add("Text", "xs y+15", "V6设备信息：")
-    ; 生成V6设备码并显示预览
-    deviceCodeV6 := GenerateDeviceCodeV6Safe()
-    guiSponsor.Add("Text", "xs y+5", "CPU哈希: " . SubStr(deviceCodeV6.cpu_hash, 1, 20) . "...")
-    guiSponsor.Add("Text", "xs y+5", "UUID哈希: " . SubStr(deviceCodeV6.uuid_hash, 1, 20) . "...")
-    guiSponsor.Add("Text", "xs y+5", "BIOS哈希: " . SubStr(deviceCodeV6.bios_hash, 1, 20) . "...")
-    guiSponsor.Add("Text", "xs y+5", "主板哈希: " . SubStr(deviceCodeV6.board_hash, 1, 20) . "...")
-    guiSponsor.Add("Text", "xs y+5", "硬盘哈希: " . SubStr(deviceCodeV6.disk_hash, 1, 20) . "...")
-    guiSponsor.Add("Text", "xs y+5", "GUID哈希: " . SubStr(deviceCodeV6.guid_hash, 1, 20) . "...")
-    upgradeBtn := guiSponsor.Add("Button", "xs y+15 w400 h40", "复制V6设备信息(JSON格式)")
-    upgradeBtn.SetFont("bold s11")
-    ; 结束标签页
-    tabControl.UseTab()
+    ; 底部左右分栏：升级 + 查询 + 兑换
+    btnUpgradeV6 := guiSponsor.Add("Button", "xs y+8 w128 h30", "V4升级V6")
+    btnUpgradeV6.SetFont("bold s10")
+    btnQueryOnline := guiSponsor.Add("Button", "x+3 yp w128 h30", "查询会员")
+    btnQueryOnline.SetFont("bold s10")
+    btnRedeemCode := guiSponsor.Add("Button", "x+3 yp w128 h30", "兑换福利码")
+    btnRedeemCode.SetFont("bold s10")
     ; === 控件交互逻辑 ===
     ToggleInputMode(GuiCtrlObj, Info) {
         if (GuiCtrlObj.Hwnd == radDuration.Hwnd) {
@@ -2562,13 +2537,134 @@ MsgSponsor(*) {
     guiDuration.OnEvent("Change", (Ctrl, Info) => UpdateSponsorPrice(userGroupInfo))
     edtAmount.OnEvent("Change", (Ctrl, Info) => UpdateSponsorPrice(userGroupInfo))
     btn2.OnEvent("Click", CalculateSponsorInfoUnified.Bind(sponsorUserIDEdit, sponsorOrderIDEdit))
-    queryBtn.OnEvent("Click", QueryMembershipWithValidation.Bind(queryUserIDEdit, queryResultText))
-    upgradeBtn.OnEvent("Click", CopyV6WithValidationForSponsor.Bind(manageUserIDEdit, deviceCodeV6))
+    btnOnlineSponsor.OnEvent("Click", OpenOnlineSponsor.Bind(sponsorOrderIDEdit, edtAmount, guiTier))
+    btnUpgradeV6.OnEvent("Click", UpgradeV6Online)
+    btnQueryOnline.OnEvent("Click", (*) => Run("https://doropay.1204244136.workers.dev/?tab=query"))
+    btnRedeemCode.OnEvent("Click", OpenRedeemPage)
     ; 初始化状态
     ToggleInputMode(radDuration, "")
     guiSponsor.Show("AutoSize Center")
 }
-;tag 设置Edit控件placeholder提示文字
+;tag 在线赞助（打开浏览器自助录入页面）
+OpenOnlineSponsor(orderEdit, amountEdit, tierEdit, *) {
+    global g_numeric_settings, g_lastCalculatedTotalPay, g_lastCalculatedOrangeValue
+    ; 构建URL，自动填入设备码参数
+    baseURL := "https://doropay.1204244136.workers.dev"
+    params := ""
+    ; 用户ID
+    userID := g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : ""
+    if (userID != "")
+        params .= "&uid=" . userID
+    ; 验证方式
+    vMethod := g_numeric_settings.Has("VerificationMethod") ? g_numeric_settings["VerificationMethod"] : "V6"
+    params .= "&method=" . vMethod
+    ; 订单号
+    orderID := orderEdit.Value
+    if (orderID != "")
+        params .= "&orderid=" . orderID
+    ; 赞助金额：传ORANGE值（非人民币），与数据库account_value一致
+    amount := ""
+    if (IsSet(g_lastCalculatedOrangeValue) && g_lastCalculatedOrangeValue > 0)
+        amount := Format("{:0.1f}", g_lastCalculatedOrangeValue)
+    else
+        amount := amountEdit.Value
+    if (amount != "")
+        params .= "&amount=" . amount
+    ; 会员类型
+    tier := tierEdit.Text
+    if (tier != "")
+        params .= "&tier=" . UriEncode(tier)
+    ; V6设备码
+    if (vMethod = "V6") {
+        try {
+            deviceCodeV6 := GenerateDeviceCodeV6Safe()
+            params .= "&cpu=" . deviceCodeV6.cpu_hash
+            params .= "&uuid=" . deviceCodeV6.uuid_hash
+            params .= "&bios=" . deviceCodeV6.bios_hash
+            params .= "&board=" . deviceCodeV6.board_hash
+            params .= "&disk=" . deviceCodeV6.disk_hash
+            params .= "&guid=" . deviceCodeV6.guid_hash
+        } catch {
+            ; 生成失败时跳过，用户在网页手动填
+        }
+    }
+    ; 拼接URL
+    if (params != "")
+        fullURL := baseURL . "?" . SubStr(params, 2)  ; 去掉开头的 &
+    else
+        fullURL := baseURL
+    Run(fullURL)
+}
+;tag V4升级V6（在线录入，保留当前余额）
+UpgradeV6Online(*) {
+    global g_numeric_settings
+    ; 获取当前用户的ORANGE余额
+    currentUserInfo := CheckUserGroup(true)
+    currentRemaining := currentUserInfo["RemainingValue"]
+    if (currentRemaining <= 0.001) {
+        MsgBox("当前无有效会员余额，无需升级。如需开通会员，请使用上方的「自动录入」。", "无需升级", "Iconi")
+        return
+    }
+    ; 构建URL
+    baseURL := "https://doropay.1204244136.workers.dev"
+    params := ""
+    ; 强制V6
+    params .= "&method=V6"
+    ; 用户ID
+    userID := g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : ""
+    if (userID = "") {
+        MsgBox("请先在设置中填写用户ID。", "缺少用户ID", "Icon!")
+        return
+    }
+    params .= "&uid=" . userID
+    ; 升级订单号：UPGRADE_用户ID（无需真实订单号）
+    params .= "&orderid=UPGRADE_" . userID
+    ; 金额=当前余额
+    params .= "&amount=" . Format("{:0.1f}", currentRemaining)
+    ; 会员类型
+    currentType := currentUserInfo["MembershipType"]
+    if (currentType != "")
+        params .= "&tier=" . UriEncode(currentType)
+    ; V6设备码
+    try {
+        deviceCodeV6 := GenerateDeviceCodeV6Safe()
+        params .= "&cpu=" . deviceCodeV6.cpu_hash
+        params .= "&uuid=" . deviceCodeV6.uuid_hash
+        params .= "&bios=" . deviceCodeV6.bios_hash
+        params .= "&board=" . deviceCodeV6.board_hash
+        params .= "&disk=" . deviceCodeV6.disk_hash
+        params .= "&guid=" . deviceCodeV6.guid_hash
+    } catch as e {
+        MsgBox("V6设备码生成失败: " . e.Message, "错误", "Iconx")
+        return
+    }
+    fullURL := baseURL . "?" . SubStr(params, 2)
+    Run(fullURL)
+}
+;tag 兑换福利码（打开兑换页面，隐性传入设备码）
+OpenRedeemPage(*) {
+    global g_numeric_settings
+    baseURL := "https://doropay.1204244136.workers.dev"
+    params := "&tab=redeem"
+    ; 用户ID
+    userID := g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : ""
+    if (userID != "")
+        params .= "&uid=" . userID
+    ; V6设备码（隐性传入，用于非会员自动创建记录）
+    try {
+        deviceCodeV6 := GenerateDeviceCodeV6Safe()
+        params .= "&cpu=" . deviceCodeV6.cpu_hash
+        params .= "&uuid=" . deviceCodeV6.uuid_hash
+        params .= "&bios=" . deviceCodeV6.bios_hash
+        params .= "&board=" . deviceCodeV6.board_hash
+        params .= "&disk=" . deviceCodeV6.disk_hash
+        params .= "&guid=" . deviceCodeV6.guid_hash
+    } catch {
+        ; 生成失败时跳过，用户在网页手动填
+    }
+    fullURL := baseURL . "?" . SubStr(params, 2)
+    Run(fullURL)
+}
 SetEditPlaceholder(editCtrl, placeholderText) {
     Static EM_SETCUEBANNER := 0x1501
     DllCall("SendMessage", "Ptr", editCtrl.Hwnd, "UInt", EM_SETCUEBANNER, "Ptr", 0, "WStr", placeholderText, "Ptr")
@@ -2637,6 +2733,7 @@ UpdateSponsorPrice(userGroupInfo_param := unset) {
     global guiTier, guiDuration, guiStatusText, guiPreviewText
     global radDuration, edtAmount
     global g_MembershipLevels, g_PriceMap, LocaleName, g_DefaultRegionPriceData
+    global g_lastCalculatedTotalPay, g_lastCalculatedOrangeValue
     if (!IsObject(guiStatusText) || !guiStatusText.Hwnd || !IsObject(guiPreviewText) || !guiPreviewText.Hwnd) {
         return
     }
@@ -2727,6 +2824,8 @@ UpdateSponsorPrice(userGroupInfo_param := unset) {
     }
     ; 计算需付金额
     totalPay := newPurchaseValue * unitPrice
+    g_lastCalculatedTotalPay := totalPay
+    g_lastCalculatedOrangeValue := newPurchaseValue
     ; 估算新日期
     tempDailyCost := targetMonthlyCost / 30.0
     newExpDateStr := "----"
@@ -3544,12 +3643,13 @@ FetchAndParseGroupData(version := 4) {
     local groupFileName := "GroupArrayV" . version . ".json"
     ; 定义所有可用的镜像站点
     local mirrors := Map(
+        "API", "https://doropay.1204244136.workers.dev/api/members/v" . version,
         "Gitee", "https://gitee.com/con_sul/DoroHelper/raw/main/group/" . groupFileName,
         "GitHub", "https://raw.githubusercontent.com/1204244136/DoroHelper/refs/heads/main/group/" . groupFileName,
         "jsDelivr", "https://cdn.jsdelivr.net/gh/1204244136/DoroHelper@main/group/" . groupFileName
     )
     ; 获取用户选择的源或使用默认值
-    local preferredSource := g_numeric_settings.Has("GroupDataSource") ? g_numeric_settings["GroupDataSource"] : "Gitee"
+    local preferredSource := g_numeric_settings.Has("GroupDataSource") ? g_numeric_settings["GroupDataSource"] : "API"
     local sourceOrder := []
     ; 构建镜像访问顺序：优先使用用户选择的源，然后尝试其他源
     sourceOrder.Push(preferredSource)
@@ -3813,7 +3913,7 @@ CheckUserGroup(forceUpdate := false) {
     g_numeric_settings["UserLevel"] := highestMembership["UserLevel"]
     highestMembership["IsPremium"] := g_numeric_settings["UserLevel"] > 0
     ; 获取当前使用的数据源
-    local currentSource := g_numeric_settings.Has("GroupDataSource") ? g_numeric_settings["GroupDataSource"] : "Gitee"
+    local currentSource := g_numeric_settings.Has("GroupDataSource") ? g_numeric_settings["GroupDataSource"] : "API"
     if (highestMembership["IsPremium"]) {
         local formattedExpiryDate := SubStr(highestMembership["VirtualExpiryDate"], 1, 4) . "-" . SubStr(highestMembership["VirtualExpiryDate"], 5, 2) . "-" . SubStr(highestMembership["VirtualExpiryDate"], 7, 2)
         if (g_numeric_settings["UserLevel"] == 3) {
@@ -4053,7 +4153,7 @@ CheckUserGroupByHashForGUI(inputHash) {
                 rawHashInfo["LastActiveDate"]
             )
         }
-        local currentSource := g_numeric_settings.Has("GroupDataSource") ? g_numeric_settings["GroupDataSource"] : "Gitee"
+        local currentSource := g_numeric_settings.Has("GroupDataSource") ? g_numeric_settings["GroupDataSource"] : "API"
         local resultMessage := "查询用户ID: " . inputHash . "`n"
         resultMessage .= "验证方式: " . matchMethod . "`n"
         resultMessage .= "数据源: " . currentSource . "`n"
@@ -4141,7 +4241,7 @@ CheckUserGroupByHash(inputHash) {
             )
         }
         ; 获取当前使用的数据源
-        local currentSource := g_numeric_settings.Has("GroupDataSource") ? g_numeric_settings["GroupDataSource"] : "Gitee"
+        local currentSource := g_numeric_settings.Has("GroupDataSource") ? g_numeric_settings["GroupDataSource"] : "API"
         local resultMessage := "查询哈希值: " . inputHash . "`n"
         resultMessage .= "验证方式: " . matchMethod . "`n"
         resultMessage .= "数据源: " . currentSource . "`n"
@@ -8372,16 +8472,16 @@ AutoAdvance(*) {
 ;endregion 快捷键
 ;tag URL编码函数
 UriEncode(str) {
-    static chars := "0123456789ABCDEF"
+    buf := Buffer(StrPut(str, "UTF-8"))
+    StrPut(str, buf, "UTF-8")
     encoded := ""
-    for i, ch in StrSplit(str) {
-        code := Ord(ch)
-        if (code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122) || ch = "-" || ch = "_" || ch = "." || ch = "~" {
-            encoded .= ch
-        } else if (ch = " ") {
-            encoded .= "+"
+    static chars := "0123456789ABCDEF"
+    loop buf.Size {
+        b := NumGet(buf, A_Index - 1, "UChar")
+        if (b >= 48 && b <= 57) || (b >= 65 && b <= 90) || (b >= 97 && b <= 122) || b = 45 || b = 95 || b = 46 || b = 126 {
+            encoded .= Chr(b)
         } else {
-            encoded .= "%" . SubStr(chars, (code >> 4) + 1, 1) . SubStr(chars, (code & 0xF) + 1, 1)
+            encoded .= "%" . SubStr(chars, (b >> 4) + 1, 1) . SubStr(chars, (b & 0xF) + 1, 1)
         }
     }
     return encoded

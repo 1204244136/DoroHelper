@@ -18,7 +18,7 @@ CoordMode "Pixel", "Client"
 CoordMode "Mouse", "Client"
 ;region 设置常量
 try TraySetIcon "doro.ico"
-currentVersion := "v1.15.3"
+currentVersion := "v1.15.4"
 ; 判断拓展名
 SplitPath A_ScriptFullPath, , , &scriptExtension
 scriptExtension := StrLower(scriptExtension)
@@ -1411,8 +1411,6 @@ Initialization() {
             Pause
     }
 }
-
-
 ; 检查 V6 设备码是否在黑名单中
 CheckBlacklistV6(deviceCodeV6) {
     ; 构建请求数据

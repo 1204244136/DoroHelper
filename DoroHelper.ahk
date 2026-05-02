@@ -2495,23 +2495,14 @@ OpenOnlineSponsor(*) {
 ;tag V4升级V6（在线录入，保留当前余额）
 UpgradeV6Online(*) {
     global g_numeric_settings
-    ; 获取当前用户的ORANGE余额
-    currentUserInfo := CheckUserGroup(true)
-    currentRemaining := currentUserInfo["RemainingValue"]
-    if (currentRemaining <= 0.001) {
-        MsgBox("当前无有效会员余额，无需升级。如需开通会员，请使用上方的「自动录入」。", "无需升级", "Iconi")
-        return
-    }
     ; 构建URL
     baseURL := "https://doropay.top"
-    params := ""
-    ; 强制V6
-    params .= "&method=V6"
+    params := "tab=upgrade"
     ; 用户ID
     userID := g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : ""
     if (userID = "") {
         ; 用户ID为空，弹出输入框让用户当场填写
-        result := InputBox("请输入你的用户ID（字母开头，3-20位字母数字）：`n`n填写后将自动保存，下次无需重复输入。", "用户ID", "w400", "")
+        result := InputBox("请输入你的用户ID（3-20位字母数字）：`n`n填写后将自动保存，下次无需重复输入。", "用户ID", "w400", "")
         if (result.Result != "OK" || result.Value = "") {
             return
         }
@@ -2525,14 +2516,6 @@ UpgradeV6Online(*) {
         WriteSettings()
     }
     params .= "&uid=" . userID
-    ; 升级订单号：UPGRADE_用户ID（无需真实订单号）
-    params .= "&orderid=UPGRADE_" . userID
-    ; 金额=当前余额
-    params .= "&amount=" . Format("{:0.1f}", currentRemaining)
-    ; 会员类型
-    currentType := currentUserInfo["MembershipType"]
-    if (currentType != "")
-        params .= "&tier=" . UriEncode(currentType)
     ; V6设备码
     try {
         deviceCodeV6 := GenerateDeviceCodeV6Safe()
@@ -2546,7 +2529,7 @@ UpgradeV6Online(*) {
         MsgBox("V6设备码生成失败: " . e.Message, "错误", "Iconx")
         return
     }
-    fullURL := baseURL . "?" . SubStr(params, 2)
+    fullURL := baseURL . "?" . params
     Run(fullURL)
 }
 ;tag 兑换福利码（打开兑换页面，隐性传入设备码）

@@ -2424,10 +2424,16 @@ GetUserLocaleName() {
 }
 ;tag 赞助界面
 MsgSponsor(*) {
-    global guiTier, guiDuration, guiSponsor
-    global guiStatusText, guiPreviewText
-    global radDuration, radAmount, edtAmount
+    global guiSponsor
     global g_PriceMap, g_DefaultRegionPriceData, g_MembershipLevels, LocaleName, g_numeric_settings
+    ; 检查用户组数据源是否为 API
+    if g_numeric_settings["GroupDataSource"] != "API" {
+        result := MsgBox("当前「用户组数据源」设置为 " . g_numeric_settings["GroupDataSource"] . "，建议改为「API」以获得更快的响应速度和更准确的会员信息。`n`n是否现在前往设置中修改？", "数据源提示", "YesNo Iconi")
+        if result = "Yes" {
+            ShowSetting("Settings")
+            return
+        }
+    }
     if g_numeric_settings["UserGroup"] = "普通用户" {
         MsgBox("我已知晓：`n1、会员功能与设备绑定，更换设备后需要重新赞助。`n2、赞助并不构成实际上的商业行为，如果遇到不可抗力因素，作者有权随时停止维护，最终解释权归作者所有`n3、赞助完后需要点击底部的「生成信息」然后按ctrl+v发送给作者登记。发送的将会是一段代码和赞助截图，而不是接下来的文本`n4、只需要在一个渠道发送录入后的文本，不要每个渠道都发一遍。`n5、录入会在24小时内完成，届时会在对应渠道发送「已录入」的信息，根据网络延迟，会员资格会在收到信息后的5分钟内生效。因此在规定时间内，请不要催促作者，谢谢。", "赞助说明", "iconi")
     }
@@ -2436,157 +2442,48 @@ MsgSponsor(*) {
     guiSponsor.Tips := GuiCtrlTips(guiSponsor)
     guiSponsor.SetFont('s10', 'Microsoft YaHei UI')
     ; 获取当前用户会员信息
-    userGroupInfo := CheckUserGroup()
-    isCheckedUser := (userGroupInfo["UserLevel"] > 0)
-    ; ========== 赞助内容（无标签页） ==========
-    Text1 := guiSponsor.Add("Text", "w400 +0x0100 Wrap", "现在 DoroHelper 的绝大部分维护和新功能的添加都是我在做，这耗费了我大量时间和精力，希望有条件的小伙伴们能支持一下")
-    ; 支付二维码逻辑
-    if (scriptExtension = "ahk") {
-        picUrl1 := "img\weixin.png"
-        picUrl2 := "img\alipay.png"
-        tempFile1 := picUrl1
-        tempFile2 := picUrl2
-    } else {
-        picUrl1 := "https://s1.imagehub.cc/images/2025/09/12/c3fd38a9b6ae2e677b4e2f411ebc49a8.jpg"
-        picUrl2 := "https://s1.imagehub.cc/images/2025/09/12/f69df12697d7bb2a98ef61108e46e787.jpg"
-        tempFile1 := A_Temp "\weixin.jpg"
-        tempFile2 := A_Temp "\alipay.jpg"
-        if (!FileExist(tempFile1)) {
-            try Download picUrl1, tempFile1
-        }
-        if (!FileExist(tempFile2)) {
-            try Download picUrl2, tempFile2
-        }
-    }
-    try {
-        pic_ctr_1 := guiSponsor.Add("Picture", "w190 h190 Section", tempFile1)
-        pic_ctr_2 := guiSponsor.Add("Picture", "x+10 yp w190 h190", tempFile2)
-    } catch {
-        guiSponsor.Add("Text", "w400 h200 Center", "无法加载赞助图片。")
-    }
-    btn1 := guiSponsor.Add("Button", "xs+100 w200", "无法使用以上支付方式?")
-    btn1.OnEvent("Click", (*) => Run("https://github.com/1204244136/DoroHelper?tab=readme-ov-file#%E6%94%AF%E6%8C%81%E5%92%8C%E9%BC%93%E5%8A%B1"))
-    ; 表格说明
-    LVZH := guiSponsor.Add("ListView", "xs w400 h100 Section", ["功能", "普通用户", "金Doro"])
-    LVZH.ModifyCol(1, 100)
-    LVZH.ModifyCol(2, 80)
-    LVZH.ModifyCol(3, 80)
-    LVZH.Add(, "基础功能", "✅️", "✅️")
-    LVZH.Add(, "去广告", "", "✅️")
-    LVZH.Add(, "轮换活动", "", "✅️")
-    LVZH.Add(, "定时/路径启动", "", "✅️")
-    LVZH.Add(, "其他最新功能", "", "✅️")
-    ; === UserID + 订单号 同行 ===
-    guiSponsor.Add("Text", "xs", "用户ID:")
-    savedUserID := g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : ""
-    sponsorUserIDEdit := guiSponsor.Add("Edit", "x+5 yp-3 w120", savedUserID != "" ? savedUserID : "")
-    if (savedUserID = "") {
-        SetEditPlaceholder(sponsorUserIDEdit, "字母开头3-20位")
-    }
-    guiSponsor.Add("Text", "x+10 yp+3", "订单号:")
-    sponsorOrderIDEdit := guiSponsor.Add("Edit", "x+5 yp-3 w135", "")
-    SetEditPlaceholder(sponsorOrderIDEdit, "28-32位订单号")
-    ; === 选择区域 ===
-    availableTiers := ["金Doro会员", "金Doro企业版"]
-    guiSponsor.Add("Text", "xs y+10", "类型:")
-    guiTier := guiSponsor.Add("DropDownList", "x+5 yp-3 w95 Choose1", availableTiers)
-    radDuration := guiSponsor.Add("Radio", "x+10 yp+3 Checked", "按时长")
-    guiDuration := guiSponsor.Add("DropDownList", "x+2 yp-3 w65 Choose1", ["1个月", "3个月", "6个月", "12个月"])
-    radAmount := guiSponsor.Add("Radio", "x+10 yp", "按金额")
-    edtAmount := guiSponsor.Add("Edit", "x+5 yp-3 w40 Number", "10")
-    ; === 左右分栏显示状态和预览 ===
-    guiSponsor.Add("GroupBox", "xs y+15 w195 h135", "当前状态")
-    guiStatusText := guiSponsor.Add("Text", "xp+10 yp+20 w175 h110", "读取中...")
-    guiSponsor.Add("GroupBox", "x+10 yp-20 w195 h135", "订单预览")
-    guiPreviewText := guiSponsor.Add("Text", "xp+10 yp+20 w175 h110", "计算中...")
-    ; 底部按钮
-    btnOnlineSponsor := guiSponsor.Add("Button", "xs y+8 w400 h30", "自动录入（推荐）")
-    btnOnlineSponsor.SetFont("bold s11")
-    btn2 := guiSponsor.Add("Button", "xs y+8 w400 h30", "手动录入（不推荐）")
-    btn2.SetFont("bold s11")
-    ; 底部左右分栏：升级 + 查询 + 兑换
-    btnUpgradeV6 := guiSponsor.Add("Button", "xs y+8 w128 h30", "V4升级V6")
+    ; ========== 赞助内容（精简版） ==========
+    guiSponsor.Add("Text", "w400 +0x0100 Wrap Center", "感谢您对 DoroHelper 的支持！`n您的支持是我持续维护的动力")
+    guiSponsor.Add("Text", "w400 h10")
+    ; 主按钮
+    btnOnlineSponsor := guiSponsor.Add("Button", "xs w400 h40", "网页赞助")
+    btnOnlineSponsor.SetFont("bold s12")
+    guiSponsor.Add("Text", "w400 h10")
+    ; 次要按钮
+    btnUpgradeV6 := guiSponsor.Add("Button", "xs w128 h30", "V4升级V6")
     btnUpgradeV6.SetFont("bold s10")
     btnQueryOnline := guiSponsor.Add("Button", "x+3 yp w128 h30", "查询会员")
     btnQueryOnline.SetFont("bold s10")
     btnRedeemCode := guiSponsor.Add("Button", "x+3 yp w128 h30", "兑换福利码")
     btnRedeemCode.SetFont("bold s10")
     ; === 控件交互逻辑 ===
-    ToggleInputMode(GuiCtrlObj, Info) {
-        if (GuiCtrlObj.Hwnd == radDuration.Hwnd) {
-            radAmount.Value := 0
-        }
-        else if (GuiCtrlObj.Hwnd == radAmount.Hwnd) {
-            if g_numeric_settings["UserLevel"] < 3 {
-                MsgBox("非金会员无法使用按金额赞助，请选择按时长赞助方式以修改会员。")
-                radAmount.Value := 0
-                return
-            }
-            MsgBox("你实际应该支付的金额应为下方「订单预览」中的金额")
-            radDuration.Value := 0
-        }
-        isDurationMode := radDuration.Value
-        guiTier.Enabled := isDurationMode
-        guiDuration.Enabled := isDurationMode
-        edtAmount.Enabled := !isDurationMode
-        UpdateSponsorPrice(userGroupInfo)
-    }
-    radDuration.OnEvent("Click", ToggleInputMode)
-    radAmount.OnEvent("Click", ToggleInputMode)
-    guiTier.OnEvent("Change", (Ctrl, Info) => UpdateSponsorPrice(userGroupInfo))
-    guiDuration.OnEvent("Change", (Ctrl, Info) => UpdateSponsorPrice(userGroupInfo))
-    edtAmount.OnEvent("Change", (Ctrl, Info) => UpdateSponsorPrice(userGroupInfo))
-    btn2.OnEvent("Click", CalculateSponsorInfoUnified.Bind(sponsorUserIDEdit, sponsorOrderIDEdit))
-    btnOnlineSponsor.OnEvent("Click", OpenOnlineSponsor.Bind(sponsorOrderIDEdit, edtAmount, guiTier))
+    btnOnlineSponsor.OnEvent("Click", OpenOnlineSponsor)
     btnUpgradeV6.OnEvent("Click", UpgradeV6Online)
     btnQueryOnline.OnEvent("Click", (*) => Run("https://doropay.top/?tab=query"))
     btnRedeemCode.OnEvent("Click", OpenRedeemPage)
-    ; 初始化状态
-    ToggleInputMode(radDuration, "")
     guiSponsor.Show("AutoSize Center")
 }
 ;tag 在线赞助（打开浏览器自助录入页面）
-OpenOnlineSponsor(orderEdit, amountEdit, tierEdit, *) {
-    global g_numeric_settings, g_lastCalculatedTotalPay, g_lastCalculatedOrangeValue
-    ; 构建URL，自动填入设备码参数
+OpenOnlineSponsor(*) {
+    global g_numeric_settings
+    ; 构建URL，只传设备信息和用户ID
     baseURL := "https://doropay.top"
     params := ""
-    ; 用户ID
+    ; 用户ID（可选预填）
     userID := g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : ""
     if (userID != "")
         params .= "&uid=" . userID
-    ; 验证方式
-    vMethod := g_numeric_settings.Has("VerificationMethod") ? g_numeric_settings["VerificationMethod"] : "V6"
-    params .= "&method=" . vMethod
-    ; 订单号
-    orderID := orderEdit.Value
-    if (orderID != "")
-        params .= "&orderid=" . orderID
-    ; 赞助金额：传ORANGE值（非人民币），与数据库account_value一致
-    amount := ""
-    if (IsSet(g_lastCalculatedOrangeValue) && g_lastCalculatedOrangeValue > 0)
-        amount := Format("{:0.1f}", g_lastCalculatedOrangeValue)
-    else
-        amount := amountEdit.Value
-    if (amount != "")
-        params .= "&amount=" . amount
-    ; 会员类型
-    tier := tierEdit.Text
-    if (tier != "")
-        params .= "&tier=" . UriEncode(tier)
-    ; V6设备码
-    if (vMethod = "V6") {
-        try {
-            deviceCodeV6 := GenerateDeviceCodeV6Safe()
-            params .= "&cpu=" . deviceCodeV6.cpu_hash
-            params .= "&uuid=" . deviceCodeV6.uuid_hash
-            params .= "&bios=" . deviceCodeV6.bios_hash
-            params .= "&board=" . deviceCodeV6.board_hash
-            params .= "&disk=" . deviceCodeV6.disk_hash
-            params .= "&guid=" . deviceCodeV6.guid_hash
-        } catch {
-            ; 生成失败时跳过，用户在网页手动填
-        }
+    ; V6设备码（必须传）
+    try {
+        deviceCodeV6 := GenerateDeviceCodeV6Safe()
+        params .= "&cpu=" . deviceCodeV6.cpu_hash
+        params .= "&uuid=" . deviceCodeV6.uuid_hash
+        params .= "&bios=" . deviceCodeV6.bios_hash
+        params .= "&board=" . deviceCodeV6.board_hash
+        params .= "&disk=" . deviceCodeV6.disk_hash
+        params .= "&guid=" . deviceCodeV6.guid_hash
+    } catch {
+        ; 生成失败时跳过，用户在网页手动填
     }
     ; 拼接URL
     if (params != "")
@@ -2740,364 +2637,6 @@ FormatOrangeValueWithLocalCurrency(orangeAmount, unitPrice, currencyName, usdToC
     return formatted
 }
 ; 根据选择更新价格显示
-UpdateSponsorPrice(userGroupInfo_param := unset) {
-    global guiTier, guiDuration, guiStatusText, guiPreviewText
-    global radDuration, edtAmount
-    global g_MembershipLevels, g_PriceMap, LocaleName, g_DefaultRegionPriceData
-    global g_lastCalculatedTotalPay, g_lastCalculatedOrangeValue
-    if (!IsObject(guiStatusText) || !guiStatusText.Hwnd || !IsObject(guiPreviewText) || !guiPreviewText.Hwnd) {
-        return
-    }
-    ; 获取价格信息
-    priceData := g_PriceMap.Get(LocaleName, g_DefaultRegionPriceData)
-    unitPrice := priceData.Unitprice
-    currencyName := priceData.Currency
-    ; 获取当前用户状态
-    if (IsObject(userGroupInfo_param)) {
-        userGroupInfo := userGroupInfo_param
-    } else {
-        userGroupInfo := CheckUserGroup()
-    }
-    currentType := userGroupInfo["MembershipType"]
-    currentRemaining := userGroupInfo["RemainingValue"]
-    currentExpDate := userGroupInfo["VirtualExpiryDate"]
-    currentRegDate := userGroupInfo["LastActiveDate"]
-    currentLevel := userGroupInfo["UserLevel"]
-    histValue := userGroupInfo["HistoricalAccountValue"]
-    ; 汇率计算
-    local usdToCnyRate := 1.0
-    if (currencyName = "USD") {
-        usdToCnyRate := GetExchangeRate("USD", "CNY")
-    }
-    ; --- 1. 左侧：当前状态 ---
-    statusStr := ""
-    if (currentLevel > 0 && histValue > 0.001) {
-        statusStr .= "类型: " . currentType . "`n"
-        regDateStr := (currentRegDate != "19991231") ? SubStr(currentRegDate, 1, 4) "-" SubStr(currentRegDate, 5, 2) "-" SubStr(currentRegDate, 7, 2) : "N/A"
-        statusStr .= "注册: " . regDateStr . "`n"
-        statusStr .= "余额: " . Format("{:0.1f}", currentRemaining) . " ORANGE`n"
-        expDateStr := SubStr(currentExpDate, 1, 4) "-" SubStr(currentExpDate, 5, 2) "-" SubStr(currentExpDate, 7, 2)
-        statusStr .= "过期: " . expDateStr
-    } else {
-        statusStr := "类型: 普通用户`n`n暂无会员权益`n或额度已耗尽"
-    }
-    guiStatusText.Text := statusStr
-    ; --- 2. 右侧：订单预览 ---
-    newPurchaseValue := 0.0
-    actionStr := ""
-    isDateReset := false
-    targetUserLevel := 0
-    targetMonthlyCost := 0
-    finalValue := 0.0
-    ; 判断当前模式
-    if (radDuration.Value) { ; === 按时长模式 ===
-        tierSelected := guiTier.Text
-        durationSelected := guiDuration.Text
-        if (tierSelected = "" || durationSelected = "") {
-            guiPreviewText.Text := "请选择会员类型"
-            return
-        }
-        targetMonths := Integer(StrReplace(durationSelected, "个月"))
-        targetLevelInfo := g_MembershipLevels.Get(tierSelected)
-        targetMonthlyCost := targetLevelInfo.monthlyCost
-        targetUserLevel := targetLevelInfo.userLevel
-        newPurchaseValue := targetMonthlyCost * targetMonths
-        if (currentLevel == 0 || currentRemaining <= 0.001) { ; 新购
-            actionStr := "开通会员"
-            finalValue := newPurchaseValue
-            isDateReset := true
-        } else if (currentLevel == targetUserLevel) { ; 续费
-            actionStr := "会员续费"
-            finalValue := currentRemaining + newPurchaseValue
-            isDateReset := false
-        } else { ; 变动
-            actionStr := (currentLevel < targetUserLevel) ? "升级套餐" : "降级套餐"
-            finalValue := currentRemaining + newPurchaseValue
-            isDateReset := true
-        }
-    } else { ; === 按金额模式 ===
-        rawAmount := edtAmount.Value
-        if (!IsNumber(rawAmount) || rawAmount == "") {
-            newPurchaseValue := 0
-        } else {
-            newPurchaseValue := Float(rawAmount)
-        }
-        actionStr := "余额充值"
-        finalValue := currentRemaining + newPurchaseValue
-        isDateReset := false
-        ; 只有当前已经是会员，才能估算剩余天数
-        if (currentLevel > 0) {
-            targetLevelInfo := g_MembershipLevels.Get(currentType)
-            targetMonthlyCost := targetLevelInfo.monthlyCost
-        } else {
-            targetMonthlyCost := 0
-        }
-    }
-    ; 计算需付金额
-    totalPay := newPurchaseValue * unitPrice
-    g_lastCalculatedTotalPay := totalPay
-    g_lastCalculatedOrangeValue := newPurchaseValue
-    ; 估算新日期
-    tempDailyCost := targetMonthlyCost / 30.0
-    newExpDateStr := "----"
-    if (finalValue > 0 && tempDailyCost > 0) {
-        daysLeft := Floor(finalValue / tempDailyCost)
-        rawNewDate := DateAdd(A_Now, daysLeft, "Days")
-        newExpDateStr := SubStr(rawNewDate, 1, 4) "-" SubStr(rawNewDate, 5, 2) "-" SubStr(rawNewDate, 7, 2)
-    } else if (finalValue > 0 && tempDailyCost == 0) {
-        newExpDateStr := "需先开通"
-    }
-    ; 构建预览文本
-    previewStr := "操作: " . actionStr . "`n"
-    priceStr := Format("{:0.1f}", totalPay) . " " . currencyName
-    if (currencyName = "USD") {
-        priceStr .= " (约" . Round(totalPay * usdToCnyRate) . " CNY)"
-    }
-    previewStr .= "需付: " . priceStr . "`n"
-    previewStr .= "-----------------------`n"
-    previewStr .= "充值额: " . Format("{:0.1f}", newPurchaseValue) . " ORANGE`n"
-    previewStr .= "新余额: " . Format("{:0.1f}", finalValue) . " ORANGE`n"
-    previewStr .= "新过期: " . newExpDateStr
-    if (isDateReset && currentLevel > 0) {
-        previewStr .= "`n(注意: 注册日将重置)"
-    }
-    guiPreviewText.Text := previewStr
-}
-;tag 统一赞助信息生成（新用户/老用户共用入口）
-CalculateSponsorInfoUnified(userIDEdit, orderIDEdit, thisGuiButton, info) {
-    global guiTier, guiDuration, guiSponsor
-    global radDuration, edtAmount
-    global g_MembershipLevels, g_PriceMap, LocaleName
-    global g_numeric_settings
-    ; === 订单号验证（所有用户必填）===
-    orderID := orderIDEdit.Value
-    if (orderID = "") {
-        MsgBox("请填写支付订单号。`n`n微信：我→钱包→账单→复制订单号`n支付宝：我的→账单→复制订单号", "信息不完整", "Icon!")
-        return
-    }
-    ; 后门：DORO跳过格式验证（测试用）
-    isTestMode := (orderID = "DORO")
-    if (!isTestMode && !RegExMatch(orderID, "^[0-9]{28,32}$")) {
-        MsgBox("订单号格式不正确！`n`n微信订单号：28位数字`n支付宝订单号：28-32位数字", "验证失败", "Icon!")
-        return
-    }
-    ; === UserID 验证 ===
-    userID := userIDEdit.Value
-    if (userID != "") {
-        validation := ValidateUserID(userID)
-        if (!validation.valid) {
-            MsgBox(validation.reason, "用户ID格式错误", "Icon!")
-            return
-        }
-        g_numeric_settings["UserID"] := userID
-        WriteSettings()
-    }
-    ; 获取当前状态
-    currentUserInfo := CheckUserGroup(true)
-    currentLevel := currentUserInfo["UserLevel"]
-    isCheckedUser := (currentLevel > 0 && currentUserInfo["RemainingValue"] > 0.001)
-    ; --- 老用户：走原有 CalculateSponsorInfo 逻辑 ---
-    if (isCheckedUser) {
-        CalculateSponsorInfo(thisGuiButton, info, orderID)
-        return
-    }
-    ; --- 新用户/未录入用户：需要额外验证 UserID ---
-    if (userID = "") {
-        MsgBox("新用户请填写用户ID（3-20位，字母开头）。", "信息不完整", "Icon!")
-        return
-    }
-    ; 获取选择的会员类型和时长
-    tierSelected := guiTier.Text
-    durationSelected := guiDuration.Text
-    targetMonths := 0
-    newPurchaseValue := 0.0
-    if (radDuration.Value) {
-        targetMonthsText := StrReplace(durationSelected, "个月")
-        if (!IsNumber(targetMonthsText)) {
-            MsgBox("请选择有效的赞助时长。", "赞助信息错误", "iconx")
-            return
-        }
-        targetMonths := Integer(targetMonthsText)
-        targetLevelInfo := g_MembershipLevels.Get(tierSelected)
-        if (!IsObject(targetLevelInfo)) {
-            MsgBox("错误：无效的会员类型数据。", "赞助信息错误", "iconx")
-            return
-        }
-        newPurchaseValue := targetLevelInfo.monthlyCost * targetMonths
-    } else {
-        rawAmount := edtAmount.Value
-        if (!IsNumber(rawAmount) || Float(rawAmount) <= 0) {
-            MsgBox("请输入有效的赞助金额 (大于0)。", "赞助信息错误", "iconx")
-            return
-        }
-        newPurchaseValue := Float(rawAmount)
-    }
-    ; 生成V6设备码
-    deviceCodeV6 := GenerateDeviceCodeV6Safe()
-    ; 生成JSON格式设备信息
-    json := FormatDeviceCodeV6JSON(deviceCodeV6, tierSelected, newPurchaseValue, userID)
-    ; 生成完整申请信息
-    priceData := g_PriceMap.Get(LocaleName, g_DefaultRegionPriceData)
-    unitPrice := priceData.Unitprice
-    currencyName := priceData.Currency
-    totalPay := newPurchaseValue * unitPrice
-    applyInfo := "=== DoroHelper 新用户赞助 ===`n`n"
-    applyInfo .= "用户ID: " . userID . "`n"
-    applyInfo .= "会员等级: " . tierSelected . "`n"
-    if (targetMonths > 0) {
-        applyInfo .= "时长: " . targetMonths . "个月`n"
-    }
-    applyInfo .= "金额: " . Format("{:0.1f}", totalPay) . " " . currencyName . "`n"
-    applyInfo .= "订单号: " . orderID . "`n`n"
-    applyInfo .= "=== 设备信息（JSON格式）===`n`n"
-    applyInfo .= json
-    A_Clipboard := applyInfo
-    MsgBox("赞助信息已生成并复制到剪贴板，请在对应页面按ctrl+v粘贴，然后连同付款截图发给我`n`n状态: 新用户申请`n会员类型: " . tierSelected . "`n需付: " . Format("{:0.1f}", totalPay) . " " . currencyName . "`n`n注意这里的文本不是你应该复制的内容，剪贴板的才是`n`nQQ群: 584275905`nQQ邮箱: 1204244136@qq.com`n海外邮箱: zhi.11@foxmail.com", "赞助信息已复制！", "iconi")
-    guiSponsor.Destroy()
-}
-; 计算并生成赞助信息
-CalculateSponsorInfo(thisGuiButton, info, orderID := "") {
-    global guiTier, guiDuration, guiSponsor
-    global radDuration, edtAmount
-    global g_MembershipLevels, g_PriceMap, LocaleName
-    global g_numeric_settings
-    today := A_YYYY A_MM A_DD
-    ; 统一使用V6设备码
-    deviceCodeV6 := GenerateDeviceCodeV6Safe()
-    ; 获取用户当前信息
-    currentUserInfo := CheckUserGroup(true)
-    currentLevel := currentUserInfo["UserLevel"]
-    currentRemainingValue := currentUserInfo["RemainingValue"]
-    currentHistoricalValue := currentUserInfo["HistoricalAccountValue"]
-    currentRegistrationDate := currentUserInfo["LastActiveDate"]
-    currentTierType := currentUserInfo["MembershipType"]
-    newPurchaseValue := 0.0
-    finalTier := ""
-    targetUserLevel := 0
-    ; === 核心分支：按时长 vs 按金额 ===
-    if (radDuration.Value) { ; 选中按时长
-        tierSelected := guiTier.Text
-        durationSelected := guiDuration.Text
-        if (tierSelected == "管理员") {
-            MsgBox("管理员等级不能通过此方式赞助。", "赞助无效", "iconx")
-            return
-        }
-        targetMonthsText := StrReplace(durationSelected, "个月")
-        if (!IsNumber(targetMonthsText)) {
-            MsgBox("请选择有效的赞助时长。", "赞助信息错误", "iconx")
-            return
-        }
-        targetMonths := Integer(targetMonthsText)
-        targetLevelInfo := g_MembershipLevels.Get(tierSelected)
-        if (!IsObject(targetLevelInfo)) {
-            MsgBox("错误：无效的会员类型数据。", "赞助信息错误", "iconx")
-            return
-        }
-        finalTier := tierSelected
-        targetUserLevel := targetLevelInfo.userLevel
-        newPurchaseValue := targetLevelInfo.monthlyCost * targetMonths
-    } else { ; 选中按金额
-        rawAmount := edtAmount.Value
-        if (!IsNumber(rawAmount) || Float(rawAmount) <= 0) {
-            MsgBox("请输入有效的赞助金额 (大于0)。", "赞助信息错误", "iconx")
-            return
-        }
-        newPurchaseValue := Float(rawAmount)
-        ; 如果按金额充值，保持当前等级
-        if (currentLevel > 0) {
-            finalTier := currentTierType
-            targetUserLevel := currentLevel
-        } else {
-            ; 普通用户仅充值余额
-            finalTier := "普通用户"
-            targetUserLevel := 0
-        }
-    }
-    finalAccountValue := 0.0
-    finalLastActiveDate := today
-    UserStatus := ""
-    ; === 计算最终状态 ===
-    ; 1. 新用户 或 已过期
-    if (currentLevel == 0 || currentRemainingValue <= 0.001) {
-        if (currentHistoricalValue <= 0.001) {
-            UserStatus := "新用户"
-        } else {
-            UserStatus := "重新开通/充值"
-        }
-        finalAccountValue := newPurchaseValue
-        finalLastActiveDate := today
-        if (!radDuration.Value && finalTier == "普通用户") {
-            UserStatus := "账户充值(未开通会员)"
-        }
-    }
-    ; 2. 老用户续费/充值
-    else if (currentLevel == targetUserLevel) {
-        UserStatus := radDuration.Value ? "老用户续费" : "余额充值"
-        finalAccountValue := currentHistoricalValue + newPurchaseValue
-        finalLastActiveDate := (currentRegistrationDate != "19991231") ? currentRegistrationDate : today
-    }
-    ; 3. 变更套餐 (仅按时长模式触发)
-    else {
-        UserStatus := (currentLevel < targetUserLevel) ? "用户组升级" : "用户组降级"
-        finalAccountValue := currentRemainingValue + newPurchaseValue
-        finalLastActiveDate := today
-    }
-    ; 计算显示用的有效期
-    tempMonthlyCost := 0
-    if (g_MembershipLevels.Has(finalTier)) {
-        tempMonthlyCost := g_MembershipLevels.Get(finalTier).monthlyCost
-    }
-    tempDailyCost := tempMonthlyCost / 30.0
-    ; 计算实际剩余额度 (与GUI预览的新余额一致)
-    displayRemainingValue := 0.0
-    if ((UserStatus == "老用户续费" || UserStatus == "余额充值") && finalLastActiveDate != today) {
-        daysPassed := DateDiff(today, finalLastActiveDate, "Days")
-        consumedValue := daysPassed * tempDailyCost
-        displayRemainingValue := finalAccountValue - consumedValue
-    } else {
-        displayRemainingValue := finalAccountValue
-    }
-    ; 计算预计到期日
-    tempVirtualExpiryDate := "19991231"
-    if (displayRemainingValue > 0 && tempDailyCost > 0) {
-        tempDaysLeft := Floor(displayRemainingValue / tempDailyCost)
-        tempVirtualExpiryDate := SubStr(DateAdd(A_Now, tempDaysLeft, "Days"), 1, 8)
-    } else if (displayRemainingValue > 0 && tempDailyCost == 0) {
-        tempVirtualExpiryDate := "99991231"
-    }
-    newExpiryDateFormatted := SubStr(tempVirtualExpiryDate, 1, 4) . "-" . SubStr(tempVirtualExpiryDate, 5, 2) . "-" . SubStr(tempVirtualExpiryDate, 7, 2)
-    ; 格式化生效日期 (解决问题2)
-    finalRegistrationDateFormatted := SubStr(finalLastActiveDate, 1, 4) . "-" . SubStr(finalLastActiveDate, 5, 2) . "-" . SubStr(finalLastActiveDate, 7, 2)
-    ; 生成 V6 格式 JSON
-    jsonStr := FormatDeviceCodeV6JSON(deviceCodeV6, finalTier, finalAccountValue, , finalLastActiveDate)
-    ; 生成完整赞助信息
-    sponsorInfo := UserStatus . " (设备信息)`n"
-    sponsorInfo .= "(请将这段文字替换成您的付款截图，邮件的图片请以附件形式发送)`n"
-    if (orderID != "") {
-        sponsorInfo .= "订单号: " . orderID . "`n"
-    }
-    sponsorInfo .= "V6设备码`n"
-    sponsorInfo .= jsonStr . "`n"
-    A_Clipboard := sponsorInfo
-    ; 修正 msgStr 中的额度和日期格式 (解决问题1和问题2)
-    msgStr := "赞助信息已生成并复制到剪贴板，请在对应页面按ctrl+v粘贴，然后连同付款记录发给我`n"
-        . "状态: " . UserStatus . "`n"
-        . "用户码版本: V6`n"
-        . "您将获得的会员类型: " . finalTier . "`n"
-        . "新会员总额度: " . Format("{:0.2f}", displayRemainingValue) . " ORANGE`n" ; 使用实际剩余额度
-    if (finalTier != "普通用户") {
-        msgStr .= "生效日期: " . finalRegistrationDateFormatted . "`n" ; 使用格式化后的日期
-        msgStr .= "预计有效期至: " . newExpiryDateFormatted . "`n`n"
-    } else {
-        msgStr .= "注意：您目前是普通用户，请在“按时长”中选择套餐以激活会员功能。`n`n"
-    }
-    msgStr .= "注意这里的文本不是你应该复制的内容，剪贴板的才是`n"
-        . "QQ群: 584275905`n"
-        . "QQ邮箱: 1204244136@qq.com`n"
-        . "海外邮箱: zhi.11@foxmail.com"
-    MsgBox(msgStr, "赞助信息已复制！", "iconi")
-    guiSponsor.Destroy()
-}
 ;tag 下载指定URL的内容
 DownloadUrlContent(url) {
     ; 这个函数是获取纯文本内容，而不是下载文件到磁盘。

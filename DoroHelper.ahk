@@ -3029,23 +3029,23 @@ BuildDeviceCodeV6FromHash(inputHash) {
 MatchDeviceCodeV6(currentCode, savedData) {
     local matchCount := 0
     local matchDetails := Map()
-    ; CPU匹配 (权重25)
+    ; CPU匹配 (权重15)
     if (savedData.Has("cpu_hash") && currentCode.cpu_hash == savedData["cpu_hash"]) {
-        matchCount += 25
+        matchCount += 15
         matchDetails["CPU"] := true
     } else {
         matchDetails["CPU"] := false
     }
-    ; UUID匹配 (权重35)
+    ; UUID匹配 (权重45)
     if (savedData.Has("uuid_hash") && currentCode.uuid_hash == savedData["uuid_hash"]) {
-        matchCount += 35
+        matchCount += 45
         matchDetails["UUID"] := true
     } else {
         matchDetails["UUID"] := false
     }
-    ; BIOS匹配 (权重15)
+    ; BIOS匹配 (权重5)
     if (savedData.Has("bios_hash") && currentCode.bios_hash == savedData["bios_hash"]) {
-        matchCount += 15
+        matchCount += 5
         matchDetails["BIOS"] := true
     } else {
         matchDetails["BIOS"] := false
@@ -3057,16 +3057,16 @@ MatchDeviceCodeV6(currentCode, savedData) {
     } else {
         matchDetails["Board"] := false
     }
-    ; 硬盘匹配 (权重10)
+    ; 硬盘匹配 (权重15)
     if (savedData.Has("disk_hash") && currentCode.disk_hash == savedData["disk_hash"]) {
-        matchCount += 10
+        matchCount += 15
         matchDetails["Disk"] := true
     } else {
         matchDetails["Disk"] := false
     }
-    ; MachineGuid匹配 (权重5)
+    ; MachineGuid匹配 (权重10)
     if (savedData.Has("guid_hash") && currentCode.guid_hash == savedData["guid_hash"]) {
-        matchCount += 5
+        matchCount += 10
         matchDetails["GUID"] := true
     } else {
         matchDetails["GUID"] := false

@@ -2538,24 +2538,10 @@ UpgradeV6Online(*) {
     params := "tab=upgrade"
     ; 传递V4哈希（服务器根据此哈希查找余额并继承到V6）
     params .= "&v4_hash=" . v4Hash
-    ; 用户ID
+    ; 用户ID（可选预填）
     userID := g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : ""
-    if (userID = "") {
-        ; 用户ID为空，弹出输入框让用户当场填写
-        result := InputBox("请输入你的用户ID（3-20位字母数字）：`n`n填写后将自动保存，下次无需重复输入。", "用户ID", "w400", "")
-        if (result.Result != "OK" || result.Value = "") {
-            return
-        }
-        validation := ValidateUserID(result.Value)
-        if (!validation.valid) {
-            MsgBox(validation.reason, "用户ID格式错误", "Icon!")
-            return
-        }
-        userID := result.Value
-        g_numeric_settings["UserID"] := userID
-        WriteSettings()
-    }
-    params .= "&uid=" . userID
+    if (userID != "")
+        params .= "&uid=" . userID
     ; V6设备码
     try {
         deviceCodeV6 := GenerateDeviceCodeV6Safe()

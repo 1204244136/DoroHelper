@@ -1411,6 +1411,37 @@ Initialization() {
             Pause
     }
 }
+
+
+; 检查 V6 设备码是否在黑名单中
+CheckBlacklistV6(deviceCodeV6) {
+    ; 构建请求数据
+    postData := '{'
+        . '"cpu_hash": "' . deviceCodeV6.cpu_hash . '",'
+        . '"uuid_hash": "' . deviceCodeV6.uuid_hash . '",'
+        . '"bios_hash": "' . deviceCodeV6.bios_hash . '",'
+        . '"board_hash": "' . deviceCodeV6.board_hash . '",'
+        . '"disk_hash": "' . deviceCodeV6.disk_hash . '",'
+        . '"guid_hash": "' . deviceCodeV6.guid_hash . '"'
+        . '}'
+    ; 发送请求
+    try {
+        http := ComObject("WinHttp.WinHttpRequest.5.1")
+        http.Open("POST", "https://doropay.top/api/blacklist/check", false)
+        http.SetRequestHeader("Content-Type", "application/json")
+        http.Send(postData)
+        ; 解析响应
+        if http.Status = 200 {
+            response := http.ResponseText
+            if InStr(response, '"blacklisted": true') {
+                return false
+            }
+        }
+    } catch as e {
+    } catch {
+    }
+    return true
+}
 AutoStartDoro() {
     AddLog("等待10秒后自动运行……")
     Sleep 10000
@@ -3381,6 +3412,11 @@ CheckUserGroup(forceUpdate := false) {
             local groupDataV6 := FetchAndParseGroupData(6)
             ; 生成V6设备码
             local deviceCodeV6 := GenerateDeviceCodeV6()
+            ; 黑名单检查
+            if !CheckBlacklistV6(deviceCodeV6) {
+                MsgBox("您的设备已被封禁，无法使用 DoroHelper。如有疑问请联系管理员。", "设备已被封禁", "Iconx")
+                ExitApp
+            }
             ; V6权重匹配
             local v6MatchResult := GetMembershipInfoForDeviceV6(deviceCodeV6, groupDataV6)
             if (v6MatchResult["UserLevel"] > 0 || v6MatchResult["RemainingValue"] > 0) {

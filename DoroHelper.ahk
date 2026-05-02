@@ -2524,9 +2524,20 @@ OpenOnlineSponsor(*) {
 ;tag V4升级V6（在线录入，保留当前余额）
 UpgradeV6Online(*) {
     global g_numeric_settings
+    ; 先查询V4会员信息，确认是会员
+    AddLog("正在查询V4会员信息……", "Blue")
+    v4Hash := GenerateDeviceCode()
+    v4Result := QueryV4MemberByHash(v4Hash)
+    if (!v4Result.found) {
+        MsgBox("未查询到您的V4会员信息，无法进行升级。`n`n请确认您已经是V4会员后再试。", "升级失败", "Icon!")
+        return
+    }
+    AddLog("查询到V4会员，余额: " . v4Result.account_value . " ORANGE", "Green")
     ; 构建URL
     baseURL := "https://doropay.top"
     params := "tab=upgrade"
+    ; 传递V4哈希（服务器根据此哈希查找余额并继承到V6）
+    params .= "&v4_hash=" . v4Hash
     ; 用户ID
     userID := g_numeric_settings.Has("UserID") ? g_numeric_settings["UserID"] : ""
     if (userID = "") {
@@ -2560,6 +2571,29 @@ UpgradeV6Online(*) {
     }
     fullURL := baseURL . "?" . params
     Run(fullURL)
+}
+;tag 根据V4哈希查询会员信息
+QueryV4MemberByHash(v4Hash) {
+    try {
+        apiUrl := "https://doropay.top/api/members/v4"
+        jsonContent := DownloadUrlContent(apiUrl)
+        if (jsonContent = "")
+            return { found: false, account_value: "0" }
+        members := Json.Load(&jsonContent)
+        if (!IsObject(members))
+            return { found: false, account_value: "0" }
+        for member in members {
+            if (member.Has("hash") && member.Get("hash") = v4Hash) {
+                val := member.Has("account_value") ? member.Get("account_value") : "0"
+                if (Float(val) > 0)
+                    return { found: true, account_value: val }
+            }
+        }
+        return { found: false, account_value: "0" }
+    } catch as e {
+        AddLog("查询V4会员失败: " . e.Message, "Red")
+        return { found: false, account_value: "0" }
+    }
 }
 ;tag 兑换福利码（打开兑换页面，隐性传入设备码）
 OpenRedeemPage(*) {

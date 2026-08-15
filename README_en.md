@@ -219,7 +219,7 @@ Hanpass|PandaRemit|WireBarley|GmoneyTrans|Debunk|PayForex|koala transfer|Sendly|
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=1204244136/DoroHelper&type=Timeline)](https://www.star-history.com/#1204244136/DoroHelper&Timeline)
+[![Star History Chart](https://star-history.dera.page/svg?repos=1204244136/DoroHelper&type=Timeline)](https://star-history.dera.page/#1204244136/DoroHelper&Timeline)
 
 ## Credits
 
